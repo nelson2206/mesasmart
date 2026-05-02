@@ -21,6 +21,10 @@
   </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-6">
+  <script>
+    // Backend URL por defecto · si el usuario no la tiene configurada, usa esta
+    window.MESASMART_BACKEND_URL = "https://mesasmart-backend.onrender.com";
+  </script>
   <script src="./assets/api.js"></script>
 
   <div class="w-full max-w-md">
@@ -34,15 +38,24 @@
     </div>
 
     <div class="bg-white border border-border rounded-2xl p-6 shadow-sm">
-      <!-- Backend URL config -->
-      <div id="backend-config" class="mb-5 pb-5 border-b border-border">
-        <label class="text-xs font-bold uppercase tracking-wider text-muted">Backend URL</label>
-        <div class="mt-1.5 flex gap-2">
-          <input id="backend-url" type="url" placeholder="https://mesasmart-backend.onrender.com" class="flex-1 px-3 py-2 bg-cream border border-border rounded-lg text-sm focus:outline-none focus:border-clay" />
-          <button id="save-backend" class="px-3 py-2 bg-charcoal text-white text-xs font-semibold rounded-lg">Guardar</button>
-        </div>
-        <p id="backend-status" class="text-xs text-muted mt-1.5"></p>
+      <!-- Backend status (siempre visible) -->
+      <div class="mb-4 flex items-center gap-2 text-xs">
+        <span id="backend-dot" class="w-2 h-2 rounded-full bg-muted"></span>
+        <span id="backend-status" class="text-muted">Verificando backend...</span>
       </div>
+
+      <!-- Backend URL config (oculto por defecto · solo para devs) -->
+      <details id="backend-config" class="mb-4">
+        <summary class="text-[11px] text-muted hover:text-ink cursor-pointer select-none">⚙ Configuración avanzada</summary>
+        <div class="mt-2 p-3 bg-cream rounded-lg">
+          <label class="text-[10px] font-bold uppercase tracking-wider text-muted">Backend URL</label>
+          <div class="mt-1.5 flex gap-2">
+            <input id="backend-url" type="url" placeholder="https://mesasmart-backend.onrender.com" class="flex-1 px-2 py-1.5 bg-white border border-border rounded text-xs focus:outline-none focus:border-clay" />
+            <button id="save-backend" class="px-3 py-1.5 bg-charcoal text-white text-[11px] font-semibold rounded">Guardar</button>
+          </div>
+          <p class="text-[10px] text-muted mt-1.5">Solo cambiar si tienes tu propio backend desplegado.</p>
+        </div>
+      </details>
 
       <form id="login-form" class="space-y-4">
         <div>
@@ -81,12 +94,16 @@
     const api = window.MesaSmartAPI;
     const backendUrlInput = document.getElementById('backend-url');
     const backendStatus = document.getElementById('backend-status');
+    const backendDot = document.getElementById('backend-dot');
     const errorEl = document.getElementById('error');
 
-    // Init backend URL
+    // Init backend URL (auto-conectado a producción por window.MESASMART_BACKEND_URL)
     if (api.isConfigured()) {
       backendUrlInput.value = api.getBaseUrl();
       checkBackend();
+    } else {
+      backendStatus.textContent = 'Sin backend configurado';
+      backendDot.className = 'w-2 h-2 rounded-full bg-clay';
     }
 
     document.getElementById('save-backend').onclick = () => {
@@ -97,19 +114,23 @@
     };
 
     async function checkBackend() {
-      backendStatus.textContent = 'Verificando...';
-      backendStatus.className = 'text-xs text-muted mt-1.5';
+      backendStatus.textContent = 'Conectando con backend...';
+      backendDot.className = 'w-2 h-2 rounded-full bg-warn animate-pulse';
       try {
         const res = await fetch(api.getBaseUrl() + '/health');
         if (res.ok) {
-          backendStatus.textContent = '✓ Backend conectado';
-          backendStatus.className = 'text-xs text-olive mt-1.5 font-semibold';
+          backendStatus.textContent = 'Backend conectado · listo para entrar';
+          backendStatus.className = 'text-olive font-semibold';
+          backendDot.className = 'w-2 h-2 rounded-full bg-olive';
         } else {
           throw new Error('HTTP ' + res.status);
         }
       } catch (e) {
-        backendStatus.textContent = `✗ No alcanzable: ${e.message}`;
-        backendStatus.className = 'text-xs text-clay mt-1.5';
+        backendStatus.textContent = `Backend dormido (puede tardar 30-60s la primera vez)`;
+        backendStatus.className = 'text-warn';
+        backendDot.className = 'w-2 h-2 rounded-full bg-warn animate-pulse';
+        // Reintenta automáticamente
+        setTimeout(checkBackend, 8000);
       }
     }
 
