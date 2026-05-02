@@ -13,17 +13,8 @@
  */
 
 (function () {
-  // ─── 4 PLANES ─────────────────────────────────────────────
+  // ─── 3 PLANES ─────────────────────────────────────────────
   const PLANS = {
-    POS_SOLO: {
-      id: "POS_SOLO",
-      name: "Solo POS",
-      tagline: "Para restaurantes pequeños · 1 local · empieza gratis",
-      priceCents: 0,
-      setupCents: 0,
-      color: "#6B5D52",
-      gradient: "linear-gradient(135deg, #6B5D52 0%, #8A7A6A 100%)"
-    },
     OPERACION: {
       id: "OPERACION",
       name: "Operación",
@@ -65,10 +56,10 @@
       icon: "🍽️",
       color: "#A0322B",
       features: [
-        { id: "pos", name: "POS · Tomar pedidos", desc: "Carta digital, mesas, pedidos en cocina", icon: "📋", plans: ["POS_SOLO", "OPERACION", "PROFESIONAL", "ENTERPRISE"] },
-        { id: "kds", name: "Cocina KDS", desc: "Pantalla de cocina con tickets en tiempo real", icon: "👨‍🍳", plans: ["POS_SOLO", "OPERACION", "PROFESIONAL", "ENTERPRISE"] },
-        { id: "waiter_mobile", name: "App del mozo", desc: "Mozo toma pedidos desde su celular", icon: "📱", plans: ["POS_SOLO", "OPERACION", "PROFESIONAL", "ENTERPRISE"] },
-        { id: "floor_plan", name: "Plano del salón", desc: "Estado de mesas en vivo · unir mesas", icon: "🗺️", plans: ["POS_SOLO", "OPERACION", "PROFESIONAL", "ENTERPRISE"] },
+        { id: "pos", name: "POS · Tomar pedidos", desc: "Carta digital, mesas, pedidos en cocina", icon: "📋", plans: ["OPERACION", "PROFESIONAL", "ENTERPRISE"] },
+        { id: "kds", name: "Cocina KDS", desc: "Pantalla de cocina con tickets en tiempo real", icon: "👨‍🍳", plans: ["OPERACION", "PROFESIONAL", "ENTERPRISE"] },
+        { id: "waiter_mobile", name: "App del mozo", desc: "Mozo toma pedidos desde su celular", icon: "📱", plans: ["OPERACION", "PROFESIONAL", "ENTERPRISE"] },
+        { id: "floor_plan", name: "Plano del salón", desc: "Estado de mesas en vivo · unir mesas", icon: "🗺️", plans: ["OPERACION", "PROFESIONAL", "ENTERPRISE"] },
         { id: "calls", name: "Llamado al mozo", desc: "Cliente llama desde la mesa", icon: "🔔", plans: ["OPERACION", "PROFESIONAL", "ENTERPRISE"] }
       ]
     },
@@ -121,10 +112,10 @@
       icon: "🧾",
       color: "#7C3AED",
       features: [
-        { id: "sunat", name: "Boletas y facturas SUNAT", desc: "UBL 2.1 firmado · OSE Nubefact", icon: "✅", plans: ["POS_SOLO", "OPERACION", "PROFESIONAL", "ENTERPRISE"] },
-        { id: "yape_plin", name: "Yape · Plin · Tarjeta · Efectivo", desc: "Todos los métodos peruanos", icon: "💳", plans: ["POS_SOLO", "OPERACION", "PROFESIONAL", "ENTERPRISE"] },
+        { id: "sunat", name: "Boletas y facturas SUNAT", desc: "UBL 2.1 firmado · OSE Nubefact", icon: "✅", plans: ["OPERACION", "PROFESIONAL", "ENTERPRISE"] },
+        { id: "yape_plin", name: "Yape · Plin · Tarjeta · Efectivo", desc: "Todos los métodos peruanos", icon: "💳", plans: ["OPERACION", "PROFESIONAL", "ENTERPRISE"] },
         { id: "split_check", name: "Dividir cuenta", desc: "Por persona o por consumo", icon: "✂️", plans: ["OPERACION", "PROFESIONAL", "ENTERPRISE"] },
-        { id: "indecopi_book", name: "Libro de Reclamaciones", desc: "Digital INDECOPI integrado", icon: "📕", plans: ["POS_SOLO", "OPERACION", "PROFESIONAL", "ENTERPRISE"] }
+        { id: "indecopi_book", name: "Libro de Reclamaciones", desc: "Digital INDECOPI integrado", icon: "📕", plans: ["OPERACION", "PROFESIONAL", "ENTERPRISE"] }
       ]
     },
     {
@@ -240,7 +231,13 @@
   const STORAGE_CTX = "mesasmart_consultant_context";
 
   function activePlanId() {
-    return localStorage.getItem(STORAGE_KEY) || "PROFESIONAL"; // demo default
+    const stored = localStorage.getItem(STORAGE_KEY);
+    // Migración: si quedó "POS_SOLO" en storage, lo subimos a OPERACION
+    if (stored === "POS_SOLO") {
+      localStorage.setItem(STORAGE_KEY, "OPERACION");
+      return "OPERACION";
+    }
+    return stored || "PROFESIONAL"; // demo default
   }
 
   function activePlan() {

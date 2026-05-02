@@ -476,14 +476,16 @@
     /* Plan cards row */
     .plan-cards {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 18px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
       margin-top: 48px;
+      max-width: 1080px;
+      margin-left: auto;
+      margin-right: auto;
       position: relative;
       z-index: 1;
     }
-    @media (max-width: 1024px) { .plan-cards { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 600px)  { .plan-cards { grid-template-columns: 1fr; } }
+    @media (max-width: 1024px) { .plan-cards { grid-template-columns: 1fr; max-width: 480px; } }
 
     .plan-card {
       position: relative;
@@ -643,7 +645,7 @@
     }
     .matrix-header {
       display: grid;
-      grid-template-columns: 1.6fr repeat(4, 1fr);
+      grid-template-columns: 1.8fr repeat(3, 1fr);
       background: linear-gradient(180deg, #FAF7F2 0%, #FFFFFF 100%);
       border-bottom: 1.5px solid var(--border);
       padding: 18px 24px;
@@ -699,7 +701,7 @@
 
     .matrix-row {
       display: grid;
-      grid-template-columns: 1.6fr repeat(4, 1fr);
+      grid-template-columns: 1.8fr repeat(3, 1fr);
       padding: 14px 24px;
       border-bottom: 1px solid #F4ECDF;
       transition: background 0.15s ease;
@@ -1284,28 +1286,8 @@
       <h2 class="catalog-title">Planes y funcionalidades, <em>uno al lado del otro</em></h2>
       <p class="catalog-sub">Cada plan suma sobre el anterior. Si crece tu negocio, solo activas el siguiente — no migras de software.</p>
 
-      <!-- 4 Plan Cards -->
-      <div class="plan-cards">
-        <!-- Solo POS -->
-        <div class="plan-card pos-solo" onclick="window.MesaSmartFeatures && window.MesaSmartFeatures.setActivePlan('POS_SOLO'); document.querySelector('#consultor').scrollIntoView({behavior:'smooth'});">
-          <div class="plan-card-icon">📋</div>
-          <div class="plan-card-name">Solo POS</div>
-          <div class="plan-card-tagline">Para empezar gratis con lo esencial</div>
-          <div class="plan-card-price-row">
-            <span class="plan-card-price-num">Gratis</span>
-          </div>
-          <div class="plan-card-setup">Sin setup · Sin tarjeta</div>
-          <div class="plan-card-divider"></div>
-          <ul class="plan-card-list">
-            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>POS, mesas, cocina KDS</li>
-            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>App del mozo en celular</li>
-            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Boletas y facturas SUNAT</li>
-            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Yape, Plin, tarjeta, efectivo</li>
-            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Libro de Reclamaciones</li>
-          </ul>
-          <div class="plan-card-foot">Ideal para <strong>1 local pequeño</strong></div>
-        </div>
-
+      <!-- 3 Plan Cards -->
+      <div class="plan-cards plan-cards-3">
         <!-- Operación -->
         <div class="plan-card operacion" onclick="window.MesaSmartFeatures && window.MesaSmartFeatures.setActivePlan('OPERACION'); document.querySelector('#consultor').scrollIntoView({behavior:'smooth'});">
           <div class="plan-card-icon">📦</div>
@@ -1318,7 +1300,8 @@
           <div class="plan-card-setup">+ S/ 500 setup · 1 local</div>
           <div class="plan-card-divider"></div>
           <ul class="plan-card-list">
-            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Todo Solo POS</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>POS, mesas, cocina KDS, app del mozo</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Boletas/facturas SUNAT · Yape · Plin</li>
             <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Insumos · recetas · stock real</li>
             <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Caducidad por lotes (FEFO)</li>
             <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>P&L · food cost · costos laborales</li>
@@ -1389,20 +1372,16 @@
         <div class="matrix-header">
           <div class="matrix-header-cell feat">Funcionalidad</div>
           <div class="matrix-header-cell">
-            <span class="plan-mini-name">Solo POS</span>
-            <span class="plan-mini-price">Gratis</span>
-          </div>
-          <div class="matrix-header-cell">
             <span class="plan-mini-name olive">Operación</span>
-            <span class="plan-mini-price">S/ 199</span>
+            <span class="plan-mini-price">S/ 199 / mes</span>
           </div>
           <div class="matrix-header-cell">
             <span class="plan-mini-name clay">Profesional</span>
-            <span class="plan-mini-price">S/ 399</span>
+            <span class="plan-mini-price">S/ 399 / mes</span>
           </div>
           <div class="matrix-header-cell">
             <span class="plan-mini-name gold">Enterprise</span>
-            <span class="plan-mini-price">S/ 1499</span>
+            <span class="plan-mini-price">S/ 1499 / mes</span>
           </div>
         </div>
         <div id="catalog-matrix-body">
@@ -1614,41 +1593,10 @@
               </div>
 
               <div class="action-buttons">
-                <button class="btn btn-primary" onclick="document.querySelector('#compare-plans-container').classList.toggle('hidden')">Ver todos los planes comparados</button>
+                <a href="#catalogo" class="btn btn-primary" style="text-decoration:none;display:inline-block;text-align:center;">Ver todos los planes comparados ↑</a>
               </div>
             </div>
 
-            <div id="compare-plans-container" class="hidden" style="margin-top: 32px;">
-              <div class="comparison-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Feature</th>
-                      <th class="solo-pos">Solo POS<br><span style="font-size: 11px; font-weight: 400;">Gratis</span></th>
-                      <th class="operacion">Operación<br><span style="font-size: 11px; font-weight: 400;">S/ 199/mes</span></th>
-                      <th class="profesional">Profesional<br><span style="font-size: 11px; font-weight: 400;">S/ 399/mes</span></th>
-                      <th class="enterprise">Enterprise<br><span style="font-size: 11px; font-weight: 400;">S/ 799/mes</span></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr><td>POS · Carta y pedidos</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
-                    <tr><td>Inventario y recetas</td><td class="empty">—</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
-                    <tr><td>Costos y conversiones de insumos</td><td class="empty">—</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
-                    <tr><td>Recepción de guías con foto IA</td><td class="empty">—</td><td class="empty">—</td><td class="check">✓</td><td class="check">✓</td></tr>
-                    <tr><td>P&L y reportes financieros</td><td class="empty">—</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
-                    <tr><td>Personal y nómina</td><td class="empty">—</td><td class="empty">—</td><td class="check">✓</td><td class="check">✓</td></tr>
-                    <tr><td>Cliente-tablet en mesa (add-on)</td><td class="empty">—</td><td class="empty">—</td><td class="check">✓</td><td class="check">✓</td></tr>
-                    <tr><td>Llamado al mozo y cocina KDS</td><td class="empty">—</td><td class="empty">—</td><td class="check">✓</td><td class="check">✓</td></tr>
-                    <tr><td>Multi-local consolidado</td><td class="empty">—</td><td class="empty">—</td><td class="check">✓</td><td class="check">✓</td></tr>
-                    <tr><td>Campañas IA</td><td class="empty">—</td><td class="empty">—</td><td class="check">✓</td><td class="check">✓</td></tr>
-                    <tr><td>Cliente recurrente y rewards</td><td class="empty">—</td><td class="empty">—</td><td class="check">✓</td><td class="check">✓</td></tr>
-                    <tr><td>IA completa (Claude Vision)</td><td class="empty">—</td><td class="empty">—</td><td class="check">✓</td><td class="check">✓</td></tr>
-                    <tr><td>Soporte priority</td><td class="empty">—</td><td class="empty">—</td><td class="empty">—</td><td class="check">✓</td></tr>
-                    <tr><td>Integración SUNAT/OSE</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
           </div>
 
           <div class="wizard-controls">
@@ -1882,9 +1830,8 @@
           setTimeout(build, 50);
           return;
         }
-        const PLAN_IDS = ["POS_SOLO", "OPERACION", "PROFESIONAL", "ENTERPRISE"];
+        const PLAN_IDS = ["OPERACION", "PROFESIONAL", "ENTERPRISE"];
         const PLAN_CELL_CLASS = {
-          "POS_SOLO": "",
           "OPERACION": "cell-yes",          // green default
           "PROFESIONAL": "cell-yes-clay",
           "ENTERPRISE": "cell-yes-gold"
@@ -1916,9 +1863,7 @@
             const cells = PLAN_IDS.map(p => {
               if (!f.plans.includes(p)) return `<div class="matrix-cell"><div class="cell-no"></div></div>`;
               const cls = PLAN_CELL_CLASS[p] || "cell-yes";
-              const label = p === "POS_SOLO" ? "Incluido" : "✓";
-              const styledCls = p === "POS_SOLO" ? "cell-yes" : cls;
-              return `<div class="matrix-cell"><div class="${styledCls}" title="Incluido en ${p}">${label === "Incluido" ? "✓" : label}</div></div>`;
+              return `<div class="matrix-cell"><div class="${cls}" title="Incluido en ${p}">✓</div></div>`;
             }).join("");
             rows.push(`
               <div class="matrix-row${onlyEnterprise ? ' enterprise-row' : ''}" data-group="${g.id}" data-feature="${f.id}">
@@ -1969,26 +1914,8 @@
       painPoints: []
     };
 
-    // Plan definitions
+    // Plan definitions (3 planes — Solo POS removido, no entramos a la commodity)
     const plans = {
-      'POS_SOLO': {
-        name: 'Solo POS',
-        badge: 'Plan Gratuito',
-        price: 'Gratis',
-        period: 'Lead generator',
-        description: 'Para empezar con lo esencial',
-        features: [
-          'Carta digital',
-          'Pedidos básico',
-          'Pagos (Yape, tarjeta)',
-          'Boletas SUNAT'
-        ],
-        optional: [
-          'Inventario y recetas',
-          'Conversiones de insumos',
-          'Recepción de guías con IA'
-        ]
-      },
       'OPERACION': {
         name: 'Operación',
         badge: 'Plan Operacional',
@@ -2078,10 +2005,9 @@
       // Scoring por pain points (cada uno suma 10 puntos)
       score += wizardData.painPoints.length * 10;
 
-      // Determinar plan basado en score
-      if (score < 30) return 'POS_SOLO';
+      // Determinar plan basado en score (3 planes: el "free" Solo POS ya no existe)
       if (score < 60) return 'OPERACION';
-      if (score < 100) return 'PROFESIONAL';
+      if (score < 110) return 'PROFESIONAL';
       return 'ENTERPRISE';
     }
 
