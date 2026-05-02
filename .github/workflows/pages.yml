@@ -35,16 +35,12 @@ jobs:
       - name: Prepare frontend artifact
         run: |
           mkdir -p _site
-          cp index.html _site/
-          cp cliente.html _site/
-          cp cocina.html _site/
-          cp admin.html _site/
-          cp mozo.html _site/
-          cp erp.html _site/
-          cp README.md _site/
-          cp BENCHMARK.md _site/
-          cp ARCHITECTURE.md _site/
-          cp PUBLICAR.md _site/
+          # Páginas HTML
+          cp *.html _site/
+          # Carpeta de assets (api.js compartido, futuros recursos)
+          cp -r assets _site/ 2>/dev/null || true
+          # Documentación markdown
+          cp *.md _site/ 2>/dev/null || true
           # No copiamos /backend porque GitHub Pages solo sirve estáticos
 
       - name: Upload artifact
