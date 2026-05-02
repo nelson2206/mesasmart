@@ -181,21 +181,24 @@
         <header className="bg-charcoal text-cream px-5 pt-12 pb-5 sticky top-0 z-30">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full bg-clay flex items-center justify-center font-bold text-lg">
-                {ME.name.split(" ").map(s => s[0]).join("")}
+              <div className="relative">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg shadow-lg" style={{ background: "linear-gradient(135deg, #A0322B 0%, #C8941F 100%)", boxShadow: "0 6px 16px rgba(160,50,43,0.40)" }}>
+                  {ME.name.split(" ").map(s => s[0]).slice(0,2).join("")}
+                </div>
+                <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-olive border-2 border-charcoal" title="En turno"></span>
               </div>
               <div>
-                <p className="font-semibold">{ME.name}</p>
-                <p className="text-xs text-cream/60">{ME.role}</p>
+                <p className="font-semibold text-base leading-tight">{ME.name}</p>
+                <p className="text-[11px] text-cream/60">{ME.role}</p>
               </div>
             </div>
-            <button className="relative w-10 h-10 rounded-full bg-cream/10 flex items-center justify-center">
+            <button className="relative w-11 h-11 rounded-full bg-cream/10 backdrop-blur flex items-center justify-center hover:bg-cream/20 transition" style={{ border: "1px solid rgba(250,247,242,0.15)" }}>
               <Icon name="bell" size={18} />
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-clay rounded-full text-[10px] font-bold flex items-center justify-center">{CALLS.length}</span>
+              {CALLS.length > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-clay rounded-full text-[10px] font-bold flex items-center justify-center" style={{ animation: "pulseDot 1.4s infinite" }}>{CALLS.length}</span>}
             </button>
           </div>
-          <div className="mt-4 flex items-center gap-3 text-xs">
-            <span className="inline-flex items-center gap-1.5 bg-olive/20 text-olive px-2.5 py-1 rounded-full">
+          <div className="mt-4 flex items-center gap-2.5 text-xs">
+            <span className="inline-flex items-center gap-1.5 bg-olive/20 text-olive px-3 py-1 rounded-full font-semibold" style={{ border: "1px solid rgba(45,125,90,0.30)" }}>
               <span className="w-1.5 h-1.5 rounded-full bg-olive pulse-dot"></span> En turno
             </span>
             <span className="text-cream/60">{ME.shift}</span>

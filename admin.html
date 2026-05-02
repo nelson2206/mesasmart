@@ -60,11 +60,74 @@
     @keyframes pulse-soft { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
     .pulse-soft { animation: pulse-soft 2s infinite; }
 
+    @keyframes pulse-table {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.04); }
+    }
+    .pulse-table { animation: pulse-table 2.5s ease-in-out infinite; }
+
     @keyframes growBar {
       from { transform: scaleY(0); transform-origin: bottom; }
       to { transform: scaleY(1); transform-origin: bottom; }
     }
     .grow-bar { animation: growBar 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+
+    @keyframes countUp {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .count-up { animation: countUp 0.8s ease-out; }
+
+    @keyframes slideInRight {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .slide-in-right { animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+
+    @keyframes growBarStaggered {
+      from { transform: scaleY(0); transform-origin: bottom; }
+      to { transform: scaleY(1); transform-origin: bottom; }
+    }
+    .grow-bar-staggered { animation: growBarStaggered 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+    .kpi-card-hover {
+      transition: transform 250ms cubic-bezier(0.45, 0, 0.55, 1), box-shadow 250ms ease-out;
+    }
+    .kpi-card-hover:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 16px rgba(31, 26, 23, 0.06), 0 1px 4px rgba(31, 26, 23, 0.04);
+    }
+    .kpi-card-hover:hover .kpi-icon {
+      transform: scale(1.1);
+      transition: transform 250ms ease-out;
+    }
+
+    .table-lift-hover {
+      transition: transform 250ms ease-out, box-shadow 250ms ease-out;
+    }
+    .table-lift-hover:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 16px rgba(31, 26, 23, 0.06), 0 1px 4px rgba(31, 26, 23, 0.04);
+    }
+
+    .empty-state-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 200px;
+    }
+    .empty-state-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      background: #FAF7F2;
+      border-radius: 100%;
+      color: #6B5D52;
+      margin-bottom: 16px;
+    }
   </style>
 </head>
 <body>
@@ -184,16 +247,36 @@
 
     // ─────────────────────────── COMPONENTS ───────────────────────────
     function Sidebar({ active, setActive }) {
-      const items = [
-        { id: "dashboard", label: "Dashboard", icon: "home" },
-        { id: "mesas", label: "Mesas y plano", icon: "table" },
-        { id: "cola", label: "Cola de espera", icon: "users" },
-        { id: "menu", label: "Carta", icon: "menu" },
-        { id: "pedidos", label: "Pedidos", icon: "receipt" },
-        { id: "reportes", label: "Reportes", icon: "chart" },
-        { id: "personal", label: "Personal", icon: "users" },
-        { id: "asistente_config", label: "Asistente IA", icon: "settings" },
-        { id: "ajustes", label: "Ajustes", icon: "settings" }
+      const groups = [
+        {
+          label: "HOY",
+          items: [
+            { id: "dashboard", label: "Dashboard", icon: "home" },
+            { id: "cola", label: "Cola de espera", icon: "users" },
+            { id: "asistente_config", label: "Asistente IA", icon: "settings" }
+          ]
+        },
+        {
+          label: "OPERAR",
+          items: [
+            { id: "mesas", label: "Mesas y plano", icon: "table" },
+            { id: "menu", label: "Carta", icon: "menu" },
+            { id: "pedidos", label: "Pedidos", icon: "receipt" }
+          ]
+        },
+        {
+          label: "ANALIZAR",
+          items: [
+            { id: "reportes", label: "Reportes", icon: "chart" },
+            { id: "personal", label: "Personal", icon: "users" }
+          ]
+        },
+        {
+          label: "AJUSTES",
+          items: [
+            { id: "ajustes", label: "Ajustes", icon: "settings" }
+          ]
+        }
       ];
       return (
         <aside className="w-60 bg-charcoal text-cream p-4 flex flex-col h-screen sticky top-0">
@@ -204,16 +287,23 @@
               <p className="text-[11px] text-cream/50">Admin · Miraflores</p>
             </div>
           </div>
-          <nav className="flex-1 space-y-1">
-            {items.map(it => (
-              <button
-                key={it.id}
-                onClick={() => setActive(it.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${active === it.id ? 'bg-clay text-white' : 'text-cream/70 hover:bg-cream/5 hover:text-cream'}`}
-              >
-                <Icon name={it.icon} size={18} />
-                {it.label}
-              </button>
+          <nav className="flex-1 space-y-6">
+            {groups.map(grp => (
+              <div key={grp.label}>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-cream/50 px-3 mb-2">{grp.label}</p>
+                <div className="space-y-1">
+                  {grp.items.map(it => (
+                    <button
+                      key={it.id}
+                      onClick={() => setActive(it.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${active === it.id ? 'bg-clay text-white' : 'text-cream/70 hover:bg-cream/5 hover:text-cream'}`}
+                    >
+                      <Icon name={it.icon} size={18} />
+                      {it.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ))}
           </nav>
           <div className="border-t border-cream/10 pt-3 mt-3">
@@ -230,6 +320,15 @@
     }
 
     function TopBar({ alerts }) {
+      const [time, setTime] = React.useState(new Date());
+
+      React.useEffect(() => {
+        const timer = setInterval(() => setTime(new Date()), 1000);
+        return () => clearInterval(timer);
+      }, []);
+
+      const timeStr = time.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+
       return (
         <header className="bg-paper border-b border-border px-8 py-4 flex items-center justify-between sticky top-0 z-20">
           <div className="flex-1 max-w-md relative">
@@ -239,7 +338,11 @@
               className="w-full pl-9 pr-4 py-2.5 bg-cream border border-border rounded-lg text-sm focus:outline-none focus:border-clay"
             />
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-sm">
+              <Icon name="clock" size={16} className="text-muted" />
+              <span className="font-mono font-bold text-ink">{timeStr}</span>
+            </div>
             <span className="text-sm text-muted">Hoy · 1 May 2026</span>
             <button className="inline-flex items-center gap-1.5 px-3 py-2 border border-border rounded-lg text-sm font-medium hover:bg-cream">
               <Icon name="download" size={14} />
@@ -259,21 +362,41 @@
     }
 
     function KpiCard({ label, value, prev, formatter = (v) => v, accent = "clay", icon }) {
+      const [displayValue, setDisplayValue] = React.useState(0);
       const numValue = typeof value === 'number' ? value : parseFloat(value);
       const numPrev = typeof prev === 'number' ? prev : parseFloat(prev);
       const change = prev ? ((numValue - numPrev) / numPrev) * 100 : 0;
       const positive = change >= 0;
+
+      React.useEffect(() => {
+        if (typeof numValue !== 'number' || numValue === 0) return;
+        let start = 0;
+        const end = numValue;
+        const duration = 800;
+        const start_time = performance.now();
+
+        const animate = (current_time) => {
+          const elapsed = current_time - start_time;
+          const progress = Math.min(elapsed / duration, 1);
+          const easeOut = 1 - Math.pow(1 - progress, 3);
+          setDisplayValue(Math.floor(start + (end - start) * easeOut));
+          if (progress < 1) requestAnimationFrame(animate);
+        };
+
+        requestAnimationFrame(animate);
+      }, [numValue]);
+
       return (
-        <div className="bg-paper border border-border rounded-2xl p-5">
+        <div className="bg-paper border border-border rounded-2xl p-5 kpi-card-hover">
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted uppercase tracking-wider font-semibold">{label}</span>
             {icon && (
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-${accent}/10 text-${accent}`}>
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-${accent}/10 text-${accent} kpi-icon`}>
                 <Icon name={icon} size={16} />
               </div>
             )}
           </div>
-          <p className="font-display text-3xl font-bold mt-3">{formatter(value)}</p>
+          <p className="font-display text-3xl font-bold mt-3 count-up">{formatter(displayValue || numValue)}</p>
           {prev !== undefined && (
             <div className="mt-2 flex items-center gap-2 text-xs">
               <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded ${positive ? 'bg-olive/10 text-olive' : 'bg-clay/10 text-clay'}`}>
@@ -301,7 +424,7 @@
       return (
         <button
           onClick={() => onClick(table)}
-          className={`relative aspect-square rounded-xl border-2 ${config.border} ${config.bg} p-3 text-left transition hover:shadow-card`}
+          className={`relative aspect-square rounded-xl border-2 ${config.border} ${config.bg} p-3 text-left transition table-lift-hover ${hasAlert ? 'pulse-table' : ''}`}
         >
           {hasAlert && (
             <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-clay rounded-full pulse-soft" title={table.alert}></span>
@@ -378,10 +501,14 @@
           <div className="h-48 flex items-end gap-1.5">
             {data.map((d, i) => (
               <div key={i} className="flex-1 flex flex-col items-center justify-end gap-1.5 group">
-                <span className="text-[10px] text-muted opacity-0 group-hover:opacity-100 font-mono font-bold">{PEN_K(d.v)}</span>
+                <span className="text-[10px] text-muted opacity-0 group-hover:opacity-100 font-mono font-bold transition">{PEN_K(d.v)}</span>
                 <div
-                  className="w-full bg-clay/80 hover:bg-clay rounded-t-md grow-bar transition"
-                  style={{ height: `${(d.v / max) * 100}%` }}
+                  className="w-full bg-clay/80 hover:bg-clay rounded-t-md transition"
+                  style={{
+                    height: `${(d.v / max) * 100}%`,
+                    animation: `growBarStaggered 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${i * 0.05}s forwards`,
+                    transformOrigin: 'bottom'
+                  }}
                 ></div>
                 <span className="text-[10px] text-muted">{d.h}</span>
               </div>
@@ -457,8 +584,8 @@
                 </tr>
               </thead>
               <tbody>
-                {orders.map(o => (
-                  <tr key={o.id} className="border-t border-border hover:bg-cream/50 cursor-pointer">
+                {orders.map((o, idx) => (
+                  <tr key={o.id} className={`border-t border-border cursor-pointer transition ${idx % 2 === 0 ? 'hover:bg-clay/10' : 'bg-cream/30 hover:bg-clay/10'}`} onClick={() => alert(`Detalles del pedido ${o.id}`)}>
                     <td className="py-3 px-2 font-mono text-xs">{o.id}</td>
                     <td className="py-3 px-2 text-sm text-muted">{o.time}</td>
                     <td className="py-3 px-2 text-sm font-semibold">M{o.mesa}</td>
@@ -478,9 +605,11 @@
     function ActiveCalls({ calls, onResolve }) {
       if (calls.length === 0) {
         return (
-          <div className="bg-olive/5 border border-olive/30 rounded-2xl p-5 text-center">
-            <Icon name="check" size={24} className="text-olive mx-auto" />
-            <p className="text-sm font-semibold text-olive mt-2">Todo bajo control</p>
+          <div className="bg-olive/5 border border-olive/30 rounded-2xl p-8 empty-state-container">
+            <div className="empty-state-icon bg-olive/10">
+              <Icon name="check" size={32} className="text-olive" />
+            </div>
+            <p className="font-display text-lg font-semibold text-olive">Todo bajo control</p>
             <p className="text-xs text-muted mt-1">Sin llamados pendientes</p>
           </div>
         );
@@ -525,9 +654,12 @@
 
       return (
         <div className="space-y-6">
-          <div>
-            <h1 className="font-display text-3xl font-semibold">Buenas noches, Marcos</h1>
-            <p className="text-muted mt-1">Esto es lo que pasa en La Brasa Dorada hoy.</p>
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center font-display text-2xl font-bold text-white" style={{background: 'linear-gradient(135deg, #A0322B 0%, #C8941F 100%)'}}> MV </div>
+            <div>
+              <h1 className="font-display text-3xl font-semibold">Buenas noches, Marcos</h1>
+              <p className="text-muted mt-1">Esto es lo que pasa en La Brasa Dorada hoy.</p>
+            </div>
           </div>
 
           {/* KPIs */}
@@ -840,24 +972,33 @@
     }
 
     function AjustesView() {
+      const [hoveredCard, setHoveredCard] = useState(null);
+      const colorMap = ["clay", "gold", "olive", "sky", "warn", "danger", "clay", "gold"];
       return (
         <div>
           <h1 className="font-display text-3xl font-semibold">Ajustes</h1>
           <p className="text-muted mt-1">Configura tu restaurante.</p>
           <div className="mt-6 grid grid-cols-2 gap-4">
             {[
-              { title: "Información del restaurante", sub: "Nombre, RUC, dirección, contacto" },
-              { title: "Facturación electrónica", sub: "OSE conectado · Nubefact" },
-              { title: "Métodos de pago", sub: "Yape, Plin, Niubiz, efectivo" },
-              { title: "Impuestos y propinas", sub: "IGV 18% · Propina sugerida 10%" },
-              { title: "Mesas y QRs", sub: "16 mesas · QRs generados" },
-              { title: "Notificaciones", sub: "Email, WhatsApp Business" },
-              { title: "Idiomas de la carta", sub: "Español, Inglés, Portugués" },
-              { title: "Integraciones", sub: "PedidosYa, Rappi, Google Maps" }
-            ].map(s => (
-              <div key={s.title} className="bg-paper border border-border rounded-2xl p-5 hover:shadow-card cursor-pointer transition">
-                <p className="font-semibold">{s.title}</p>
-                <p className="text-xs text-muted mt-0.5">{s.sub}</p>
+              { title: "Información del restaurante", sub: "Nombre, RUC, dirección, contacto", icon: "settings" },
+              { title: "Facturación electrónica", sub: "OSE conectado · Nubefact", icon: "receipt" },
+              { title: "Métodos de pago", sub: "Yape, Plin, Niubiz, efectivo", icon: "cash" },
+              { title: "Impuestos y propinas", sub: "IGV 18% · Propina sugerida 10%", icon: "chart" },
+              { title: "Mesas y QRs", sub: "16 mesas · QRs generados", icon: "table" },
+              { title: "Notificaciones", sub: "Email, WhatsApp Business", icon: "bell" },
+              { title: "Idiomas de la carta", sub: "Español, Inglés, Portugués", icon: "menu" },
+              { title: "Integraciones", sub: "PedidosYa, Rappi, Google Maps", icon: "search" }
+            ].map((s, idx) => (
+              <div key={s.title} className="bg-paper border border-border rounded-2xl p-5 kpi-card-hover cursor-pointer" onMouseEnter={() => setHoveredCard(idx)} onMouseLeave={() => setHoveredCard(null)}>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="font-semibold">{s.title}</p>
+                    <p className="text-xs text-muted mt-0.5">{s.sub}</p>
+                  </div>
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition ${hoveredCard === idx ? `bg-${colorMap[idx]}/20 text-${colorMap[idx]}` : 'bg-cream text-muted'}`}>
+                    <Icon name={s.icon} size={16} />
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -1031,10 +1172,12 @@
           <div className="bg-paper border border-border rounded-2xl p-6">
             <h2 className="font-display text-xl font-semibold mb-4">En cola ({waiting.length})</h2>
             {waiting.length === 0 ? (
-              <div className="text-center py-12 text-muted">
-                <Icon name="check" size={36} className="mx-auto opacity-50" />
-                <p className="mt-3 font-medium">Sin cola de espera</p>
-                <p className="text-xs mt-1">Cuando llegue un grupo, regístralo arriba</p>
+              <div className="empty-state-container py-12">
+                <div className="empty-state-icon bg-cream">
+                  <Icon name="users" size={32} className="text-muted" />
+                </div>
+                <p className="font-display text-lg font-semibold text-ink">Sin cola de espera</p>
+                <p className="text-xs text-muted mt-1">Cuando llegue un grupo, regístralo arriba</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -1043,7 +1186,7 @@
                   const result = findBestTable(q.size, q.pref);
                   const canSeat = result && result.type === "match";
                   return (
-                    <div key={q.id} className={`flex items-center gap-4 p-4 rounded-xl border ${canSeat ? 'border-olive/40 bg-olive/5' : 'border-border bg-cream'}`}>
+                    <div key={q.id} className={`flex items-center gap-4 p-4 rounded-xl border slide-in-right ${canSeat ? 'border-l-4 border-olive bg-olive/5' : 'border-border bg-cream'}`} style={{animationDelay: `${idx * 0.05}s`}}>
                       <div className="w-12 h-12 rounded-xl bg-paper border border-border flex items-center justify-center font-display text-lg font-bold text-clay">
                         {idx + 1}
                       </div>
