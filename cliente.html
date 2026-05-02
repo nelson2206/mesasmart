@@ -735,7 +735,7 @@
     }
 
     // Welcome / Hero
-    function WelcomeScreen({ onStart }) {
+    function WelcomeScreen({ onStart, onIdentify, customer, customerTier }) {
       return (
         <div className="h-full relative overflow-hidden text-white welcome-screen">
           {/* Atmospheric background */}
@@ -803,6 +803,27 @@
                 <span>Comenzar experiencia</span>
                 <Icon name="chevronRight" size={20} />
               </button>
+
+              {/* Cliente recurrente · identificación */}
+              {customerTier && customerTier.tier !== "NEW" ? (
+                <div className="mt-6 inline-flex items-center gap-3 px-5 py-3 rounded-full" style={{ background: "rgba(255,255,255,0.10)", backdropFilter: "blur(20px)", border: "1px solid rgba(229,180,88,0.30)" }}>
+                  <span className="text-2xl">{customerTier.icon}</span>
+                  <div className="text-left">
+                    <p className="text-[10px] uppercase tracking-widest text-gold-light font-bold">{customerTier.label}</p>
+                    <p className="text-sm text-white">¡Hola{customer?.name ? ' ' + customer.name.split(" ")[0] : ''}! · Visita #{customer?.totalVisits}</p>
+                    {customerTier.reward && <p className="text-xs text-white/85 mt-0.5">🎁 {customerTier.reward.label}</p>}
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={onIdentify}
+                  className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition hover:bg-white/15"
+                  style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(14px)", border: "1px solid rgba(255,255,255,0.18)", color: "rgba(255,255,255,0.85)" }}
+                >
+                  <span>⭐</span>
+                  <span>¿Eres cliente recurrente? · Identifícate</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -2009,6 +2030,188 @@
     }
 
     // Call waiter
+    // ════════════════════════════════════════════════════════
+    //          IDENTIFICACIÓN DE CLIENTE RECURRENTE
+    // ════════════════════════════════════════════════════════
+    function CustomerIdentifyModal({ open, onClose, onIdentified }) {
+      const [step, setStep] = useState("input"); // input | loading | found | new
+      const [method, setMethod] = useState("phone"); // phone | email | dni
+      const [value, setValue] = useState("");
+      const [name, setName] = useState("");
+      const [result, setResult] = useState(null);
+      const [error, setError] = useState("");
+
+      useEffect(() => {
+        if (open) { setStep("input"); setValue(""); setName(""); setResult(null); setError(""); }
+      }, [open]);
+
+      const submit = async () => {
+        if (!value.trim()) { setError("Ingresa tu " + method); return; }
+        // Validaciones simples
+        if (method === "dni" && !/^\d{8}$/.test(value)) { setError("DNI de 8 dígitos"); return; }
+        if (method === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) { setError("Email inválido"); return; }
+        if (method === "phone" && value.replace(/\D/g, "").length < 6) { setError("Celular inválido"); return; }
+
+        setError(""); setStep("loading");
+        try {
+          if (!window.MesaSmartAPI?.public || !RESTAURANT.qrToken) {
+            // Simulación si no hay backend
+            setTimeout(() => {
+              setResult({ found: false, tier: { tier: "NEW", label: "Primera visita", icon: "👋", reward: null } });
+              setStep("new");
+            }, 700);
+            return;
+          }
+          const payload = { [method]: value };
+          if (name.trim()) payload.name = name.trim();
+          const data = await window.MesaSmartAPI.public.identifyCustomer(RESTAURANT.qrToken, payload);
+          setResult(data);
+          setStep(data.found ? "found" : "new");
+          onIdentified(data);
+        } catch (e) {
+          setError(e.message || "Error al identificar");
+          setStep("input");
+        }
+      };
+
+      if (!open) return null;
+
+      return (
+        <div className="fixed inset-0 z-[60] bg-charcoal/60 backdrop-blur flex items-center justify-center p-6 anim-fade-in" onClick={onClose}>
+          <div onClick={(e) => e.stopPropagation()} className="bg-paper rounded-3xl max-w-md w-full overflow-hidden anim-slide-up">
+
+            {step === "input" && (
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <p className="text-xs text-clay font-bold uppercase tracking-widest">Cliente recurrente</p>
+                    <h2 className="font-display text-2xl font-semibold mt-1">¿Ya nos visitaste antes?</h2>
+                    <p className="text-sm text-muted mt-1">Identifícate y disfruta de beneficios exclusivos.</p>
+                  </div>
+                  <button onClick={onClose} className="w-8 h-8 rounded-full bg-cream"><Icon name="x" size={16} className="mx-auto" /></button>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  {[
+                    { id: "phone", label: "Celular", icon: "📱" },
+                    { id: "email", label: "Email", icon: "📧" },
+                    { id: "dni", label: "DNI", icon: "🪪" }
+                  ].map(m => (
+                    <button
+                      key={m.id}
+                      onClick={() => { setMethod(m.id); setValue(""); setError(""); }}
+                      className={`p-3 rounded-xl border-2 text-center transition ${method === m.id ? 'border-clay bg-clay/5' : 'border-border bg-paper'}`}
+                    >
+                      <div className="text-2xl">{m.icon}</div>
+                      <p className="text-xs font-semibold mt-1">{m.label}</p>
+                    </button>
+                  ))}
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold">{method === "phone" ? "Tu celular" : method === "email" ? "Tu email" : "Tu DNI"}</label>
+                  <input
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                    placeholder={method === "phone" ? "987 654 321" : method === "email" ? "tu@email.com" : "12345678"}
+                    type={method === "email" ? "email" : "text"}
+                    inputMode={method === "phone" || method === "dni" ? "numeric" : "email"}
+                    autoFocus
+                    className="mt-1.5 w-full px-4 py-3 bg-cream border border-border rounded-xl text-base focus:outline-none focus:border-clay"
+                  />
+                </div>
+
+                <div className="mt-3">
+                  <label className="text-xs text-muted">Nombre (opcional · si es tu primera visita)</label>
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Cómo te llamamos"
+                    className="mt-1 w-full px-4 py-2.5 bg-cream border border-border rounded-xl text-sm focus:outline-none focus:border-clay"
+                  />
+                </div>
+
+                {error && <p className="mt-3 text-sm text-clay bg-clay/5 p-2 rounded-lg">{error}</p>}
+
+                <button
+                  onClick={submit}
+                  className="w-full mt-5 py-4 text-white font-semibold rounded-full"
+                  style={{ background: "linear-gradient(135deg, #A0322B 0%, #C8941F 100%)", boxShadow: "0 8px 24px rgba(160,50,43,0.40)" }}
+                >
+                  Identificarme
+                </button>
+                <button onClick={onClose} className="w-full mt-2 py-3 text-sm text-muted">No, gracias · seguir como invitado</button>
+
+                <p className="mt-4 text-[11px] text-muted text-center">Tus datos se guardan según Ley N° 29733 de Protección de Datos.</p>
+              </div>
+            )}
+
+            {step === "loading" && (
+              <div className="p-12 text-center">
+                <div className="inline-block w-10 h-10 rounded-full border-4 border-clay border-t-transparent animate-spin"></div>
+                <p className="mt-4 text-sm text-muted">Buscándote en nuestra base...</p>
+              </div>
+            )}
+
+            {step === "found" && result && (
+              <div>
+                <div className="p-6 text-center" style={{ background: `linear-gradient(135deg, ${result.tier.color || '#A0322B'} 0%, #C8941F 100%)` }}>
+                  <div className="text-6xl mb-2">{result.tier.icon}</div>
+                  <p className="text-xs text-white/80 uppercase tracking-widest font-bold">{result.tier.label}</p>
+                  <h2 className="font-display text-3xl font-bold text-white mt-2">¡Hola{result.customer.name ? ' ' + result.customer.name.split(" ")[0] : ''}!</h2>
+                  <p className="text-sm text-white/90 mt-1">Tu visita número {result.customer.totalVisits}</p>
+                </div>
+                <div className="p-6">
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="bg-cream rounded-xl p-3 text-center">
+                      <p className="text-[10px] text-muted uppercase tracking-wider">Visitas</p>
+                      <p className="font-display text-2xl font-bold mt-1">{result.customer.totalVisits}</p>
+                    </div>
+                    <div className="bg-cream rounded-xl p-3 text-center">
+                      <p className="text-[10px] text-muted uppercase tracking-wider">Ticket promedio</p>
+                      <p className="font-display text-2xl font-bold mt-1">S/ {(result.customer.avgTicketCents / 100).toFixed(0)}</p>
+                    </div>
+                  </div>
+
+                  {result.tier.reward && (
+                    <div className="bg-gradient-to-br from-gold/10 to-clay/10 border-2 border-gold/30 rounded-2xl p-4">
+                      <div className="flex items-center gap-2 text-xs font-bold text-gold uppercase tracking-widest">
+                        <span>🎁</span>Tu regalo de hoy
+                      </div>
+                      <p className="font-display text-lg font-semibold mt-1.5 leading-tight">{result.tier.reward.label}</p>
+                      <p className="text-xs text-muted mt-1">Se aplica automáticamente en tu cuenta al final.</p>
+                    </div>
+                  )}
+
+                  <button onClick={onClose} className="w-full mt-5 py-4 bg-charcoal text-white rounded-full font-semibold">
+                    Empezar a pedir
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {step === "new" && result && (
+              <div className="p-6 text-center">
+                <div className="text-6xl">👋</div>
+                <h2 className="font-display text-2xl font-semibold mt-3">¡Bienvenido por primera vez!</h2>
+                <p className="text-sm text-muted mt-2">Te registramos para que la próxima vez recibas beneficios de cliente recurrente.</p>
+                <div className="mt-5 bg-olive/10 border border-olive/30 rounded-xl p-4">
+                  <p className="text-xs font-bold text-olive">📌 Acumula visitas para desbloquear:</p>
+                  <ul className="text-xs text-ink mt-2 space-y-1 text-left">
+                    <li>🤝 <strong>3 visitas:</strong> Chicha morada de cortesía</li>
+                    <li>⭐ <strong>10 visitas:</strong> 10% de descuento permanente</li>
+                    <li>👑 <strong>20 visitas:</strong> 15% off + bebida cortesía VIP</li>
+                  </ul>
+                </div>
+                <button onClick={onClose} className="w-full mt-5 py-4 bg-charcoal text-white rounded-full font-semibold">Empezar a pedir</button>
+              </div>
+            )}
+
+          </div>
+        </div>
+      );
+    }
+
     function CallWaiterModal({ open, onClose, onConfirm }) {
       const reasons = [
         { id: 'ayuda', label: 'Necesito ayuda' },
@@ -2175,7 +2378,33 @@
       const total = subtotal * (1 + tip / 100);
       const cartCount = cart.reduce((s, c) => s + c.qty, 0);
 
-      if (screen === "welcome") return <WelcomeScreen onStart={() => setScreen("menu")} />;
+      // Cliente recurrente
+      const [identifyOpen, setIdentifyOpen] = useState(false);
+      const [customer, setCustomer] = useState(null);
+      const [customerTier, setCustomerTier] = useState(null);
+
+      const onIdentified = (data) => {
+        if (data.found) {
+          setCustomer(data.customer);
+          setCustomerTier(data.tier);
+          if (data.tier.reward) {
+            setTimeout(() => showToast(`🎁 ${data.tier.reward.label}`), 600);
+          }
+        } else if (data.customer) {
+          setCustomer(data.customer);
+          setCustomerTier(data.tier);
+        }
+      };
+
+      if (screen === "welcome") return <>
+        <WelcomeScreen
+          onStart={() => setScreen("menu")}
+          onIdentify={() => setIdentifyOpen(true)}
+          customer={customer}
+          customerTier={customerTier}
+        />
+        <CustomerIdentifyModal open={identifyOpen} onClose={() => setIdentifyOpen(false)} onIdentified={onIdentified} />
+      </>;
 
       return (
         <div className="min-h-full">

@@ -103,6 +103,9 @@
         layout: <><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="9" y1="3" x2="9" y2="21" /></>,
         cash: <><rect x="2" y="6" width="20" height="12" rx="2" /><circle cx="12" cy="12" r="2" /></>,
         plus: <><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></>,
+        minus: <line x1="5" y1="12" x2="19" y2="12" />,
+        chevronLeft: <polyline points="15 18 9 12 15 6" />,
+        search: <><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></>,
         phone: <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />,
         alert: <><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12" y2="17" /></>,
         edit: <><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></>
@@ -115,6 +118,43 @@
     };
 
     const PEN = (n) => "S/ " + n.toFixed(2);
+
+    // ───────────────────────────── MENU PARA TOMAR PEDIDOS ─────────────────────────────
+    const IMG = (id, w = 600) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`;
+
+    const MOZO_MENU = [
+      // POLLOS
+      { id: 1, cat: "pollos", emoji: "🍗", name: "1/4 Pollo a la Brasa", price: 22.90, time: 15, img: IMG("1598103442097-8b74394b95c6"), color: "#A0322B" },
+      { id: 2, cat: "pollos", emoji: "🍗", name: "1/2 Pollo a la Brasa", price: 38.90, time: 18, img: IMG("1610057099443-fde8c4d50f91"), color: "#A0322B" },
+      { id: 3, cat: "pollos", emoji: "🍗", name: "Pollo Entero", price: 65.90, time: 22, img: IMG("1626082929543-5bab6f17e2e8"), color: "#7E2820" },
+      // PARRILLAS
+      { id: 10, cat: "parrillas", emoji: "🍢", name: "Anticuchos de Corazón", price: 28.00, time: 15, img: IMG("1529692236671-f1f6cf9683ba"), color: "#7E2820" },
+      { id: 11, cat: "parrillas", emoji: "🥩", name: "Parrilla Mixta Personal", price: 42.00, time: 20, img: IMG("1532550907401-a500c9a57435"), color: "#7E2820" },
+      { id: 12, cat: "parrillas", emoji: "🍗", name: "Alitas BBQ (10 unid.)", price: 32.00, time: 17, img: IMG("1567620832903-9fc6debc209f"), color: "#C8941F" },
+      // ENSALADAS
+      { id: 40, cat: "ensaladas", emoji: "🥗", name: "Ensalada César con Pollo", price: 24.00, time: 8, img: IMG("1546069901-ba9599a7e63c"), color: "#2D7D5A" },
+      { id: 41, cat: "ensaladas", emoji: "🥗", name: "Ensalada de la Casa", price: 18.00, time: 6, img: IMG("1512621776951-a57141f2eefd"), color: "#2D7D5A" },
+      // ACOMPAÑAMIENTOS
+      { id: 50, cat: "acompanamientos", emoji: "🍟", name: "Papas Fritas", price: 12.00, time: 7, img: IMG("1573080496219-bb080dd4f877"), color: "#C8941F" },
+      { id: 51, cat: "acompanamientos", emoji: "🍠", name: "Yuca Frita", price: 10.00, time: 8, img: IMG("1623238913973-99f0d2b3b3b3"), color: "#C8941F" },
+      // BEBIDAS
+      { id: 60, cat: "bebidas", emoji: "🍷", name: "Chicha Morada · Jarra 1L", price: 14.00, time: 3, img: IMG("1556679343-c7306c1976bc"), color: "#7E2820" },
+      { id: 61, cat: "bebidas", emoji: "🍋", name: "Limonada Frozen", price: 12.00, time: 4, img: IMG("1437418747212-8d9709afab22"), color: "#C8941F" },
+      { id: 62, cat: "bebidas", emoji: "🥤", name: "Inca Kola · 1.5L", price: 11.00, time: 2, img: IMG("1554866585-cd94860890b7"), color: "#C8941F" },
+      // POSTRES
+      { id: 70, cat: "postres", emoji: "🍮", name: "Suspiro a la Limeña", price: 14.00, time: 5, img: IMG("1551024506-0bccd828d307"), color: "#C8941F" },
+      { id: 71, cat: "postres", emoji: "🍰", name: "Torta de Chocolate", price: 12.00, time: 4, img: IMG("1565958011703-44f9829ba187"), color: "#7E2820" }
+    ];
+
+    const MOZO_CATEGORIES = [
+      { id: "todos", name: "Todos" },
+      { id: "pollos", name: "Pollos" },
+      { id: "parrillas", name: "Parrillas" },
+      { id: "ensaladas", name: "Ensaladas" },
+      { id: "acompanamientos", name: "Acompañamientos" },
+      { id: "bebidas", name: "Bebidas" },
+      { id: "postres", name: "Postres" }
+    ];
 
     // ───────────────────────────── DATA ─────────────────────────────
     const ME = { name: "María Quispe", role: "Mozo · Salón principal", shift: "16:00 - 24:00", color: "#A0322B" };
@@ -211,6 +251,7 @@
       const tabs = [
         { id: "asistente", label: "✨ Asistente", badge: aiCount },
         { id: "mesas", label: "Mis mesas" },
+        { id: "tomar", label: "📝 Tomar pedido" },
         { id: "plano", label: "Plano" },
         { id: "llamados", label: "Llamados", badge: callCount }
       ];
@@ -815,6 +856,338 @@
       );
     }
 
+    // TOMAR PEDIDO VIEW
+    function TomarPedidoView({ tables, setTables, onSent }) {
+      const [step, setStep] = useState("select");
+      const [selectedTable, setSelectedTable] = useState(null);
+      const [cart, setCart] = useState([]);
+      const [search, setSearch] = useState("");
+      const [activeCat, setActiveCat] = useState("todos");
+      const [detailItem, setDetailItem] = useState(null);
+      const [itemNotes, setItemNotes] = useState("");
+      const [itemQty, setItemQty] = useState(1);
+      const [servingMode, setServingMode] = useState("asReady");
+      const [orderNotes, setOrderNotes] = useState("");
+
+      const myTables = tables.filter(t => t.server === ME.name);
+
+      const filteredMenu = MOZO_MENU.filter(m => {
+        const matchCat = activeCat === "todos" || m.cat === activeCat;
+        const matchSearch = m.name.toLowerCase().includes(search.toLowerCase());
+        return matchCat && matchSearch;
+      });
+
+      const handleAddItem = () => {
+        if (!detailItem) return;
+        const existingIdx = cart.findIndex(c => c.item.id === detailItem.id && c.notes === itemNotes);
+        if (existingIdx >= 0) {
+          setCart(prev => {
+            const newCart = [...prev];
+            newCart[existingIdx].qty += itemQty;
+            return newCart;
+          });
+        } else {
+          setCart(prev => [...prev, { item: detailItem, qty: itemQty, notes: itemNotes }]);
+        }
+        setDetailItem(null);
+        setItemNotes("");
+        setItemQty(1);
+      };
+
+      const handleRemoveItem = (idx) => {
+        setCart(prev => prev.filter((_, i) => i !== idx));
+      };
+
+      const handleQuantityChange = (idx, newQty) => {
+        if (newQty <= 0) {
+          handleRemoveItem(idx);
+        } else {
+          setCart(prev => {
+            const newCart = [...prev];
+            newCart[idx].qty = newQty;
+            return newCart;
+          });
+        }
+      };
+
+      const subtotal = cart.reduce((s, c) => s + (c.item.price * c.qty), 0);
+      const igv = subtotal * 0.18;
+      const total = subtotal + igv;
+
+      const handleSendOrder = async () => {
+        if (!selectedTable || cart.length === 0) return;
+
+        const orderData = {
+          tableId: selectedTable.id,
+          partySize: selectedTable.party || 1,
+          items: cart.map(c => ({
+            menuItemId: c.item.id,
+            qty: c.qty,
+            notes: c.notes || (servingMode === "together" ? "[Servir todo junto]" : "[Servir según salgan]"),
+            course: c.item.cat === "bebidas" ? "DRINKS" : c.item.cat === "postres" ? "DESSERT" : "MAIN"
+          })),
+          globalNotes: orderNotes,
+          servingMode: servingMode
+        };
+
+        try {
+          if (window.MesaSmartAPI && window.MesaSmartAPI.orders) {
+            await window.MesaSmartAPI.orders.create(orderData);
+          }
+        } catch (e) {
+          console.log("Backend unavailable, simulating local save");
+        }
+
+        onSent();
+        setCart([]);
+        setOrderNotes("");
+        setStep("select");
+        setSelectedTable(null);
+        setSearch("");
+        setActiveCat("todos");
+      };
+
+      // PASO A: SELECCIONAR MESA
+      if (step === "select") {
+        return (
+          <div className="px-5 py-5 space-y-5">
+            <div>
+              <h2 className="font-display text-lg font-semibold mb-3">Seleccionar mesa</h2>
+              <div className="space-y-2">
+                {myTables.map(t => (
+                  <button
+                    key={t.id}
+                    onClick={() => { setSelectedTable(t); setStep("menu"); setCart([]); }}
+                    className="w-full flex items-center gap-3 p-4 bg-paper border border-border rounded-2xl text-left hover:border-clay transition"
+                  >
+                    <div className="w-12 h-12 rounded-lg bg-clay/10 flex items-center justify-center text-clay font-bold text-lg">
+                      {t.id}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm">Mesa {t.id}</p>
+                      {t.status === "free" ? (
+                        <p className="text-xs text-muted">Tap para asignar y tomar pedido</p>
+                      ) : (
+                        <p className="text-xs text-muted inline-flex items-center gap-1">
+                          <Icon name="users" size={10} /> {t.party}/{t.seats} · {t.time}' en mesa
+                        </p>
+                      )}
+                    </div>
+                    <Icon name="chevronRight" size={14} className="text-muted" />
+                  </button>
+                ))}
+              </div>
+              {myTables.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-muted text-sm">No tienes mesas asignadas</p>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      // PASO B: CARTA
+      if (step === "menu" && selectedTable) {
+        return (
+          <div className="flex flex-col h-[calc(100vh-280px)] bg-cream">
+            {/* Header */}
+            <div className="bg-paper border-b border-border p-4 flex items-center justify-between sticky top-0 z-10">
+              <div>
+                <p className="font-semibold text-base">Mesa {selectedTable.id}</p>
+                {selectedTable.party && <p className="text-xs text-muted">{selectedTable.party} comensales</p>}
+              </div>
+              <button onClick={() => { setStep("select"); setSelectedTable(null); }} className="flex items-center gap-1 text-xs text-clay font-semibold">
+                <Icon name="chevronLeft" size={14} /> Cambiar mesa
+              </button>
+            </div>
+
+            {/* Search + Categories */}
+            <div className="bg-paper border-b border-border p-4 space-y-3">
+              <div className="relative">
+                <Icon name="search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Buscar plato..."
+                  className="w-full pl-10 pr-4 py-2.5 bg-cream border border-border rounded-lg text-sm focus:border-clay focus:outline-none"
+                />
+              </div>
+              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                {MOZO_CATEGORIES.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setActiveCat(cat.id)}
+                    className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition ${
+                      activeCat === cat.id
+                        ? 'bg-clay text-white'
+                        : 'bg-paper border border-border text-muted hover:border-clay'
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Menu Grid */}
+            <div className="flex-1 overflow-y-auto no-scrollbar p-4">
+              <div className="grid grid-cols-2 gap-3">
+                {filteredMenu.map(item => (
+                  <button
+                    key={item.id}
+                    onClick={() => { setDetailItem(item); setItemNotes(""); setItemQty(1); }}
+                    className="group bg-paper border border-border rounded-2xl overflow-hidden text-left hover:shadow-card transition"
+                  >
+                    <div className="relative aspect-[3/2] overflow-hidden bg-cream/50">
+                      <img src={item.img} alt={item.name} onError={(e) => { e.target.style.display = "none"; }} className="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
+                      <div className="absolute inset-0 flex items-center justify-center text-3xl opacity-0 group-hover:opacity-100 transition" style={{ background: `linear-gradient(135deg, ${item.color}22, ${item.color}44)` }}>
+                        {item.emoji}
+                      </div>
+                    </div>
+                    <div className="p-3">
+                      <p className="font-semibold text-sm leading-tight line-clamp-2">{item.name}</p>
+                      <div className="flex items-baseline justify-between mt-2">
+                        <p className="text-clay font-bold text-sm">{PEN(item.price)}</p>
+                        <p className="text-[10px] text-muted inline-flex items-center gap-0.5">
+                          <Icon name="clock" size={10} /> {item.time}'
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              {filteredMenu.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-muted text-sm">No hay platos en esta categoría</p>
+                </div>
+              )}
+            </div>
+
+            {/* Cart Button */}
+            {cart.length > 0 && (
+              <button
+                onClick={() => setStep("confirm")}
+                className="m-4 py-3 bg-gradient-to-r from-clay to-gold text-white font-bold rounded-lg text-center text-sm flex items-center justify-center gap-2 shadow-lg"
+              >
+                Ver pedido ({cart.length} items · {PEN(total)})
+              </button>
+            )}
+          </div>
+        );
+      }
+
+      // PASO C: CONFIRMAR Y ENVIAR
+      if (step === "confirm" && selectedTable) {
+        return (
+          <div className="flex flex-col h-[calc(100vh-280px)] bg-cream">
+            {/* Header */}
+            <div className="bg-paper border-b border-border p-4 flex items-center justify-between sticky top-0 z-10">
+              <div>
+                <p className="font-semibold text-base">Mesa {selectedTable.id}</p>
+                <p className="text-xs text-muted">{cart.length} items</p>
+              </div>
+              <button onClick={() => setStep("menu")} className="flex items-center gap-1 text-xs text-clay font-semibold">
+                <Icon name="chevronLeft" size={14} /> Editar
+              </button>
+            </div>
+
+            {/* Items List */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {cart.map((c, i) => (
+                <div key={i} className="flex gap-3 bg-paper border border-border rounded-2xl p-3">
+                  <div className="w-16 h-16 rounded-lg bg-cream flex-shrink-0 overflow-hidden">
+                    <img src={c.item.img} alt={c.item.name} onError={(e) => { e.target.style.display = "none"; }} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm">{c.item.name}</p>
+                    {c.notes && <p className="text-xs text-muted italic mt-0.5 truncate">"{c.notes}"</p>}
+                    <p className="text-xs text-clay font-bold mt-1">{PEN(c.item.price * c.qty)}</p>
+                  </div>
+                  <div className="flex flex-col items-end justify-between">
+                    <button onClick={() => handleRemoveItem(i)} className="text-muted hover:text-danger">
+                      <Icon name="x" size={14} />
+                    </button>
+                    <div className="flex items-center gap-2 bg-cream rounded-lg px-2 py-1">
+                      <button onClick={() => handleQuantityChange(i, c.qty - 1)} className="text-muted">
+                        <Icon name="minus" size={12} />
+                      </button>
+                      <span className="text-xs font-bold w-4 text-center">{c.qty}</span>
+                      <button onClick={() => handleQuantityChange(i, c.qty + 1)} className="text-clay">
+                        <Icon name="plus" size={12} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* Notas y modo de servir */}
+              <div className="space-y-3 mt-4">
+                <div>
+                  <label className="text-xs font-bold uppercase text-muted mb-2 block">Notas del pedido</label>
+                  <textarea
+                    value={orderNotes}
+                    onChange={(e) => setOrderNotes(e.target.value)}
+                    placeholder="Cambios especiales, instrucciones, etc."
+                    className="w-full p-3 bg-paper border border-border rounded-lg text-sm focus:border-clay focus:outline-none resize-none"
+                    rows="3"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold uppercase text-muted mb-2 block">¿Cómo servir?</label>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => setServingMode("together")}
+                      className={`w-full p-3 rounded-lg text-sm font-semibold transition ${servingMode === "together" ? 'bg-clay text-white' : 'bg-paper border border-border text-ink hover:border-clay'}`}
+                    >
+                      Todos juntos
+                    </button>
+                    <button
+                      onClick={() => setServingMode("asReady")}
+                      className={`w-full p-3 rounded-lg text-sm font-semibold transition ${servingMode === "asReady" ? 'bg-clay text-white' : 'bg-paper border border-border text-ink hover:border-clay'}`}
+                    >
+                      Según vayan saliendo
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer con total */}
+            <div className="bg-paper border-t border-border p-4 space-y-3">
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between text-muted">
+                  <span>Subtotal</span>
+                  <span>{PEN(subtotal)}</span>
+                </div>
+                <div className="flex justify-between text-muted">
+                  <span>IGV (18%)</span>
+                  <span>{PEN(igv)}</span>
+                </div>
+                <div className="flex justify-between font-bold text-base border-t border-border pt-2">
+                  <span>Total</span>
+                  <span>{PEN(total)}</span>
+                </div>
+              </div>
+
+              <button
+                onClick={handleSendOrder}
+                className="w-full py-3 bg-gradient-to-r from-clay to-gold text-white font-bold rounded-lg text-sm shadow-lg hover:shadow-xl transition"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <Icon name="check" size={16} /> Enviar a cocina
+                </span>
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      return null;
+    }
+
     function MesasView({ tables, onTable }) {
       const stats = {
         active: tables.length,
@@ -1366,6 +1739,7 @@
             showToast(`✓ ${rec.title}`);
           }} />}
           {tab === "mesas" && <MesasView tables={myTables} onTable={setSelectedTable} />}
+          {tab === "tomar" && <TomarPedidoView tables={tables} setTables={setTables} onSent={() => showToast("✓ Pedido enviado a cocina")} />}
           {tab === "plano" && <PlanoView tables={tables} onTap={handlePlanoTap} joinMode={!!joinFirst} joinFirst={joinFirst} />}
           {tab === "llamados" && <LlamadosView calls={calls} onResolve={(id) => setCalls(c => c.filter(x => x.id !== id))} />}
 

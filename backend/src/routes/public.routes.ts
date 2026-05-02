@@ -281,3 +281,212 @@ publicRoutes.post(
     });
   })
 );
+
+// ════════════════════════════════════════════════════════════
+//        IDENTIFICACIÓN DE CLIENTE RECURRENTE + REWARDS
+// ════════════════════════════════════════════════════════════
+
+/**
+ * Tiers de cliente recurrente con sus rewards automáticos.
+ * Se calcula on-the-fly en base a totalVisits + totalSpentCents.
+ */
+function computeCustomerTier(visits: number, totalSpentCents: number) {
+  if (visits >= 20 || totalSpentCents >= 200000) {
+    return {
+      tier: "VIP",
+      label: "Cliente VIP",
+      icon: "👑",
+      color: "#C8941F",
+      reward: { type: "DISCOUNT_PCT", value: 15, label: "15% de descuento + bebida cortesía" }
+    };
+  }
+  if (visits >= 10 || totalSpentCents >= 80000) {
+    return {
+      tier: "FREQUENT",
+      label: "Cliente frecuente",
+      icon: "⭐",
+      color: "#A0322B",
+      reward: { type: "DISCOUNT_PCT", value: 10, label: "10% de descuento de cortesía" }
+    };
+  }
+  if (visits >= 3) {
+    return {
+      tier: "RETURNING",
+      label: "Bienvenido de vuelta",
+      icon: "🤝",
+      color: "#2D7D5A",
+      reward: { type: "FREE_DRINK", value: 1, label: "Chicha morada de cortesía" }
+    };
+  }
+  return {
+    tier: "NEW",
+    label: "Primera visita",
+    icon: "👋",
+    color: "#6B5D52",
+    reward: null
+  };
+}
+
+/**
+ * Identifica cliente por email, DNI o celular.
+ * Si lo encuentra, devuelve historial + tier + reward.
+ * Si no, sugiere registrarlo (opcional).
+ */
+const identifySchema = z
+  .object({
+    qrToken: z.string(),
+    email: z.string().email().optional(),
+    dni: z.string().regex(/^\d{8}$/).optional(),
+    phone: z.string().min(6).optional(),
+    name: z.string().optional()
+  })
+  .refine(d => d.email || d.dni || d.phone, { message: "Ingresa email, DNI o celular" });
+
+publicRoutes.post(
+  "/customer/identify",
+  asyncHandler(async (req, res) => {
+    const data = identifySchema.parse(req.body);
+    const table = await prisma.table.findUnique({ where: { qrToken: data.qrToken } });
+    if (!table) throw new HttpError(404, "invalid_qr");
+
+    const filter: any = { restaurantId: table.restaurantId, OR: [] };
+    if (data.email) filter.OR.push({ email: data.email });
+    if (data.dni) filter.OR.push({ dni: data.dni });
+    if (data.phone) filter.OR.push({ phone: data.phone });
+
+    let customer = await prisma.customer.findFirst({ where: filter });
+
+    // Si no existe, lo registramos como nuevo (NEW tier)
+    if (!customer && (data.email || data.dni || data.phone)) {
+      try {
+        customer = await prisma.customer.create({
+          data: {
+            restaurantId: table.restaurantId,
+            name: data.name || null,
+            email: data.email || null,
+            dni: data.dni || null,
+            phone: data.phone || null,
+            tags: JSON.stringify(["NUEVO"]),
+            totalVisits: 1,
+            totalSpentCents: 0,
+            avgTicketCents: 0
+          }
+        });
+      } catch (e: any) {
+        // Si choca con unique de DNI por restaurante, busca de nuevo
+        customer = await prisma.customer.findFirst({ where: filter });
+      }
+    }
+
+    if (!customer) {
+      return res.json({
+        found: false,
+        tier: computeCustomerTier(0, 0)
+      });
+    }
+
+    const tier = computeCustomerTier(customer.totalVisits, customer.totalSpentCents);
+
+    res.json({
+      found: true,
+      customer: {
+        id: customer.id,
+        name: customer.name,
+        email: customer.email,
+        dni: customer.dni,
+        phone: customer.phone,
+        totalVisits: customer.totalVisits,
+        totalSpentCents: customer.totalSpentCents,
+        avgTicketCents: customer.avgTicketCents,
+        lastVisitAt: customer.lastVisitAt,
+        tags: JSON.parse(customer.tags || "[]"),
+        preferences: JSON.parse(customer.preferences || "{}")
+      },
+      tier
+    });
+  })
+);
+
+/**
+ * Registra una visita: incrementa totalVisits, actualiza lastVisitAt, recalcula avgTicket.
+ * Llamado al cierre de orden con customerId.
+ */
+const registerVisitSchema = z.object({
+  customerId: z.string(),
+  orderId: z.string().optional(),
+  spentCents: z.number().int().min(0).default(0)
+});
+
+publicRoutes.post(
+  "/customer/register-visit",
+  asyncHandler(async (req, res) => {
+    const { customerId, orderId, spentCents } = registerVisitSchema.parse(req.body);
+    const customer = await prisma.customer.findUnique({ where: { id: customerId } });
+    if (!customer) throw new HttpError(404, "customer_not_found");
+
+    const newTotalVisits = customer.totalVisits + 1;
+    const newTotalSpent = customer.totalSpentCents + spentCents;
+    const newAvg = Math.round(newTotalSpent / newTotalVisits);
+
+    const updated = await prisma.customer.update({
+      where: { id: customerId },
+      data: {
+        totalVisits: newTotalVisits,
+        totalSpentCents: newTotalSpent,
+        avgTicketCents: newAvg,
+        lastVisitAt: new Date()
+      }
+    });
+
+    const tier = computeCustomerTier(newTotalVisits, newTotalSpent);
+    res.json({ customer: updated, tier });
+  })
+);
+
+/**
+ * Aplica reward al cierre de cuenta: ajusta el descuento sobre la orden.
+ * Permite que el cliente lo redima desde la pantalla de cliente.
+ */
+const applyRewardSchema = z.object({
+  qrToken: z.string(),
+  customerId: z.string(),
+  orderId: z.string()
+});
+
+publicRoutes.post(
+  "/customer/apply-reward",
+  asyncHandler(async (req, res) => {
+    const { qrToken, customerId, orderId } = applyRewardSchema.parse(req.body);
+    const table = await prisma.table.findUnique({ where: { qrToken } });
+    if (!table) throw new HttpError(404, "invalid_qr");
+
+    const customer = await prisma.customer.findUnique({ where: { id: customerId } });
+    if (!customer) throw new HttpError(404, "customer_not_found");
+
+    const tier = computeCustomerTier(customer.totalVisits, customer.totalSpentCents);
+    if (!tier.reward) {
+      return res.json({ applied: false, reason: "no_reward_for_tier" });
+    }
+
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    if (!order || order.tableId !== table.id) throw new HttpError(403, "wrong_order");
+
+    let discountCents = 0;
+    if (tier.reward.type === "DISCOUNT_PCT") {
+      discountCents = Math.round(order.subtotalCents * (tier.reward.value / 100));
+      const newSubtotal = order.subtotalCents - discountCents;
+      const newTotal = newSubtotal + order.tipCents;
+      await prisma.order.update({
+        where: { id: orderId },
+        data: { subtotalCents: newSubtotal, totalCents: newTotal, vipNote: `Reward ${tier.tier}: ${tier.reward.label}` }
+      });
+    }
+
+    res.json({
+      applied: true,
+      tier,
+      discountCents,
+      reward: tier.reward
+    });
+  })
+);

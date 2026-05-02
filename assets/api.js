@@ -224,7 +224,15 @@
       callWaiter: (qrToken, reason, urgent = false) =>
         request("POST", "/api/public/calls", { qrToken, reason, urgent }),
       checkout: (orderId, qrToken, tipPct = 0.10) =>
-        request("POST", `/api/public/orders/${orderId}/checkout`, { qrToken, tipPct })
+        request("POST", `/api/public/orders/${orderId}/checkout`, { qrToken, tipPct }),
+
+      // Customer identification + recurring rewards
+      identifyCustomer: (qrToken, { email, dni, phone, name }) =>
+        request("POST", "/api/public/customer/identify", { qrToken, email, dni, phone, name }),
+      registerCustomerVisit: (customerId, orderId, spentCents) =>
+        request("POST", "/api/public/customer/register-visit", { customerId, orderId, spentCents }),
+      applyCustomerReward: (qrToken, customerId, orderId) =>
+        request("POST", "/api/public/customer/apply-reward", { qrToken, customerId, orderId })
     },
 
     // AI
