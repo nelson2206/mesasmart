@@ -1,0 +1,55 @@
+# Auto-deploy a GitHub Pages cuando hay push a main
+# Sirve solo los archivos del frontend (root) — backend se ignora.
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare frontend artifact
+        run: |
+          mkdir -p _site
+          cp index.html _site/
+          cp cliente.html _site/
+          cp cocina.html _site/
+          cp admin.html _site/
+          cp mozo.html _site/
+          cp erp.html _site/
+          cp README.md _site/
+          cp BENCHMARK.md _site/
+          cp ARCHITECTURE.md _site/
+          cp PUBLICAR.md _site/
+          # No copiamos /backend porque GitHub Pages solo sirve estáticos
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '_site'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

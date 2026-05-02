@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cocina · La Brasa Dorada</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          },
+          colors: {
+            ink: '#0E0B09',
+            char: '#1A1614',
+            char2: '#2A2421',
+            line: '#3A302B',
+            mute: '#8A7E72',
+            text: '#F5EFE5',
+            ok: '#22C55E',
+            warn: '#F59E0B',
+            danger: '#EF4444',
+            cool: '#3B82F6'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    html, body, #root { height: 100%; margin: 0; }
+    body {
+      background: #0E0B09;
+      color: #F5EFE5;
+      font-family: 'Inter', system-ui, sans-serif;
+      overscroll-behavior: none;
+      user-select: none;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { scrollbar-width: none; }
+
+    @keyframes pulseDanger {
+      0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.6); }
+      50% { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
+    }
+    @keyframes flashNew {
+      0% { background-color: rgba(34,197,94,0.3); }
+      100% { background-color: transparent; }
+    }
+    @keyframes ticker {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .ticket-new { animation: flashNew 1.5s ease-out; }
+    .ticket-late { animation: pulseDanger 1.4s infinite; }
+    .pulse-dot { animation: ticker 1.2s infinite; }
+
+    button { min-height: 36px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" data-presets="env,react">
+    const { useState, useEffect, useMemo, useRef } = React;
+
+    // ───────────────────────────── DATA ─────────────────────────────
+    const STATIONS = [
+      { id: "todo", name: "Todas", color: "#F5EFE5" },
+      { id: "brasa", name: "Brasa", color: "#EF4444" },
+      { id: "parrilla", name: "Parrilla", color: "#F59E0B" },
+      { id: "frio", name: "Frío", color: "#22C55E" },
+      { id: "bebidas", name: "Bebidas", color: "#3B82F6" },
+      { id: "postres", name: "Postres", color: "#A855F7" }
+    ];
+
+    // Items database
+    const ITEMS_DB = {
+      pollo_quarter: { name: "1/4 de Pollo a la Brasa", station: "brasa", time: 15 },
+      pollo_half: { name: "1/2 Pollo a la Brasa", station: "brasa", time: 18 },
+      pollo_full: { name: "Pollo Entero", station: "brasa", time: 22 },
+      anticuchos: { name: "Anticuchos de Corazón", station: "parrilla", time: 15 },
+      parrilla_mixta: { name: "Parrilla Mixta", station: "parrilla", time: 20 },
+      alitas_bbq: { name: "Alitas BBQ x10", station: "parrilla", time: 17 },
+      brochetas: { name: "Brochetas de Pollo", station: "parrilla", time: 14 },
+      piqueo: { name: "Piqueo Brasa", station: "parrilla", time: 18 },
+      salchipapa: { name: "Salchipapa Familiar", station: "parrilla", time: 12 },
+      mollejitas: { name: "Mollejitas al Ajo", station: "parrilla", time: 13 },
+      sandwich_pollo: { name: "Sándwich de Pollo", station: "parrilla", time: 10 },
+      sandwich_chicharron: { name: "Sándwich de Chicharrón", station: "parrilla", time: 11 },
+      ensalada_cesar: { name: "Ensalada César", station: "frio", time: 8 },
+      ensalada_casa: { name: "Ensalada de la Casa", station: "frio", time: 6 },
+      papas_fritas: { name: "Papas Fritas", station: "parrilla", time: 7 },
+      yuca_frita: { name: "Yuca Frita", station: "parrilla", time: 8 },
+      choclo: { name: "Choclo con Queso", station: "frio", time: 9 },
+      ensalada_fresca: { name: "Ensalada Fresca", station: "frio", time: 5 },
+      chicha: { name: "Chicha Morada 1L", station: "bebidas", time: 3 },
+      limonada: { name: "Limonada Frozen", station: "bebidas", time: 4 },
+      inca_kola: { name: "Inca Kola 1.5L", station: "bebidas", time: 2 },
+      coca_cola: { name: "Coca Cola Personal", station: "bebidas", time: 2 },
+      cusquena: { name: "Cerveza Cusqueña", station: "bebidas", time: 2 },
+      agua: { name: "Agua Sin Gas", station: "bebidas", time: 1 },
+      suspiro: { name: "Suspiro a la Limeña", station: "postres", time: 5 },
+      torta_choco: { name: "Torta de Chocolate", station: "postres", time: 4 },
+      mazamorra: { name: "Mazamorra Morada", station: "postres", time: 4 },
+      cheesecake: { name: "Cheesecake de Fresa", station: "postres", time: 4 }
+    };
+
+    const now = () => new Date();
+
+    // Sample tickets with different ages, priorities, courses
+    const seedTickets = () => {
+      const t = now().getTime();
+      return [
+        {
+          id: "T-1042", mesa: 7, comensales: 4, server: "María",
+          createdAt: t - 9 * 60000,
+          priority: "normal", course: "main", entradaServedAt: t - 4 * 60000,
+          items: [
+            { id: 1, ref: "pollo_full", qty: 1, status: "preparing", notes: "Sin ají", course: "main" },
+            { id: 2, ref: "papas_fritas", qty: 2, status: "ready", course: "main" },
+            { id: 3, ref: "chicha", qty: 1, status: "ready", course: "drinks" },
+            { id: 4, ref: "ensalada_casa", qty: 1, status: "ready", course: "main" }
+          ]
+        },
+        {
+          id: "T-1043", mesa: 12, comensales: 2, server: "Juan",
+          createdAt: t - 12 * 60000,
+          priority: "high", complaint: "Atraso en parrilla", complaintAt: t - 2 * 60000,
+          items: [
+            { id: 1, ref: "anticuchos", qty: 1, status: "preparing", course: "main" },
+            { id: 2, ref: "parrilla_mixta", qty: 1, status: "preparing", course: "main" },
+            { id: 3, ref: "limonada", qty: 2, status: "ready", course: "drinks" }
+          ]
+        },
+        {
+          id: "T-1044", mesa: 3, comensales: 6, server: "María",
+          createdAt: t - 4 * 60000,
+          priority: "normal",
+          items: [
+            { id: 1, ref: "piqueo", qty: 1, status: "preparing", course: "starter" },
+            { id: 2, ref: "alitas_bbq", qty: 1, status: "preparing", course: "starter" },
+            { id: 3, ref: "salchipapa", qty: 1, status: "preparing", course: "main" },
+            { id: 4, ref: "cusquena", qty: 4, status: "ready", course: "drinks" },
+            { id: 5, ref: "inca_kola", qty: 1, status: "ready", course: "drinks" }
+          ]
+        },
+        {
+          id: "T-1045", mesa: 9, comensales: 2, server: "Carlos",
+          createdAt: t - 2 * 60000,
+          priority: "normal",
+          items: [
+            { id: 1, ref: "pollo_half", qty: 1, status: "received", notes: "Bien dorado", course: "main" },
+            { id: 2, ref: "papas_fritas", qty: 1, status: "received", course: "main" },
+            { id: 3, ref: "chicha", qty: 1, status: "ready", course: "drinks" }
+          ]
+        },
+        {
+          id: "T-1046", mesa: 5, comensales: 3, server: "Juan",
+          createdAt: t - 25000,
+          priority: "vip", vipNote: "Crítico gastronómico",
+          items: [
+            { id: 1, ref: "pollo_quarter", qty: 2, status: "received", course: "main" },
+            { id: 2, ref: "ensalada_cesar", qty: 1, status: "received", course: "starter" },
+            { id: 3, ref: "yuca_frita", qty: 1, status: "received", course: "main" },
+            { id: 4, ref: "limonada", qty: 1, status: "received", course: "drinks" },
+            { id: 5, ref: "agua", qty: 1, status: "received", course: "drinks" }
+          ]
+        },
+        {
+          id: "T-1047", mesa: 11, comensales: 2, server: "María",
+          createdAt: t - 6 * 60000,
+          priority: "normal", course: "main", entradaServedAt: t - 1 * 60000,
+          items: [
+            { id: 1, ref: "sandwich_pollo", qty: 1, status: "preparing", course: "main" },
+            { id: 2, ref: "sandwich_chicharron", qty: 1, status: "preparing", course: "main" },
+            { id: 3, ref: "papas_fritas", qty: 2, status: "ready", course: "main" }
+          ]
+        }
+      ];
+    };
+
+    // Modification requests (incoming from cliente)
+    const seedModRequests = () => [
+      { id: "M1", ticketId: "T-1042", itemRef: "pollo_full", reason: "ingredients", note: "Agregar más ají", status: "pending", at: now().getTime() - 30000 },
+      { id: "M2", ticketId: "T-1044", itemRef: "salchipapa", reason: "qty", note: "Cambiar a familiar", status: "pending", at: now().getTime() - 80000 }
+    ];
+
+    // ─────────────────────────── HELPERS ───────────────────────────
+    const elapsed = (createdAt) => {
+      const s = Math.floor((now().getTime() - createdAt) / 1000);
+      const m = Math.floor(s / 60);
+      const ss = s % 60;
+      return { m, s: ss, total: s, txt: `${m}:${String(ss).padStart(2, "0")}` };
+    };
+
+    const ticketColor = (sec) => {
+      if (sec < 5 * 60) return { bar: "bg-ok", text: "text-ok", border: "border-ok/40", soft: "bg-ok/10", label: "A tiempo" };
+      if (sec < 10 * 60) return { bar: "bg-warn", text: "text-warn", border: "border-warn/40", soft: "bg-warn/10", label: "Atención" };
+      return { bar: "bg-danger", text: "text-danger", border: "border-danger/50", soft: "bg-danger/10", label: "Atrasado" };
+    };
+
+    // ─── SMART PRIORITY ALGORITHM ───────────────────────────────────
+    // Composite score (higher = more urgent)
+    // Weights tuned for typical restaurant operations
+    const calcPriority = (ticket) => {
+      const e = elapsed(ticket.createdAt);
+      let score = 0;
+      const reasons = [];
+
+      // 1. Wait time (linear up to 15 min, accelerates after)
+      const waitMin = e.total / 60;
+      const waitScore = waitMin < 10 ? waitMin * 8 : 80 + (waitMin - 10) * 18;
+      score += waitScore;
+      if (waitMin > 10) reasons.push({ icon: "clock", text: `Atrasado ${Math.floor(waitMin)} min`, weight: Math.round(waitScore) });
+      else if (waitMin > 5) reasons.push({ icon: "clock", text: `${Math.floor(waitMin)} min en cola`, weight: Math.round(waitScore) });
+
+      // 2. Manual priority override
+      if (ticket.priority === "vip") {
+        score += 250;
+        reasons.push({ icon: "star", text: ticket.vipNote || "VIP", weight: 250 });
+      } else if (ticket.priority === "high") {
+        score += 120;
+        reasons.push({ icon: "flame", text: "Prioridad alta", weight: 120 });
+      }
+
+      // 3. Complaint flag (highest individual boost)
+      if (ticket.complaint) {
+        score += 200;
+        reasons.push({ icon: "alert", text: `Queja: ${ticket.complaint}`, weight: 200 });
+      }
+
+      // 4. Course optimization: if entrada served, mains should advance
+      if (ticket.entradaServedAt) {
+        const sinceEntrada = (now().getTime() - ticket.entradaServedAt) / 60000;
+        if (sinceEntrada > 8 && ticket.items.some(i => i.course === "main" && i.status !== "ready" && i.status !== "completed")) {
+          score += 90;
+          reasons.push({ icon: "utensils", text: `Comió entrada hace ${Math.floor(sinceEntrada)} min · sirvele plato fuerte`, weight: 90 });
+        } else if (sinceEntrada > 4) {
+          score += 40;
+          reasons.push({ icon: "utensils", text: "Entrada servida · prepara plato fuerte", weight: 40 });
+        }
+      }
+
+      // 5. Party size penalty (small parties wait less patiently)
+      if (ticket.comensales && ticket.comensales <= 2 && waitMin > 6) {
+        score += 25;
+        reasons.push({ icon: "users", text: "Mesa pequeña esperando", weight: 25 });
+      }
+
+      // 6. Drinks should be near-instant — penalize if pending
+      const drinksPending = ticket.items.filter(i => i.course === "drinks" && i.status !== "ready" && i.status !== "completed").length;
+      if (drinksPending > 0 && waitMin > 3) {
+        score += 35;
+        reasons.push({ icon: "clock", text: `${drinksPending} bebidas pendientes`, weight: 35 });
+      }
+
+      // Tier classification
+      let tier;
+      if (score >= 250) tier = { name: "Crítica", color: "danger", emoji: "🔥" };
+      else if (score >= 130) tier = { name: "Alta", color: "warn", emoji: "⚡" };
+      else if (score >= 60) tier = { name: "Media", color: "cool", emoji: "↑" };
+      else tier = { name: "Normal", color: "mute", emoji: "•" };
+
+      return { score: Math.round(score), tier, reasons };
+    };
+
+    // Course optimization recommendation (next ticket to push)
+    const optimizeRecommendation = (tickets) => {
+      const scored = tickets.map(t => ({ ...t, _p: calcPriority(t) })).sort((a, b) => b._p.score - a._p.score);
+      if (scored.length === 0) return null;
+      const top = scored[0];
+      return {
+        ticketId: top.id,
+        mesa: top.mesa,
+        score: top._p.score,
+        topReason: top._p.reasons[0]
+      };
+    };
+
+    const Icon = ({ name, size = 18, className = "" }) => {
+      const ics = {
+        check: <polyline points="20 6 9 17 4 12" />,
+        clock: <><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></>,
+        flame: <path d="M8.5 14.5C9.5 16 12 18 12 18s2.5-2 3.5-3.5C18 11 17 7 12 4c-5 3-6 7-3.5 10.5z" />,
+        bell: <><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9zM13.73 21a2 2 0 0 1-3.46 0" /></>,
+        users: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>,
+        user: <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></>,
+        x: <><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>,
+        plus: <><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></>,
+        check2: <><polyline points="20 6 9 17 4 12" /></>,
+        utensils: <><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7" /></>,
+        printer: <><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></>,
+        layout: <><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="9" y1="3" x2="9" y2="21" /></>,
+        sound: <><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" /></>,
+        settings: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></>,
+        zap: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />,
+        trending: <><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></>,
+        edit: <><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></>,
+        flag: <><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" /></>,
+        alert: <><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12" y2="17" /></>,
+        star: <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+      };
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+          {ics[name]}
+        </svg>
+      );
+    };
+
+    // ─────────────────────────── COMPONENTS ───────────────────────────
+
+    function Clock() {
+      const [time, setTime] = useState(now());
+      useEffect(() => {
+        const i = setInterval(() => setTime(now()), 1000);
+        return () => clearInterval(i);
+      }, []);
+      const hh = String(time.getHours()).padStart(2, "0");
+      const mm = String(time.getMinutes()).padStart(2, "0");
+      const ss = String(time.getSeconds()).padStart(2, "0");
+      return (
+        <div className="font-mono text-xl text-text">
+          {hh}:{mm}<span className="text-mute">:{ss}</span>
+        </div>
+      );
+    }
+
+    function StationFilter({ active, setActive, counts }) {
+      return (
+        <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+          {STATIONS.map(s => (
+            <button
+              key={s.id}
+              onClick={() => setActive(s.id)}
+              className={`shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition border ${active === s.id ? 'bg-text/10 border-text/30 text-text' : 'border-line text-mute hover:text-text'}`}
+            >
+              <span className="w-2 h-2 rounded-full" style={{ background: s.color }}></span>
+              {s.name}
+              <span className="text-xs font-mono opacity-70">{counts[s.id] ?? 0}</span>
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    function Topbar({ tickets, station, setStation, soundOn, setSoundOn, pendingMods = 0 }) {
+      const counts = useMemo(() => {
+        const c = { todo: tickets.length };
+        STATIONS.forEach(s => { if (s.id !== "todo") c[s.id] = 0; });
+        tickets.forEach(t => {
+          t.items.forEach(it => {
+            if (it.status !== "completed") {
+              const stat = ITEMS_DB[it.ref]?.station;
+              if (stat) c[stat] = (c[stat] || 0) + 1;
+            }
+          });
+        });
+        return c;
+      }, [tickets]);
+
+      const lateCount = tickets.filter(t => elapsed(t.createdAt).total > 10 * 60).length;
+
+      return (
+        <header className="sticky top-0 z-30 bg-char border-b border-line">
+          <div className="px-6 py-3 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-danger rounded-lg flex items-center justify-center font-bold text-sm">LB</div>
+                <div>
+                  <p className="font-bold text-base leading-tight">Cocina · La Brasa Dorada</p>
+                  <p className="text-xs text-mute">KDS · {tickets.length} tickets · {lateCount} atrasados {pendingMods > 0 && <><span className="mx-1">·</span><span className="text-warn font-bold">{pendingMods} cambios pendientes</span></>}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-3 py-2 bg-char2 rounded-lg border border-line">
+                <span className="w-2 h-2 rounded-full bg-ok pulse-dot"></span>
+                <span className="text-xs font-medium">En vivo</span>
+              </div>
+              <Clock />
+              <button
+                onClick={() => setSoundOn(!soundOn)}
+                className={`p-2.5 rounded-lg border ${soundOn ? 'border-ok/40 bg-ok/10 text-ok' : 'border-line text-mute'}`}
+                title="Sonido al recibir nuevo pedido"
+              >
+                <Icon name="sound" size={16} />
+              </button>
+              <button className="p-2.5 rounded-lg border border-line text-mute hover:text-text" title="Imprimir">
+                <Icon name="printer" size={16} />
+              </button>
+              <button className="p-2.5 rounded-lg border border-line text-mute hover:text-text" title="Ajustes">
+                <Icon name="settings" size={16} />
+              </button>
+            </div>
+          </div>
+          <div className="px-6 py-2 border-t border-line">
+            <StationFilter active={station} setActive={setStation} counts={counts} />
+          </div>
+        </header>
+      );
+    }
+
+    function ItemRow({ item, onAdvance }) {
+      const data = ITEMS_DB[item.ref];
+      if (!data) return null;
+      const dot =
+        item.status === "completed" ? "bg-ok" :
+        item.status === "ready" ? "bg-cool" :
+        item.status === "preparing" ? "bg-warn" : "bg-mute";
+      const lineThrough = item.status === "completed" || item.status === "ready";
+      return (
+        <button
+          onClick={() => onAdvance(item.id)}
+          className={`w-full flex items-center gap-3 py-2 px-2 -mx-2 rounded hover:bg-char/40 text-left transition`}
+        >
+          <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${dot}`}></span>
+          <span className={`text-mute text-sm font-mono w-7 shrink-0`}>{item.qty}×</span>
+          <span className={`flex-1 text-sm font-medium leading-tight ${lineThrough ? 'line-through text-mute' : 'text-text'}`}>
+            {data.name}
+          </span>
+          {item.notes && (
+            <span className="text-xs text-warn bg-warn/10 px-2 py-0.5 rounded font-medium shrink-0">
+              {item.notes}
+            </span>
+          )}
+        </button>
+      );
+    }
+
+    function PriorityBadge({ tier, score, compact = false }) {
+      const colors = {
+        danger: { bg: "bg-danger/15", text: "text-danger", border: "border-danger/30" },
+        warn: { bg: "bg-warn/15", text: "text-warn", border: "border-warn/30" },
+        cool: { bg: "bg-cool/15", text: "text-cool", border: "border-cool/30" },
+        mute: { bg: "bg-mute/10", text: "text-mute", border: "border-line" }
+      }[tier.color];
+      return (
+        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider ${colors.bg} ${colors.text} ${colors.border}`}>
+          <span>{tier.emoji}</span>
+          {compact ? tier.name : `Prio ${tier.name}`}
+          {!compact && <span className="font-mono opacity-60 ml-0.5">·{score}</span>}
+        </span>
+      );
+    }
+
+    function Ticket({ ticket, onAdvanceItem, onBump, onSetPriority, onClearComplaint, mods, onResolveMod, isNew, isTopPriority }) {
+      const [tick, setTick] = useState(0);
+      useEffect(() => { const i = setInterval(() => setTick(t => t + 1), 1000); return () => clearInterval(i); }, []);
+      const e = elapsed(ticket.createdAt);
+      const c = ticketColor(e.total);
+      const allReady = ticket.items.every(i => i.status === "ready" || i.status === "completed");
+      const isLate = e.total > 10 * 60;
+      const priority = calcPriority(ticket);
+      const ticketMods = mods.filter(m => m.ticketId === ticket.id && m.status === "pending");
+      const groupedByStation = useMemo(() => {
+        const groups = {};
+        ticket.items.forEach(it => {
+          const st = ITEMS_DB[it.ref]?.station || "otro";
+          if (!groups[st]) groups[st] = [];
+          groups[st].push(it);
+        });
+        return groups;
+      }, [ticket.items]);
+
+      const ringClass = isTopPriority ? "ring-2 ring-cool ring-offset-2 ring-offset-ink" : "";
+
+      return (
+        <div className={`bg-char2 border ${c.border} rounded-xl overflow-hidden flex flex-col ${isNew ? 'ticket-new' : ''} ${isLate ? 'ticket-late' : ''} ${ringClass}`}>
+          <div className={`h-1 ${c.bar}`}></div>
+
+          {/* Top priority banner */}
+          {isTopPriority && (
+            <div className="bg-cool text-white text-[10px] font-bold uppercase tracking-wider py-1 px-3 text-center">
+              ★ Recomendación IA · Hacer ahora
+            </div>
+          )}
+
+          {/* Complaint banner */}
+          {ticket.complaint && (
+            <button
+              onClick={() => onClearComplaint(ticket.id)}
+              className="bg-danger/20 border-b border-danger/30 px-3 py-2 text-left flex items-center gap-2 hover:bg-danger/30"
+            >
+              <Icon name="alert" size={14} className="text-danger shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-danger truncate">Queja: {ticket.complaint}</p>
+                <p className="text-[10px] text-mute">Toca para marcar como resuelto</p>
+              </div>
+            </button>
+          )}
+
+          <div className="px-4 py-3 border-b border-line">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="font-mono text-mute text-xs">{ticket.id}</span>
+                <span className="text-mute">·</span>
+                <span className="font-bold text-text">Mesa {ticket.mesa}</span>
+              </div>
+              <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded ${c.soft} shrink-0`}>
+                <Icon name="clock" size={11} className={c.text} />
+                <span className={`font-mono font-bold text-sm ${c.text}`}>{e.txt}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <PriorityBadge tier={priority.tier} score={priority.score} compact />
+              <span className="inline-flex items-center gap-1 text-xs text-mute"><Icon name="user" size={11} />{ticket.server}</span>
+              <span className="inline-flex items-center gap-1 text-xs text-mute"><Icon name="users" size={11} />{ticket.comensales}</span>
+              <button
+                onClick={() => onSetPriority(ticket.id)}
+                className="ml-auto p-1 rounded hover:bg-char text-mute"
+                title="Cambiar prioridad"
+              >
+                <Icon name="flag" size={13} />
+              </button>
+            </div>
+
+            {/* Top reason from AI */}
+            {priority.reasons.length > 0 && priority.tier.color !== "mute" && (
+              <div className="mt-2 px-2 py-1 bg-char rounded text-[10px] text-mute leading-snug">
+                <span className="text-cool font-semibold">IA:</span> {priority.reasons[0].text}
+              </div>
+            )}
+          </div>
+
+          {/* Modification requests inline */}
+          {ticketMods.length > 0 && (
+            <div className="bg-warn/10 border-b border-warn/30 p-2 space-y-1.5">
+              {ticketMods.map(m => {
+                const item = ITEMS_DB[m.itemRef];
+                return (
+                  <div key={m.id} className="flex items-start gap-2 p-2 bg-char2 rounded text-xs">
+                    <Icon name="edit" size={12} className="text-warn shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-warn">Cambio · {item?.name}</p>
+                      <p className="text-mute text-[11px] truncate">{m.note || m.reason}</p>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <button onClick={() => onResolveMod(m.id, "accepted")} className="px-2 py-1 bg-ok/20 text-ok rounded text-[10px] font-bold hover:bg-ok/30">OK</button>
+                      <button onClick={() => onResolveMod(m.id, "rejected")} className="px-2 py-1 bg-danger/20 text-danger rounded text-[10px] font-bold hover:bg-danger/30">No</button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="px-4 py-3 flex-1 space-y-3">
+            {Object.entries(groupedByStation).map(([st, its]) => {
+              const station = STATIONS.find(s => s.id === st);
+              return (
+                <div key={st}>
+                  <p className="text-[10px] uppercase tracking-wider font-bold flex items-center gap-1.5 mb-1" style={{ color: station?.color }}>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: station?.color }}></span>
+                    {station?.name || st}
+                  </p>
+                  <div>
+                    {its.map(it => <ItemRow key={it.id} item={it} onAdvance={(id) => onAdvanceItem(ticket.id, id)} />)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="px-3 pb-3">
+            <button
+              onClick={() => onBump(ticket.id)}
+              disabled={!allReady}
+              className={`w-full py-3 rounded-lg font-bold text-sm transition ${allReady ? 'bg-ok hover:bg-ok/90 text-ink' : 'bg-char border border-line text-mute cursor-not-allowed'}`}
+            >
+              {allReady ? <>Servido <Icon name="check2" size={14} className="inline ml-1" /></> : `${ticket.items.filter(i => i.status === 'ready').length}/${ticket.items.length} listos`}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Smart Priority Panel — recommendation banner
+    function SmartPriorityPanel({ tickets, smartOn, setSmartOn, velocity }) {
+      const top = useMemo(() => {
+        if (tickets.length === 0) return null;
+        const sorted = [...tickets].map(t => ({ ...t, _p: calcPriority(t) })).sort((a, b) => b._p.score - a._p.score);
+        return sorted[0];
+      }, [tickets]);
+
+      return (
+        <div className="px-6 py-3 border-b border-line bg-gradient-to-r from-cool/5 via-char to-char">
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={() => setSmartOn(!smartOn)}
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition ${smartOn ? 'bg-cool text-white' : 'bg-char2 border border-line text-mute'}`}
+            >
+              <Icon name="zap" size={13} />
+              Smart Priority {smartOn ? "ON" : "OFF"}
+            </button>
+
+            {top && smartOn && (
+              <div className="flex items-center gap-2 text-xs flex-1 min-w-0">
+                <span className="text-mute shrink-0">Próximo a despachar:</span>
+                <span className="font-bold text-text shrink-0">Mesa {top.mesa}</span>
+                <PriorityBadge tier={top._p.tier} score={top._p.score} compact />
+                {top._p.reasons[0] && (
+                  <span className="text-mute truncate">· {top._p.reasons[0].text}</span>
+                )}
+              </div>
+            )}
+
+            {/* Velocity stats */}
+            <div className="ml-auto flex items-center gap-4 text-xs">
+              <div className="flex items-center gap-1.5">
+                <Icon name="trending" size={13} className="text-ok" />
+                <span className="text-mute">Velocidad</span>
+                <span className="font-mono font-bold text-text">{velocity.itemsPerMin.toFixed(1)}</span>
+                <span className="text-mute">platos/min</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Icon name="clock" size={13} className="text-warn" />
+                <span className="text-mute">ETA cola</span>
+                <span className="font-mono font-bold text-text">{velocity.queueEta}'</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Priority Modal
+    function PriorityModal({ open, ticket, onClose, onSet }) {
+      const [complaint, setComplaint] = useState("");
+      useEffect(() => { setComplaint(""); }, [ticket]);
+      if (!open || !ticket) return null;
+      const options = [
+        { id: "vip", label: "VIP", desc: "Cliente importante o crítico", color: "bg-cool" },
+        { id: "high", label: "Alta", desc: "Atender cuanto antes", color: "bg-warn" },
+        { id: "normal", label: "Normal", desc: "Sin prioridad especial", color: "bg-mute" }
+      ];
+      return (
+        <div className="fixed inset-0 z-50 bg-ink/70 flex items-center justify-center p-6" onClick={onClose}>
+          <div onClick={(e) => e.stopPropagation()} className="bg-char2 border border-line rounded-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-bold">Prioridad de Mesa {ticket.mesa}</h3>
+              <button onClick={onClose} className="w-8 h-8 rounded bg-char text-mute"><Icon name="x" size={14} className="mx-auto" /></button>
+            </div>
+            <p className="text-xs text-mute mb-4">Ticket {ticket.id} · Smart Priority lo usará para reordenar la cola.</p>
+            <div className="space-y-2">
+              {options.map(o => (
+                <button
+                  key={o.id}
+                  onClick={() => onSet(ticket.id, { priority: o.id })}
+                  className={`w-full flex items-center gap-3 p-3 rounded-lg border text-left transition ${ticket.priority === o.id ? 'border-cool bg-cool/10' : 'border-line bg-char hover:border-mute'}`}
+                >
+                  <span className={`w-2 h-8 rounded ${o.color}`}></span>
+                  <div className="flex-1">
+                    <p className="font-bold text-text text-sm">{o.label}</p>
+                    <p className="text-xs text-mute">{o.desc}</p>
+                  </div>
+                  {ticket.priority === o.id && <Icon name="check2" size={16} className="text-cool" />}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-5 pt-5 border-t border-line">
+              <p className="text-xs font-bold text-text mb-2">Marcar queja</p>
+              <input
+                value={complaint}
+                onChange={(e) => setComplaint(e.target.value)}
+                placeholder="Ej: Plato frío, demora exagerada..."
+                className="w-full px-3 py-2 bg-char border border-line rounded text-sm text-text focus:outline-none focus:border-cool"
+              />
+              <button
+                onClick={() => { if (complaint.trim()) onSet(ticket.id, { complaint: complaint.trim() }); }}
+                disabled={!complaint.trim()}
+                className={`w-full mt-2 py-2 rounded text-sm font-bold ${complaint.trim() ? 'bg-danger text-white' : 'bg-char border border-line text-mute'}`}
+              >
+                Marcar como queja
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function Stats({ tickets }) {
+      const totalItems = tickets.reduce((s, t) => s + t.items.length, 0);
+      const readyItems = tickets.reduce((s, t) => s + t.items.filter(i => i.status === 'ready').length, 0);
+      const avgTime = tickets.length === 0 ? 0 : Math.floor(tickets.reduce((s, t) => s + elapsed(t.createdAt).total, 0) / tickets.length / 60);
+      const late = tickets.filter(t => elapsed(t.createdAt).total > 10 * 60).length;
+      const stats = [
+        { label: "Tickets activos", value: tickets.length, color: "text" },
+        { label: "Items listos", value: `${readyItems}/${totalItems}`, color: "ok" },
+        { label: "Tiempo promedio", value: `${avgTime}'`, color: "warn" },
+        { label: "Atrasados", value: late, color: late > 0 ? "danger" : "text" },
+      ];
+      return (
+        <div className="px-6 py-3 border-b border-line bg-char/40">
+          <div className="grid grid-cols-4 gap-4">
+            {stats.map(s => (
+              <div key={s.label} className="text-center">
+                <p className={`font-mono text-3xl font-bold text-${s.color}`}>{s.value}</p>
+                <p className="text-[11px] text-mute uppercase tracking-wider mt-0.5">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ─────────────────────────── APP ───────────────────────────
+    function App() {
+      const [tickets, setTickets] = useState(seedTickets);
+      const [station, setStation] = useState("todo");
+      const [soundOn, setSoundOn] = useState(true);
+      const [newTicketIds, setNewTicketIds] = useState(new Set());
+
+      // Add fake new ticket every 30s for demo
+      useEffect(() => {
+        const i = setInterval(() => {
+          const newId = `T-${1048 + Math.floor(Math.random() * 100)}`;
+          const refs = Object.keys(ITEMS_DB);
+          const items = [];
+          const itemCount = 2 + Math.floor(Math.random() * 4);
+          for (let k = 0; k < itemCount; k++) {
+            items.push({
+              id: k + 1,
+              ref: refs[Math.floor(Math.random() * refs.length)],
+              qty: 1 + Math.floor(Math.random() * 2),
+              status: "received"
+            });
+          }
+          const newTicket = {
+            id: newId,
+            mesa: 1 + Math.floor(Math.random() * 20),
+            comensales: 1 + Math.floor(Math.random() * 5),
+            server: ["María", "Juan", "Carlos"][Math.floor(Math.random() * 3)],
+            createdAt: now().getTime(),
+            items
+          };
+          setTickets(prev => [...prev, newTicket]);
+          setNewTicketIds(prev => new Set([...prev, newId]));
+          setTimeout(() => {
+            setNewTicketIds(prev => {
+              const c = new Set(prev);
+              c.delete(newId);
+              return c;
+            });
+          }, 1600);
+        }, 30000);
+        return () => clearInterval(i);
+      }, []);
+
+      // Modifications inbox + Smart Priority + velocity tracking
+      const [mods, setMods] = useState(seedModRequests);
+      const [smartOn, setSmartOn] = useState(true);
+      const [priorityModal, setPriorityModal] = useState(null);
+      const [completionLog, setCompletionLog] = useState([]); // {ticketId, itemId, at}
+
+      const advanceItem = (ticketId, itemId) => {
+        setTickets(prev => prev.map(t => {
+          if (t.id !== ticketId) return t;
+          return {
+            ...t,
+            items: t.items.map(it => {
+              if (it.id !== itemId) return it;
+              const flow = ["received", "preparing", "ready"];
+              const idx = flow.indexOf(it.status);
+              if (idx < flow.length - 1) {
+                const next = flow[idx + 1];
+                if (next === "ready") {
+                  // Track for velocity
+                  setCompletionLog(log => [...log.filter(e => now().getTime() - e.at < 10 * 60000), { ticketId, itemId, at: now().getTime() }]);
+                }
+                return { ...it, status: next };
+              }
+              return it;
+            })
+          };
+        }));
+      };
+
+      const bump = (ticketId) => {
+        setTickets(prev => prev.filter(t => t.id !== ticketId));
+      };
+
+      const setPriority = (ticketId, patch) => {
+        setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, ...patch, ...(patch.complaint ? { complaintAt: now().getTime() } : {}) } : t));
+        setPriorityModal(null);
+      };
+
+      const clearComplaint = (ticketId) => {
+        setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, complaint: null, complaintAt: null } : t));
+      };
+
+      const resolveMod = (modId, status) => {
+        setMods(prev => prev.map(m => m.id === modId ? { ...m, status } : m));
+        // Auto-remove resolved after a moment
+        setTimeout(() => setMods(prev => prev.filter(m => m.id !== modId)), 2500);
+      };
+
+      // Velocity calculation
+      const velocity = useMemo(() => {
+        const recentMs = 5 * 60 * 1000;
+        const recent = completionLog.filter(e => now().getTime() - e.at < recentMs);
+        const itemsPerMin = recent.length / 5;
+        // ETA = pending items / rate
+        const pending = tickets.reduce((s, t) => s + t.items.filter(i => i.status !== "ready" && i.status !== "completed").length, 0);
+        const rate = Math.max(0.5, itemsPerMin);
+        const queueEta = Math.ceil(pending / rate);
+        return { itemsPerMin, queueEta, pending };
+      }, [tickets, completionLog]);
+
+      const filtered = useMemo(() => {
+        if (station === "todo") return tickets;
+        return tickets.filter(t => t.items.some(it => ITEMS_DB[it.ref]?.station === station && it.status !== "completed"));
+      }, [tickets, station]);
+
+      // Sort: smart priority or by age
+      const sorted = useMemo(() => {
+        const arr = [...filtered];
+        if (smartOn) {
+          return arr.map(t => ({ ...t, _score: calcPriority(t).score })).sort((a, b) => b._score - a._score);
+        }
+        return arr.sort((a, b) => a.createdAt - b.createdAt);
+      }, [filtered, smartOn]);
+
+      const topPriorityId = sorted[0]?.id;
+      const pendingMods = mods.filter(m => m.status === "pending");
+
+      return (
+        <div className="min-h-full">
+          <Topbar tickets={tickets} station={station} setStation={setStation} soundOn={soundOn} setSoundOn={setSoundOn} pendingMods={pendingMods.length} />
+          <Stats tickets={tickets} />
+          <SmartPriorityPanel tickets={tickets} smartOn={smartOn} setSmartOn={setSmartOn} velocity={velocity} />
+
+          <main className="p-6">
+            {sorted.length === 0 ? (
+              <div className="text-center py-32 text-mute">
+                <Icon name="utensils" size={48} className="mx-auto opacity-30" />
+                <p className="mt-3">No hay tickets en {STATIONS.find(s => s.id === station)?.name}</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                {sorted.map(t => (
+                  <Ticket
+                    key={t.id}
+                    ticket={t}
+                    onAdvanceItem={advanceItem}
+                    onBump={bump}
+                    onSetPriority={(id) => setPriorityModal(tickets.find(x => x.id === id))}
+                    onClearComplaint={clearComplaint}
+                    mods={mods}
+                    onResolveMod={resolveMod}
+                    isNew={newTicketIds.has(t.id)}
+                    isTopPriority={smartOn && t.id === topPriorityId && calcPriority(t).tier.color !== "mute"}
+                  />
+                ))}
+              </div>
+            )}
+          </main>
+
+          <PriorityModal open={!!priorityModal} ticket={priorityModal} onClose={() => setPriorityModal(null)} onSet={setPriority} />
+
+          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-char2 border border-line rounded-full px-5 py-2.5 text-xs text-mute shadow-lg">
+            <Icon name="zap" size={12} className="inline text-cool mr-1" />
+            <span className="text-text font-medium">Smart Priority</span> ordena por urgencia · toca <Icon name="flag" size={11} className="inline mx-0.5" /> para cambiar prioridad
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ERP · La Brasa Dorada</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"Playfair Display"', 'serif'],
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          },
+          colors: {
+            cream: '#FAF7F2',
+            paper: '#FFFFFF',
+            charcoal: '#1F1A17',
+            ink: '#2A1F1A',
+            muted: '#6B5D52',
+            clay: { DEFAULT: '#A0322B', dark: '#7E2820', light: '#C4493A' },
+            gold: { DEFAULT: '#C8941F', light: '#E5B458' },
+            olive: '#2D7D5A',
+            border: '#E8DFD3',
+            sky: '#3B82F6',
+            warn: '#D97706',
+            danger: '#DC2626'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    html, body, #root { height: 100%; margin: 0; }
+    body { background: #FAF7F2; color: #2A1F1A; font-family: 'Inter', system-ui, sans-serif; }
+    .font-display { font-family: 'Playfair Display', serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { scrollbar-width: none; }
+    @keyframes pulse-soft { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
+    .pulse-soft { animation: pulse-soft 2s infinite; }
+    @keyframes growBar { from { transform: scaleY(0); transform-origin: bottom; } to { transform: scaleY(1); transform-origin: bottom; } }
+    .grow-bar { animation: growBar 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .anim-fade-in { animation: fadeIn .25s ease-out; }
+    @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .anim-slide-up { animation: slideUp .3s cubic-bezier(0.16, 1, 0.3, 1); }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    .shimmer { background: linear-gradient(90deg, #E8DFD3 25%, #FAF7F2 50%, #E8DFD3 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" data-presets="env,react">
+    const { useState, useEffect, useMemo, useRef } = React;
+
+    // ─────── DEMO DATA (mocked — connectable to backend) ───────
+    const PEN = (cents) => "S/ " + (cents / 100).toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const PENk = (cents) => cents >= 100000 ? `S/ ${(cents/100000).toFixed(1)}k` : PEN(cents);
+
+    const ME = { name: "Marcos Vidal", role: "Administrador", restaurant: "La Brasa Dorada", color: "#C8941F" };
+
+    // Visual icons per ingredient category (no need for real photos in demo)
+    const CAT_VISUAL = {
+      "Proteínas": { emoji: "🥩", color: "#A0322B", bg: "#FBE4E0" },
+      "Carbohidratos": { emoji: "🥔", color: "#C8941F", bg: "#FDF1D5" },
+      "Verduras y frutas": { emoji: "🥬", color: "#2D7D5A", bg: "#DCEDE2" },
+      "Lácteos y huevos": { emoji: "🥛", color: "#3B82F6", bg: "#DBEAFE" },
+      "Bebidas": { emoji: "🥤", color: "#7C3AED", bg: "#EDE9FE" },
+      "Condimentos y salsas": { emoji: "🌶️", color: "#DC2626", bg: "#FEE2E2" },
+      "Empaques y otros": { emoji: "📦", color: "#6B5D52", bg: "#F0EBE3" }
+    };
+
+    const INGREDIENTS_SEED = [
+      { id: "i1", name: "Pollo entero", unit: "unidad", current: 28, min: 15, critical: 10, optimal: 60, costCents: 1850, cat: "Proteínas", supplier: "Avícola San Fernando", emoji: "🍗", trackExpiration: true, expDays: 4 },
+      { id: "i2", name: "Carne de res (lomo)", unit: "kg", current: 6.5, min: 5, critical: 3, optimal: 15, costCents: 4200, cat: "Proteínas", supplier: "Distribuidora La Despensa", emoji: "🥩", trackExpiration: true, expDays: 6 },
+      { id: "i3", name: "Corazón de res", unit: "kg", current: 3.2, min: 4, critical: 2, optimal: 10, costCents: 2800, cat: "Proteínas", supplier: "Distribuidora La Despensa", emoji: "❤️", trackExpiration: true, expDays: 3 },
+      { id: "i4", name: "Chorizo parrillero", unit: "unidad", current: 45, min: 20, critical: 10, optimal: 80, costCents: 350, cat: "Proteínas", supplier: "Distribuidora La Despensa", emoji: "🌭", trackExpiration: true, expDays: 8 },
+      { id: "i5", name: "Mollejitas", unit: "kg", current: 1.8, min: 2, critical: 1, optimal: 5, costCents: 1800, cat: "Proteínas", supplier: "Avícola San Fernando", emoji: "🐔", trackExpiration: true, expDays: 2 },
+      { id: "i6", name: "Papas amarillas", unit: "kg", current: 38, min: 20, critical: 10, optimal: 80, costCents: 280, cat: "Carbohidratos", supplier: "Frutas y Verduras del Mercado", emoji: "🥔", trackExpiration: false },
+      { id: "i7", name: "Yuca", unit: "kg", current: 12, min: 8, critical: 4, optimal: 25, costCents: 320, cat: "Carbohidratos", supplier: "Frutas y Verduras del Mercado", emoji: "🍠", trackExpiration: false },
+      { id: "i8", name: "Pan francés", unit: "unidad", current: 80, min: 50, critical: 20, optimal: 200, costCents: 50, cat: "Carbohidratos", supplier: "Distribuidora La Despensa", emoji: "🥖", trackExpiration: true, expDays: 1 },
+      { id: "i9", name: "Arroz", unit: "kg", current: 22, min: 10, critical: 5, optimal: 40, costCents: 420, cat: "Carbohidratos", supplier: "Distribuidora La Despensa", emoji: "🍚", trackExpiration: false },
+      { id: "i10", name: "Lechuga romana", unit: "unidad", current: 14, min: 10, critical: 5, optimal: 30, costCents: 250, cat: "Verduras y frutas", supplier: "Frutas y Verduras del Mercado", emoji: "🥬", trackExpiration: true, expDays: 5 },
+      { id: "i11", name: "Tomate", unit: "kg", current: 8, min: 6, critical: 3, optimal: 18, costCents: 380, cat: "Verduras y frutas", supplier: "Frutas y Verduras del Mercado", emoji: "🍅", trackExpiration: true, expDays: 4 },
+      { id: "i12", name: "Cebolla roja", unit: "kg", current: 11, min: 5, critical: 2, optimal: 20, costCents: 250, cat: "Verduras y frutas", supplier: "Frutas y Verduras del Mercado", emoji: "🧅", trackExpiration: false },
+      { id: "i13", name: "Limón", unit: "kg", current: 4.2, min: 5, critical: 2, optimal: 12, costCents: 380, cat: "Verduras y frutas", supplier: "Frutas y Verduras del Mercado", emoji: "🍋", trackExpiration: true, expDays: 7 },
+      { id: "i14", name: "Maíz morado", unit: "kg", current: 6, min: 4, critical: 2, optimal: 12, costCents: 580, cat: "Verduras y frutas", supplier: "Distribuidora La Despensa", emoji: "🌽", trackExpiration: false },
+      { id: "i15", name: "Choclo", unit: "unidad", current: 22, min: 15, critical: 8, optimal: 40, costCents: 220, cat: "Verduras y frutas", supplier: "Frutas y Verduras del Mercado", emoji: "🌽", trackExpiration: true, expDays: 5 },
+      { id: "i16", name: "Palta", unit: "unidad", current: 18, min: 10, critical: 5, optimal: 30, costCents: 280, cat: "Verduras y frutas", supplier: "Frutas y Verduras del Mercado", emoji: "🥑", trackExpiration: true, expDays: 3 },
+      { id: "i17", name: "Queso fresco", unit: "kg", current: 1.5, min: 2, critical: 1, optimal: 5, costCents: 2200, cat: "Lácteos y huevos", supplier: "Distribuidora La Despensa", emoji: "🧀", trackExpiration: true, expDays: 5 },
+      { id: "i18", name: "Mantequilla", unit: "kg", current: 2.2, min: 1, critical: 0.5, optimal: 4, costCents: 3200, cat: "Lácteos y huevos", supplier: "Distribuidora La Despensa", emoji: "🧈", trackExpiration: true, expDays: 14 },
+      { id: "i19", name: "Inca Kola 1.5L", unit: "unidad", current: 65, min: 40, critical: 20, optimal: 120, costCents: 750, cat: "Bebidas", supplier: "Backus Distribuciones", emoji: "🥤", trackExpiration: false },
+      { id: "i20", name: "Coca Cola personal", unit: "unidad", current: 95, min: 50, critical: 25, optimal: 150, costCents: 380, cat: "Bebidas", supplier: "Backus Distribuciones", emoji: "🥤", trackExpiration: false },
+      { id: "i21", name: "Cerveza Cusqueña", unit: "unidad", current: 85, min: 50, critical: 25, optimal: 150, costCents: 720, cat: "Bebidas", supplier: "Backus Distribuciones", emoji: "🍺", trackExpiration: false },
+      { id: "i22", name: "Agua mineral", unit: "unidad", current: 55, min: 40, critical: 20, optimal: 100, costCents: 220, cat: "Bebidas", supplier: "Backus Distribuciones", emoji: "💧", trackExpiration: false },
+      { id: "i23", name: "Ají panca pasta", unit: "kg", current: 4.5, min: 3, critical: 1, optimal: 10, costCents: 2400, cat: "Condimentos y salsas", supplier: "Distribuidora La Despensa", emoji: "🌶️", trackExpiration: false },
+      { id: "i24", name: "Aceite vegetal", unit: "l", current: 18, min: 10, critical: 5, optimal: 40, costCents: 980, cat: "Condimentos y salsas", supplier: "Distribuidora La Despensa", emoji: "🫒", trackExpiration: false },
+      { id: "i25", name: "Salsa BBQ", unit: "l", current: 4, min: 3, critical: 1, optimal: 8, costCents: 1800, cat: "Condimentos y salsas", supplier: "Distribuidora La Despensa", emoji: "🍯", trackExpiration: false },
+      { id: "i26", name: "Mayonesa", unit: "kg", current: 5.5, min: 4, critical: 2, optimal: 12, costCents: 1400, cat: "Condimentos y salsas", supplier: "Distribuidora La Despensa", emoji: "🫙", trackExpiration: true, expDays: 30 }
+    ];
+
+    const stockStatus = (i) => {
+      if (i.current <= i.critical) return { code: "critical", label: "CRÍTICO", color: "danger", bg: "bg-danger/10", text: "text-danger", border: "border-danger" };
+      if (i.current <= i.min) return { code: "low", label: "Stock bajo", color: "warn", bg: "bg-warn/10", text: "text-warn", border: "border-warn" };
+      return { code: "ok", label: "OK", color: "olive", bg: "bg-olive/10", text: "text-olive", border: "border-olive" };
+    };
+
+    const stockPct = (i) => Math.min(100, Math.round((i.current / i.optimal) * 100));
+
+    // P&L demo data (last 7 days)
+    const PNL_BY_DAY = [
+      { day: "Lun 25", revenue: 612400, cogs: 196100, margin: 416300 },
+      { day: "Mar 26", revenue: 542200, cogs: 174300, margin: 367900 },
+      { day: "Mie 27", revenue: 488900, cogs: 158600, margin: 330300 },
+      { day: "Jue 28", revenue: 736500, cogs: 232100, margin: 504400 },
+      { day: "Vie 29", revenue: 982300, cogs: 308400, margin: 673900 },
+      { day: "Sab 30", revenue: 1124800, cogs: 350200, margin: 774600 },
+      { day: "Dom 1", revenue: 968400, cogs: 305800, margin: 662600 }
+    ];
+    const PNL_BY_WAITER = [
+      { name: "María Quispe", color: "#A0322B", revenue: 428050, orders: 64, avgTicket: 6688, tipsPct: 12.5 },
+      { name: "Juan Cárdenas", color: "#C8941F", revenue: 394020, orders: 58, avgTicket: 6793, tipsPct: 9.8 },
+      { name: "Carlos Mendoza", color: "#2D7D5A", revenue: 212080, orders: 32, avgTicket: 6627, tipsPct: 11.2 }
+    ];
+    const PNL_BY_CATEGORY = [
+      { name: "Pollos a la Brasa", revenue: 384500, cogs: 96100, margin: 70.0, color: "#A0322B", emoji: "🍗" },
+      { name: "Parrillas", revenue: 218200, cogs: 78600, margin: 56.4, color: "#7E2820", emoji: "🍢" },
+      { name: "Para Compartir", revenue: 142800, cogs: 51400, margin: 49.5, color: "#C8941F", emoji: "🍤" },
+      { name: "Bebidas", revenue: 98500, cogs: 39000, margin: 56.5, color: "#7C3AED", emoji: "🥤" },
+      { name: "Postres", revenue: 64200, cogs: 18900, margin: 65.7, color: "#C4493A", emoji: "🍰" },
+      { name: "Acompañamientos", revenue: 38400, cogs: 12500, margin: 64.4, color: "#2D7D5A", emoji: "🍟" }
+    ];
+
+    const ALL_SUPPLIERS = [
+      { id: "s1", name: "Avícola San Fernando", contact: "Pedro Gómez", phone: "987 654 321", terms: "Crédito 15", days: ["Lun", "Jue"], autoOrder: true, ingredients: 2 },
+      { id: "s2", name: "Distribuidora La Despensa", contact: "Rosa Torres", phone: "999 111 222", terms: "Contado", days: ["Mar", "Vie"], autoOrder: true, ingredients: 12 },
+      { id: "s3", name: "Frutas y Verduras del Mercado", contact: "Don Wilmer", phone: "955 333 444", terms: "Contado", days: ["Lun-Sab"], autoOrder: false, ingredients: 8 },
+      { id: "s4", name: "Backus Distribuciones", contact: "Andrés Vega", phone: "988 555 777", terms: "Crédito 30", days: ["Mié"], autoOrder: true, ingredients: 4 }
+    ];
+
+    // ─────────────────────── ICONS ───────────────────────
+    const Icon = ({ name, size = 18, className = "" }) => {
+      const ics = {
+        home: <><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></>,
+        box: <><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></>,
+        camera: <><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></>,
+        chef: <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" />,
+        truck: <><rect x="1" y="3" width="15" height="13" /><polygon points="16 8 20 8 23 11 23 16 16 16 16 8" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></>,
+        chart: <><line x1="12" y1="20" x2="12" y2="10" /><line x1="18" y1="20" x2="18" y2="4" /><line x1="6" y1="20" x2="6" y2="16" /></>,
+        zap: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />,
+        cal: <><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></>,
+        clock: <><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></>,
+        plus: <><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></>,
+        minus: <line x1="5" y1="12" x2="19" y2="12" />,
+        x: <><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>,
+        check: <polyline points="20 6 9 17 4 12" />,
+        chevronRight: <polyline points="9 18 15 12 9 6" />,
+        chevronLeft: <polyline points="15 18 9 12 15 6" />,
+        chevronDown: <polyline points="6 9 12 15 18 9" />,
+        search: <><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></>,
+        alert: <><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12" y2="17" /></>,
+        sparkle: <><path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2z" /><path d="M5 15l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z" /></>,
+        trendUp: <><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></>,
+        trendDown: <><polyline points="23 18 13.5 8.5 8.5 13.5 1 6" /><polyline points="17 18 23 18 23 12" /></>,
+        cash: <><rect x="2" y="6" width="20" height="12" rx="2" /><circle cx="12" cy="12" r="2" /></>,
+        star: <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />,
+        gift: <><polyline points="20 12 20 22 4 22 4 12" /><rect x="2" y="7" width="20" height="5" /><line x1="12" y1="22" x2="12" y2="7" /><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" /><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" /></>,
+        users: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></>,
+        package: <><line x1="16.5" y1="9.4" x2="7.5" y2="4.21" /><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></>,
+        playCircle: <><circle cx="12" cy="12" r="10" /><polygon points="10 8 16 12 10 16 10 8" /></>,
+        edit: <><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></>,
+        refresh: <><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></>
+      };
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+          {ics[name]}
+        </svg>
+      );
+    };
+
+    // ─────────────────────── COMPONENTS ───────────────────────
+
+    function Sidebar({ active, setActive }) {
+      const sections = [
+        { id: "resumen", label: "Resumen", icon: "home", group: "today" },
+        { id: "alertas", label: "Alertas", icon: "alert", badge: 7, group: "today" },
+        { id: "inventario", label: "Inventario", icon: "box", group: "operar" },
+        { id: "conteo", label: "Conteo físico", icon: "camera", group: "operar" },
+        { id: "recetas", label: "Recetas", icon: "chef", group: "operar" },
+        { id: "proveedores", label: "Proveedores", icon: "truck", group: "comprar" },
+        { id: "compras", label: "Pedidos", icon: "package", group: "comprar" },
+        { id: "caducidad", label: "Caducidad", icon: "clock", group: "comprar" },
+        { id: "pnl", label: "P&L", icon: "chart", group: "analizar" },
+        { id: "campanas", label: "Campañas IA", icon: "sparkle", group: "analizar" }
+      ];
+      const groups = {
+        today: "HOY",
+        operar: "OPERAR",
+        comprar: "COMPRAR",
+        analizar: "ANALIZAR"
+      };
+      const grouped = {};
+      for (const s of sections) {
+        if (!grouped[s.group]) grouped[s.group] = [];
+        grouped[s.group].push(s);
+      }
+      return (
+        <aside className="w-60 bg-charcoal text-cream p-4 flex flex-col h-screen sticky top-0">
+          <div className="flex items-center gap-3 mb-6 px-2">
+            <div className="w-10 h-10 bg-clay rounded-xl flex items-center justify-center font-bold text-sm">LB</div>
+            <div>
+              <p className="font-display text-lg font-semibold leading-tight">La Brasa</p>
+              <p className="text-[11px] text-cream/50">ERP · Miraflores</p>
+            </div>
+          </div>
+          <nav className="flex-1 space-y-4">
+            {Object.entries(groups).map(([gid, gname]) => (
+              <div key={gid}>
+                <p className="text-[10px] uppercase tracking-wider text-cream/40 font-bold px-3 mb-1.5">{gname}</p>
+                {grouped[gid]?.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => setActive(s.id)}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition ${active === s.id ? 'bg-clay text-white' : 'text-cream/70 hover:bg-cream/5 hover:text-cream'}`}
+                  >
+                    <Icon name={s.icon} size={16} />
+                    <span className="flex-1 text-left">{s.label}</span>
+                    {s.badge > 0 && <span className="bg-danger text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{s.badge}</span>}
+                  </button>
+                ))}
+              </div>
+            ))}
+          </nav>
+          <div className="border-t border-cream/10 pt-3 mt-3">
+            <div className="flex items-center gap-3 px-2 py-2">
+              <div className="w-9 h-9 rounded-full bg-gold flex items-center justify-center font-bold text-charcoal">M</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate">{ME.name}</p>
+                <p className="text-[11px] text-cream/50">{ME.role}</p>
+              </div>
+            </div>
+            <a href="admin.html" className="text-[11px] text-cream/40 hover:text-cream/70 px-2">← Volver al panel</a>
+          </div>
+        </aside>
+      );
+    }
+
+    function HeroKpi({ label, value, sub, accent = "clay", icon, trend }) {
+      const colors = {
+        clay: "bg-clay/5 border-clay/20 text-clay",
+        olive: "bg-olive/5 border-olive/20 text-olive",
+        gold: "bg-gold/10 border-gold/30 text-gold",
+        danger: "bg-danger/5 border-danger/20 text-danger",
+        sky: "bg-sky/5 border-sky/20 text-sky"
+      };
+      return (
+        <div className={`rounded-2xl border-2 p-5 ${colors[accent]}`}>
+          <div className="flex items-start justify-between mb-2">
+            <p className="text-xs font-bold uppercase tracking-wider opacity-80">{label}</p>
+            {icon && (
+              <div className="w-8 h-8 rounded-lg bg-current/10 flex items-center justify-center">
+                <Icon name={icon} size={16} />
+              </div>
+            )}
+          </div>
+          <p className="font-display text-3xl font-bold text-ink leading-tight">{value}</p>
+          {sub && <p className="text-xs text-muted mt-1">{sub}</p>}
+          {trend && (
+            <div className="mt-2 inline-flex items-center gap-1 text-xs font-bold">
+              <Icon name={trend.up ? "trendUp" : "trendDown"} size={12} />
+              {trend.text}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function StockBar({ percent, status }) {
+      const color = status === "critical" ? "bg-danger" : status === "low" ? "bg-warn" : "bg-olive";
+      return (
+        <div className="h-2 bg-cream rounded-full overflow-hidden">
+          <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${percent}%` }}></div>
+        </div>
+      );
+    }
+
+    // ─────────────────────── RESUMEN ───────────────────────
+    function Resumen({ ingredients }) {
+      const totalValueCents = ingredients.reduce((s, i) => s + Math.round(i.current * i.costCents), 0);
+      const critical = ingredients.filter(i => stockStatus(i).code === "critical").length;
+      const low = ingredients.filter(i => stockStatus(i).code === "low").length;
+      const expiring = ingredients.filter(i => i.trackExpiration && i.expDays <= 3).length;
+      const todayRevenue = 968400;
+      const todayCogs = 305800;
+      const todayMargin = todayRevenue - todayCogs;
+      const marginPct = (todayMargin / (todayRevenue / 1.18)) * 100;
+
+      return (
+        <div className="space-y-6">
+          <div>
+            <h1 className="font-display text-3xl font-semibold">¡Buenos días, Marcos!</h1>
+            <p className="text-muted mt-1">Esto es lo que necesitas saber del negocio hoy.</p>
+          </div>
+
+          {/* Top hero KPIs */}
+          <div className="grid grid-cols-4 gap-4">
+            <HeroKpi label="Ventas hoy" value={PEN(todayRevenue)} icon="cash" accent="clay" trend={{ up: true, text: "+12.4% vs ayer" }} />
+            <HeroKpi label="Margen" value={`${marginPct.toFixed(1)}%`} sub={PEN(todayMargin)} icon="trendUp" accent="olive" />
+            <HeroKpi label="Valor inventario" value={PEN(totalValueCents)} sub={`${ingredients.length} insumos en stock`} icon="box" accent="gold" />
+            <HeroKpi label="Necesitan atención" value={critical + low + expiring} sub={`${critical} críticos · ${low} bajos · ${expiring} por vencer`} icon="alert" accent="danger" />
+          </div>
+
+          {/* Action cards */}
+          <div className="grid grid-cols-3 gap-4">
+            <ActionCard
+              icon="camera" color="clay"
+              title="Hacer conteo con foto"
+              desc="Toma fotos de tus despensas y la IA cuenta los insumos por ti"
+              cta="Empezar conteo"
+            />
+            <ActionCard
+              icon="package" color="gold"
+              title="Generar pedidos a proveedores"
+              desc={`${critical} insumos críticos esperan reposición. Lo hacemos automático.`}
+              cta="Generar pedidos"
+              urgent={critical > 0}
+            />
+            <ActionCard
+              icon="sparkle" color="olive"
+              title="Crear campañas con IA"
+              desc="La IA analiza tu data y propone campañas para vender más"
+              cta="Generar sugerencias"
+            />
+          </div>
+
+          {/* Bottom: ingredient health overview */}
+          <div className="bg-paper border border-border rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="font-display text-xl font-semibold">Salud del inventario</h2>
+                <p className="text-xs text-muted mt-0.5">Por categoría · {ingredients.length} insumos</p>
+              </div>
+              <button className="text-sm text-clay font-semibold">Ver todo →</button>
+            </div>
+            <div className="grid grid-cols-7 gap-3">
+              {Object.entries(CAT_VISUAL).map(([catName, viz]) => {
+                const items = ingredients.filter(i => i.cat === catName);
+                if (items.length === 0) return null;
+                const okCount = items.filter(i => stockStatus(i).code === "ok").length;
+                const lowCount = items.filter(i => stockStatus(i).code === "low").length;
+                const critCount = items.filter(i => stockStatus(i).code === "critical").length;
+                const allOk = critCount === 0 && lowCount === 0;
+                return (
+                  <button key={catName} className="p-3 bg-cream rounded-xl text-center hover:shadow-soft transition">
+                    <div className="text-3xl">{viz.emoji}</div>
+                    <p className="font-semibold text-xs mt-1 leading-tight">{catName}</p>
+                    <p className="text-[10px] text-muted mt-0.5">{items.length} items</p>
+                    <div className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold">
+                      {allOk ? (
+                        <span className="text-olive">✓ OK</span>
+                      ) : (
+                        <span className={critCount > 0 ? "text-danger" : "text-warn"}>
+                          ⚠ {critCount + lowCount} alertas
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Last 7 days chart */}
+          <div className="bg-paper border border-border rounded-2xl p-6">
+            <h2 className="font-display text-xl font-semibold mb-4">Margen últimos 7 días</h2>
+            <div className="flex items-end gap-2 h-48">
+              {PNL_BY_DAY.map((d, i) => {
+                const max = Math.max(...PNL_BY_DAY.map(x => x.revenue));
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
+                    <span className="text-[10px] text-muted opacity-0 group-hover:opacity-100 font-bold">{PENk(d.margin)}</span>
+                    <div className="w-full flex-1 relative bg-cream rounded-t-lg overflow-hidden flex flex-col-reverse grow-bar">
+                      <div className="w-full bg-clay" style={{ height: `${(d.margin / max) * 100}%` }}></div>
+                      <div className="w-full bg-clay/30 absolute bottom-0" style={{ height: `${(d.revenue / max) * 100}%` }}></div>
+                    </div>
+                    <span className="text-[10px] text-muted">{d.day}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex items-center gap-4 mt-4 text-xs text-muted">
+              <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-clay"></span> Margen bruto</span>
+              <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-clay/30"></span> Ventas</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function ActionCard({ icon, color, title, desc, cta, urgent }) {
+      const cmap = { clay: "bg-clay text-white", gold: "bg-gold text-charcoal", olive: "bg-olive text-white" };
+      return (
+        <div className={`bg-paper border-2 rounded-2xl p-5 hover:shadow-card transition ${urgent ? 'border-danger animate-pulse' : 'border-border'}`}>
+          <div className={`w-12 h-12 rounded-xl ${cmap[color]} flex items-center justify-center`}>
+            <Icon name={icon} size={22} />
+          </div>
+          <h3 className="font-display text-lg font-semibold mt-3">{title}</h3>
+          <p className="text-xs text-muted mt-1 leading-relaxed">{desc}</p>
+          <button className={`mt-4 inline-flex items-center gap-1 text-sm font-bold ${urgent ? 'text-danger' : `text-${color}`}`}>
+            {cta} <Icon name="chevronRight" size={14} />
+          </button>
+        </div>
+      );
+    }
+
+    // ─────────────────────── INVENTARIO ───────────────────────
+    function Inventario({ ingredients, setIngredients }) {
+      const [search, setSearch] = useState("");
+      const [filterCat, setFilterCat] = useState("all");
+      const [filterStatus, setFilterStatus] = useState("all"); // all | critical | low | ok
+      const [selected, setSelected] = useState(null);
+
+      const cats = ["all", ...Object.keys(CAT_VISUAL)];
+
+      const filtered = ingredients.filter(i => {
+        if (filterCat !== "all" && i.cat !== filterCat) return false;
+        if (search && !i.name.toLowerCase().includes(search.toLowerCase())) return false;
+        if (filterStatus !== "all" && stockStatus(i).code !== filterStatus) return false;
+        return true;
+      });
+
+      const counts = {
+        all: ingredients.length,
+        critical: ingredients.filter(i => stockStatus(i).code === "critical").length,
+        low: ingredients.filter(i => stockStatus(i).code === "low").length,
+        ok: ingredients.filter(i => stockStatus(i).code === "ok").length
+      };
+
+      return (
+        <div className="space-y-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="font-display text-3xl font-semibold">Inventario</h1>
+              <p className="text-muted mt-1">Cada tarjeta muestra el stock actual de un insumo. Toca para ver detalle.</p>
+            </div>
+            <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-clay text-white rounded-xl font-semibold text-sm">
+              <Icon name="plus" size={16} /> Nuevo insumo
+            </button>
+          </div>
+
+          {/* Status filter pills (very visual) */}
+          <div className="flex gap-3">
+            {[
+              { id: "all", label: "Todos", color: "ink", n: counts.all },
+              { id: "critical", label: "🚨 Crítico · pedir ya", color: "danger", n: counts.critical },
+              { id: "low", label: "⚠️ Stock bajo", color: "warn", n: counts.low },
+              { id: "ok", label: "✓ OK", color: "olive", n: counts.ok }
+            ].map(f => (
+              <button
+                key={f.id}
+                onClick={() => setFilterStatus(f.id)}
+                className={`flex-1 p-4 rounded-xl text-left transition border-2 ${filterStatus === f.id ? `border-${f.color === 'ink' ? 'charcoal' : f.color} bg-${f.color === 'ink' ? 'charcoal' : f.color}/5` : 'border-border bg-paper hover:border-charcoal/30'}`}
+              >
+                <p className="font-display text-3xl font-bold">{f.n}</p>
+                <p className="text-xs font-semibold mt-1">{f.label}</p>
+              </button>
+            ))}
+          </div>
+
+          {/* Search and category filter */}
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar insumo..."
+                className="w-full pl-10 pr-4 py-3 bg-paper border border-border rounded-xl text-sm focus:outline-none focus:border-clay"
+              />
+            </div>
+            <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+              {cats.map(c => (
+                <button
+                  key={c}
+                  onClick={() => setFilterCat(c)}
+                  className={`shrink-0 px-3 py-2 rounded-lg text-xs font-semibold transition ${filterCat === c ? 'bg-charcoal text-white' : 'bg-paper border border-border'}`}
+                >
+                  {c === "all" ? "Todas" : (
+                    <>
+                      <span className="mr-1">{CAT_VISUAL[c]?.emoji}</span>
+                      {c}
+                    </>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Photo-first ingredient cards (Sortly style) */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filtered.map(i => <IngredientCard key={i.id} ing={i} onClick={() => setSelected(i)} />)}
+          </div>
+
+          {filtered.length === 0 && (
+            <div className="text-center py-16 bg-paper rounded-2xl border border-border">
+              <p className="font-display text-xl">Sin resultados</p>
+              <p className="text-sm text-muted mt-1">Ajusta los filtros o búsqueda</p>
+            </div>
+          )}
+
+          {selected && <IngredientDetail ing={selected} onClose={() => setSelected(null)} onAdjust={(newQty, reason) => {
+            setIngredients(prev => prev.map(i => i.id === selected.id ? { ...i, current: newQty } : i));
+            setSelected(null);
+          }} />}
+        </div>
+      );
+    }
+
+    function IngredientCard({ ing, onClick }) {
+      const status = stockStatus(ing);
+      const pct = stockPct(ing);
+      const viz = CAT_VISUAL[ing.cat];
+      return (
+        <button
+          onClick={onClick}
+          className={`bg-paper border-2 ${status.code === 'critical' ? 'border-danger/40' : status.code === 'low' ? 'border-warn/40' : 'border-border'} rounded-2xl p-4 text-left hover:shadow-card transition group`}
+        >
+          {/* Photo / Emoji area */}
+          <div className="relative h-32 rounded-xl flex items-center justify-center mb-3" style={{ background: viz?.bg }}>
+            <span className="text-7xl">{ing.emoji}</span>
+            {status.code !== 'ok' && (
+              <span className={`absolute top-2 left-2 px-2 py-0.5 ${status.bg} ${status.text} text-[10px] font-bold rounded-full uppercase tracking-wider`}>
+                {status.label}
+              </span>
+            )}
+            {ing.trackExpiration && (
+              <span className="absolute top-2 right-2 w-7 h-7 bg-paper/80 rounded-full flex items-center justify-center" title="Producto perecible">
+                <Icon name="clock" size={12} className="text-muted" />
+              </span>
+            )}
+          </div>
+
+          {/* Title + supplier */}
+          <p className="font-semibold text-sm leading-tight">{ing.name}</p>
+          <p className="text-[11px] text-muted mt-0.5 truncate">{ing.supplier}</p>
+
+          {/* Stock visual */}
+          <div className="mt-3">
+            <div className="flex items-baseline justify-between">
+              <span className="font-mono text-xl font-bold">{ing.current}</span>
+              <span className="text-[10px] text-muted">de {ing.optimal} {ing.unit}</span>
+            </div>
+            <div className="mt-1.5">
+              <StockBar percent={pct} status={status.code} />
+            </div>
+          </div>
+
+          {/* Cost */}
+          <div className="mt-2.5 flex items-center justify-between text-[11px]">
+            <span className="text-muted">Valor</span>
+            <span className="font-bold text-ink">{PEN(ing.current * ing.costCents)}</span>
+          </div>
+        </button>
+      );
+    }
+
+    function IngredientDetail({ ing, onClose, onAdjust }) {
+      const [qty, setQty] = useState(ing.current);
+      const [reason, setReason] = useState("");
+      const status = stockStatus(ing);
+      const viz = CAT_VISUAL[ing.cat];
+      return (
+        <div className="fixed inset-0 z-50 bg-charcoal/40 anim-fade-in flex items-center justify-center p-6" onClick={onClose}>
+          <div onClick={(e) => e.stopPropagation()} className="bg-paper rounded-3xl max-w-2xl w-full max-h-[92vh] overflow-y-auto no-scrollbar">
+            <div className="relative h-48 flex items-center justify-center" style={{ background: viz?.bg }}>
+              <span className="text-9xl">{ing.emoji}</span>
+              <button onClick={onClose} className="absolute top-4 right-4 w-10 h-10 rounded-full bg-paper/95 flex items-center justify-center">
+                <Icon name="x" size={18} />
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-xs uppercase tracking-wider text-muted font-semibold">{ing.cat}</p>
+              <h2 className="font-display text-3xl font-bold mt-1">{ing.name}</h2>
+              <p className="text-sm text-muted">Proveedor: <span className="font-semibold text-ink">{ing.supplier}</span></p>
+
+              <div className="mt-5 grid grid-cols-3 gap-3">
+                <div className="bg-cream rounded-xl p-4">
+                  <p className="text-[10px] text-muted uppercase tracking-wider font-semibold">Stock actual</p>
+                  <p className="font-display text-3xl font-bold mt-1">{ing.current}</p>
+                  <p className="text-xs text-muted">{ing.unit}</p>
+                </div>
+                <div className="bg-cream rounded-xl p-4">
+                  <p className="text-[10px] text-muted uppercase tracking-wider font-semibold">Costo unitario</p>
+                  <p className="font-display text-3xl font-bold mt-1">{PEN(ing.costCents)}</p>
+                  <p className="text-xs text-muted">por {ing.unit}</p>
+                </div>
+                <div className="bg-cream rounded-xl p-4">
+                  <p className="text-[10px] text-muted uppercase tracking-wider font-semibold">Valor en stock</p>
+                  <p className="font-display text-3xl font-bold mt-1">{PEN(ing.current * ing.costCents)}</p>
+                </div>
+              </div>
+
+              <div className="mt-5 bg-cream rounded-xl p-4">
+                <p className="text-xs font-bold mb-2">Niveles configurados</p>
+                <StockBar percent={stockPct(ing)} status={status.code} />
+                <div className="flex justify-between mt-2 text-[11px] text-muted">
+                  <span>🚨 Crítico: {ing.critical}</span>
+                  <span>⚠️ Mínimo: {ing.min}</span>
+                  <span>✓ Óptimo: {ing.optimal}</span>
+                </div>
+              </div>
+
+              <div className="mt-5 bg-paper border border-border rounded-xl p-4">
+                <p className="text-sm font-bold">Ajustar stock manual (merma o sobrante)</p>
+                <p className="text-xs text-muted mt-0.5">Esto registra un movimiento en el kardex.</p>
+                <div className="mt-3 flex items-center gap-3">
+                  <div className="inline-flex items-center bg-cream rounded-full">
+                    <button onClick={() => setQty(Math.max(0, qty - 0.5))} className="w-10 h-10 text-clay font-bold"><Icon name="minus" size={14} className="mx-auto" /></button>
+                    <span className="w-16 text-center font-mono font-bold text-lg">{qty.toFixed(1)}</span>
+                    <button onClick={() => setQty(qty + 0.5)} className="w-10 h-10 text-clay font-bold"><Icon name="plus" size={14} className="mx-auto" /></button>
+                  </div>
+                  <input
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    placeholder="Motivo (ej: merma, daño, sobrante)"
+                    className="flex-1 px-3 py-2.5 bg-cream border border-border rounded-lg text-sm"
+                  />
+                  <button
+                    onClick={() => onAdjust(qty, reason)}
+                    disabled={qty === ing.current || !reason}
+                    className={`px-5 py-2.5 rounded-xl font-semibold text-sm ${qty !== ing.current && reason ? 'bg-clay text-white' : 'bg-border text-muted cursor-not-allowed'}`}
+                  >
+                    Guardar
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-5">
+                <button className="w-full py-3 bg-cream border border-border rounded-xl text-sm font-semibold text-ink hover:bg-paper transition">
+                  Ver historial de movimientos
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─────────────────────── CONTEO FÍSICO (PHOTO AI) ───────────────────────
+    function ConteoFisico({ ingredients }) {
+      const [step, setStep] = useState("intro"); // intro | photo | results | manual
+      const [photoData, setPhotoData] = useState(null);
+      const [aiResults, setAiResults] = useState(null);
+      const [loading, setLoading] = useState(false);
+
+      const handleFile = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          setPhotoData(reader.result);
+          // Simulate AI processing (in real: POST to /api/inventory/counts/photo)
+          setStep("photo");
+          setLoading(true);
+          setTimeout(() => {
+            // Mock AI response
+            setAiResults({
+              counts: ingredients.slice(0, 6).map(i => ({
+                ingredientId: i.id,
+                ingredientName: i.name,
+                estimatedQty: Math.round((i.current * (0.85 + Math.random() * 0.3)) * 10) / 10,
+                unit: i.unit,
+                confidence: ["high", "medium", "low"][Math.floor(Math.random() * 3)],
+                reasoning: "Identificado en la imagen"
+              })),
+              notes: "Foto analizada · 6 insumos identificados"
+            });
+            setLoading(false);
+            setStep("results");
+          }, 2200);
+        };
+        reader.readAsDataURL(file);
+      };
+
+      if (step === "intro") {
+        return (
+          <div className="space-y-6">
+            <div>
+              <h1 className="font-display text-3xl font-semibold">Conteo físico de inventario</h1>
+              <p className="text-muted mt-1">Cuenta tus insumos al final del día. Hay dos formas: rápida con foto IA, o manual.</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-paper border-2 border-clay rounded-2xl p-6 hover:shadow-card transition">
+                <div className="w-14 h-14 bg-clay rounded-2xl flex items-center justify-center text-white">
+                  <Icon name="camera" size={26} />
+                </div>
+                <h2 className="font-display text-2xl font-semibold mt-4">📸 Conteo con foto IA</h2>
+                <p className="text-sm text-muted mt-2 leading-relaxed">Toma una foto de tu despensa, refrigerador o estante. La IA identifica los insumos y estima la cantidad. Tú confirmas.</p>
+                <ul className="mt-3 space-y-1.5 text-xs">
+                  <li className="inline-flex items-center gap-1.5"><Icon name="check" size={12} className="text-olive" />4× más rápido que conteo manual</li>
+                  <li className="inline-flex items-center gap-1.5"><Icon name="check" size={12} className="text-olive" />Funciona con celular o tablet</li>
+                  <li className="inline-flex items-center gap-1.5"><Icon name="check" size={12} className="text-olive" />Tú revisas antes de guardar</li>
+                </ul>
+                <label className="mt-4 inline-flex items-center justify-center w-full gap-2 py-3 bg-clay text-white font-semibold rounded-xl cursor-pointer">
+                  <Icon name="camera" size={18} /> Tomar / subir foto
+                  <input type="file" accept="image/*" capture="environment" onChange={handleFile} className="hidden" />
+                </label>
+              </div>
+
+              <div className="bg-paper border-2 border-border rounded-2xl p-6 hover:shadow-card transition">
+                <div className="w-14 h-14 bg-cream border border-border rounded-2xl flex items-center justify-center">
+                  <Icon name="edit" size={26} className="text-muted" />
+                </div>
+                <h2 className="font-display text-2xl font-semibold mt-4">✋ Conteo manual</h2>
+                <p className="text-sm text-muted mt-2 leading-relaxed">Lista completa de insumos. Vas tachando uno por uno. Útil para inventarios mensuales detallados.</p>
+                <ul className="mt-3 space-y-1.5 text-xs">
+                  <li className="inline-flex items-center gap-1.5"><Icon name="check" size={12} className="text-olive" />100% preciso si tienes tiempo</li>
+                  <li className="inline-flex items-center gap-1.5"><Icon name="check" size={12} className="text-olive" />Detalle por categoría</li>
+                  <li className="inline-flex items-center gap-1.5"><Icon name="check" size={12} className="text-olive" />Compara esperado vs real</li>
+                </ul>
+                <button onClick={() => setStep("manual")} className="mt-4 w-full py-3 bg-paper border-2 border-charcoal text-charcoal font-semibold rounded-xl">
+                  Empezar conteo manual
+                </button>
+              </div>
+            </div>
+
+            {/* Recent counts */}
+            <div className="bg-paper border border-border rounded-2xl p-6">
+              <h2 className="font-display text-xl font-semibold mb-3">Conteos recientes</h2>
+              <div className="space-y-2">
+                {[
+                  { date: "Ayer 23:45", scope: "Inventario completo", lines: 31, variance: -245.50, user: "Marcos V." },
+                  { date: "Vie 22:30", scope: "Solo perecibles", lines: 12, variance: -88.00, user: "Marcos V." },
+                  { date: "Mié 23:15", scope: "Bebidas", lines: 8, variance: 0, user: "Lucía V." }
+                ].map((c, i) => (
+                  <div key={i} className="flex items-center gap-4 p-3 bg-cream rounded-xl">
+                    <div className="w-10 h-10 bg-paper border border-border rounded-lg flex items-center justify-center">
+                      <Icon name="check" size={16} className="text-olive" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold">{c.scope}</p>
+                      <p className="text-[11px] text-muted">{c.date} · {c.lines} insumos · {c.user}</p>
+                    </div>
+                    <div className={`text-right ${c.variance < 0 ? 'text-danger' : c.variance > 0 ? 'text-olive' : 'text-muted'}`}>
+                      <p className="font-mono font-bold text-sm">{c.variance >= 0 ? '+' : ''}S/ {c.variance.toFixed(2)}</p>
+                      <p className="text-[10px]">variance</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (step === "photo") {
+        return (
+          <div className="space-y-5">
+            <div className="flex items-center gap-2">
+              <button onClick={() => setStep("intro")} className="p-2 rounded-full hover:bg-paper"><Icon name="chevronLeft" size={18} /></button>
+              <h1 className="font-display text-2xl font-semibold">Procesando tu foto...</h1>
+            </div>
+
+            {photoData && (
+              <div className="bg-paper border border-border rounded-2xl overflow-hidden">
+                <img src={photoData} alt="Inventory" className="w-full max-h-[480px] object-cover" />
+              </div>
+            )}
+
+            {loading && (
+              <div className="bg-clay/5 border border-clay/30 rounded-2xl p-6 text-center">
+                <div className="inline-flex items-center gap-3 text-clay font-semibold">
+                  <div className="w-6 h-6 border-3 border-clay border-t-transparent rounded-full animate-spin"></div>
+                  La IA está identificando los insumos...
+                </div>
+                <p className="text-xs text-muted mt-2">Suele tomar 5-10 segundos</p>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      if (step === "results" && aiResults) {
+        return (
+          <div className="space-y-5">
+            <div>
+              <h1 className="font-display text-3xl font-semibold">Resultados del conteo IA</h1>
+              <p className="text-muted mt-1">{aiResults.notes}. Revisa y ajusta antes de guardar.</p>
+            </div>
+
+            <div className="bg-clay/5 border border-clay/20 rounded-xl p-4 inline-flex items-start gap-3">
+              <Icon name="sparkle" size={18} className="text-clay shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold">Tip</p>
+                <p className="text-xs text-muted">La IA es excelente para conteos rápidos pero no perfecta. Ajusta cualquier valor que no coincida con lo real antes de guardar.</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {aiResults.counts.map((c, i) => {
+                const ing = ingredients.find(x => x.id === c.ingredientId);
+                if (!ing) return null;
+                const variance = c.estimatedQty - ing.current;
+                return (
+                  <div key={i} className="bg-paper border border-border rounded-2xl p-4 flex items-center gap-4">
+                    <div className="text-5xl">{ing.emoji}</div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold">{ing.name}</p>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${c.confidence === 'high' ? 'bg-olive/10 text-olive' : c.confidence === 'medium' ? 'bg-warn/10 text-warn' : 'bg-danger/10 text-danger'}`}>
+                          IA: {c.confidence === 'high' ? 'Alta' : c.confidence === 'medium' ? 'Media' : 'Baja'} confianza
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-muted">{c.reasoning}</p>
+                      <div className="mt-2 grid grid-cols-3 gap-3 text-xs">
+                        <div>
+                          <p className="text-muted">Sistema</p>
+                          <p className="font-mono font-bold">{ing.current} {ing.unit}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted">IA estimó</p>
+                          <p className="font-mono font-bold">{c.estimatedQty} {ing.unit}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted">Diferencia</p>
+                          <p className={`font-mono font-bold ${variance < 0 ? 'text-danger' : variance > 0 ? 'text-olive' : 'text-ink'}`}>
+                            {variance >= 0 ? '+' : ''}{variance.toFixed(1)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <input
+                      type="number"
+                      defaultValue={c.estimatedQty}
+                      step="0.1"
+                      className="w-20 px-2 py-1.5 bg-cream border border-border rounded-lg text-center font-mono font-bold"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex gap-3">
+              <button onClick={() => setStep("intro")} className="flex-1 py-3 bg-paper border border-border rounded-xl font-semibold">Cancelar</button>
+              <button className="flex-1 py-3 bg-clay text-white rounded-xl font-semibold">Guardar conteo</button>
+            </div>
+          </div>
+        );
+      }
+
+      // Manual count
+      return (
+        <div className="space-y-5">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setStep("intro")} className="p-2 rounded-full hover:bg-paper"><Icon name="chevronLeft" size={18} /></button>
+            <h1 className="font-display text-2xl font-semibold">Conteo manual</h1>
+          </div>
+
+          <div className="bg-paper border border-border rounded-2xl divide-y divide-border">
+            {ingredients.slice(0, 8).map(i => (
+              <div key={i.id} className="flex items-center gap-4 p-4">
+                <div className="text-3xl">{i.emoji}</div>
+                <div className="flex-1">
+                  <p className="font-semibold text-sm">{i.name}</p>
+                  <p className="text-[11px] text-muted">Sistema: <span className="font-mono">{i.current} {i.unit}</span></p>
+                </div>
+                <input
+                  type="number"
+                  step="0.1"
+                  defaultValue={i.current}
+                  className="w-24 px-3 py-2 bg-cream border border-border rounded-lg text-center font-mono font-bold"
+                  placeholder={`${i.unit}`}
+                />
+              </div>
+            ))}
+          </div>
+
+          <button className="w-full py-4 bg-clay text-white rounded-xl font-semibold">Completar conteo (8 insumos)</button>
+        </div>
+      );
+    }
+
+    // ─────────────────────── RECETAS ───────────────────────
+    function Recetas() {
+      const recipes = [
+        { menu: "1/4 Pollo a la Brasa", price: 2290, costCents: 730, ingredients: 4, foodCostPct: 31.9 },
+        { menu: "1/2 Pollo a la Brasa", price: 3890, costCents: 1180, ingredients: 4, foodCostPct: 30.3 },
+        { menu: "Pollo Entero", price: 6590, costCents: 2070, ingredients: 4, foodCostPct: 31.4 },
+        { menu: "Anticuchos de Corazón", price: 2800, costCents: 980, ingredients: 4, foodCostPct: 35.0 },
+        { menu: "Parrilla Mixta", price: 4200, costCents: 1490, ingredients: 5, foodCostPct: 35.5 },
+        { menu: "Salchipapa Familiar", price: 2500, costCents: 920, ingredients: 4, foodCostPct: 36.8 },
+        { menu: "Ensalada César", price: 2400, costCents: 750, ingredients: 3, foodCostPct: 31.3 },
+        { menu: "Suspiro a la Limeña", price: 1400, costCents: 0, ingredients: 0, foodCostPct: 0, missing: true }
+      ];
+
+      return (
+        <div className="space-y-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="font-display text-3xl font-semibold">Recetas</h1>
+              <p className="text-muted mt-1">Cada plato del menú vinculado con sus insumos. El sistema descuenta inventario al servir.</p>
+            </div>
+            <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-clay text-white rounded-xl font-semibold text-sm">
+              <Icon name="plus" size={16} /> Nueva receta
+            </button>
+          </div>
+
+          {/* Coverage banner */}
+          <div className="bg-paper border-2 border-olive/30 rounded-2xl p-5 flex items-center gap-4">
+            <div className="w-14 h-14 bg-olive/10 rounded-xl flex items-center justify-center text-olive">
+              <Icon name="check" size={26} />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-muted">Cobertura de recetas</p>
+              <p className="font-display text-2xl font-bold">87.5% (28 de 32 platos)</p>
+              <div className="mt-2 h-2 bg-cream rounded-full overflow-hidden">
+                <div className="h-full bg-olive" style={{ width: "87.5%" }}></div>
+              </div>
+            </div>
+            <button className="text-sm text-clay font-semibold">Completar 4 faltantes →</button>
+          </div>
+
+          {/* Recipe cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+            {recipes.map((r, i) => (
+              <div key={i} className={`bg-paper border-2 rounded-2xl p-4 ${r.missing ? 'border-warn/40 bg-warn/5' : 'border-border'}`}>
+                <div className="flex items-start justify-between">
+                  <h3 className="font-display text-lg font-semibold flex-1 leading-tight">{r.menu}</h3>
+                  {!r.missing && <span className="text-[10px] bg-olive/10 text-olive font-bold px-2 py-0.5 rounded uppercase">{r.ingredients} ing.</span>}
+                  {r.missing && <span className="text-[10px] bg-warn/10 text-warn font-bold px-2 py-0.5 rounded uppercase">Sin receta</span>}
+                </div>
+
+                {!r.missing ? (
+                  <>
+                    <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                      <div className="bg-cream rounded-lg p-2">
+                        <p className="text-[10px] text-muted">Precio</p>
+                        <p className="font-display font-bold">{PEN(r.price)}</p>
+                      </div>
+                      <div className="bg-cream rounded-lg p-2">
+                        <p className="text-[10px] text-muted">Costo</p>
+                        <p className="font-display font-bold">{PEN(r.costCents)}</p>
+                      </div>
+                      <div className="bg-cream rounded-lg p-2">
+                        <p className="text-[10px] text-muted">Food cost</p>
+                        <p className={`font-display font-bold ${r.foodCostPct > 35 ? 'text-warn' : 'text-olive'}`}>{r.foodCostPct}%</p>
+                      </div>
+                    </div>
+                    <div className="mt-2.5 flex items-center justify-between text-xs">
+                      <span className="text-muted">Margen unitario</span>
+                      <span className="font-bold text-olive">{PEN(r.price - r.costCents)}</span>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted mt-2">Define los ingredientes para que se descuente del inventario al vender.</p>
+                )}
+
+                <button className="mt-3 w-full py-2 text-xs font-semibold rounded-lg bg-cream hover:bg-paper border border-border">
+                  {r.missing ? "+ Definir receta" : "Editar receta"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ─────────────────────── PROVEEDORES ───────────────────────
+    function Proveedores() {
+      return (
+        <div className="space-y-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="font-display text-3xl font-semibold">Proveedores</h1>
+              <p className="text-muted mt-1">Quién te abastece de cada insumo, días de entrega y configuración de auto-pedidos.</p>
+            </div>
+            <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-clay text-white rounded-xl font-semibold text-sm">
+              <Icon name="plus" size={16} /> Nuevo proveedor
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            {ALL_SUPPLIERS.map(s => (
+              <div key={s.id} className="bg-paper border border-border rounded-2xl p-5">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="font-display text-lg font-semibold">{s.name}</h3>
+                    <p className="text-sm text-muted mt-0.5">{s.contact} · {s.phone}</p>
+                  </div>
+                  {s.autoOrder && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-clay/10 text-clay text-[10px] font-bold rounded-full">
+                      <Icon name="zap" size={10} /> Auto-pedido
+                    </span>
+                  )}
+                </div>
+                <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+                  <div>
+                    <p className="text-[10px] text-muted uppercase tracking-wider">Insumos</p>
+                    <p className="font-display text-2xl font-bold mt-0.5">{s.ingredients}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted uppercase tracking-wider">Pago</p>
+                    <p className="font-semibold text-sm mt-1">{s.terms}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted uppercase tracking-wider">Entrega</p>
+                    <p className="font-semibold text-sm mt-1">{s.days.join(", ")}</p>
+                  </div>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <button className="py-2 bg-cream border border-border rounded-lg text-xs font-semibold">Ver insumos</button>
+                  <button className="py-2 bg-cream border border-border rounded-lg text-xs font-semibold">Editar</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ─────────────────────── PEDIDOS A PROVEEDORES ───────────────────────
+    function Compras({ ingredients }) {
+      const critical = ingredients.filter(i => stockStatus(i).code === "critical");
+      const low = ingredients.filter(i => stockStatus(i).code === "low");
+
+      // Group by supplier
+      const bySupplier = {};
+      [...critical, ...low].forEach(i => {
+        if (!bySupplier[i.supplier]) bySupplier[i.supplier] = [];
+        bySupplier[i.supplier].push(i);
+      });
+
+      const draftPos = [
+        { id: "po-1", supplier: "Avícola San Fernando", lines: 2, totalCents: 134000, status: "DRAFT", auto: true, expectedDelivery: "Mañana" },
+        { id: "po-2", supplier: "Distribuidora La Despensa", lines: 4, totalCents: 89400, status: "DRAFT", auto: true, expectedDelivery: "Martes" }
+      ];
+
+      const sentPos = [
+        { id: "po-3", supplier: "Backus Distribuciones", lines: 3, totalCents: 213600, status: "SENT", expectedDelivery: "Miércoles" },
+        { id: "po-4", supplier: "Frutas y Verduras", lines: 6, totalCents: 45200, status: "PARTIAL", expectedDelivery: "Hoy", received: "4 de 6 líneas" }
+      ];
+
+      return (
+        <div className="space-y-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="font-display text-3xl font-semibold">Pedidos a proveedores</h1>
+              <p className="text-muted mt-1">Generación automática cuando hay insumos críticos.</p>
+            </div>
+            <button className="inline-flex items-center gap-2 px-5 py-3 bg-clay hover:bg-clay-dark text-white rounded-xl font-semibold">
+              <Icon name="zap" size={16} /> Auto-generar pedidos
+            </button>
+          </div>
+
+          {/* Suggested auto-pos */}
+          <div className="bg-clay/5 border-2 border-clay/30 rounded-2xl p-5">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-10 h-10 bg-clay text-white rounded-xl flex items-center justify-center">
+                <Icon name="zap" size={18} />
+              </div>
+              <div>
+                <h2 className="font-display text-xl font-semibold">Pedidos sugeridos por el sistema</h2>
+                <p className="text-sm text-muted">{Object.keys(bySupplier).length} proveedores tienen insumos críticos / bajos. Revísalos antes de enviar.</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {draftPos.map(po => (
+                <div key={po.id} className="bg-paper border border-border rounded-xl p-4 flex items-center gap-4">
+                  <div className="w-10 h-10 bg-clay/10 rounded-lg flex items-center justify-center text-clay">
+                    <Icon name="package" size={18} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold">{po.supplier}</p>
+                      {po.auto && <span className="text-[10px] bg-clay/10 text-clay font-bold px-1.5 py-0.5 rounded">AUTO</span>}
+                    </div>
+                    <p className="text-[11px] text-muted">{po.lines} líneas · entrega {po.expectedDelivery}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-display font-bold">{PEN(po.totalCents)}</p>
+                    <p className="text-[10px] text-muted">total estimado</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button className="px-3 py-1.5 bg-cream border border-border rounded-lg text-xs font-semibold">Ver</button>
+                    <button className="px-3 py-1.5 bg-clay text-white rounded-lg text-xs font-semibold">Enviar</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Sent / In transit */}
+          <div className="bg-paper border border-border rounded-2xl p-5">
+            <h2 className="font-display text-xl font-semibold mb-3">En camino</h2>
+            <div className="space-y-2">
+              {sentPos.map(po => (
+                <div key={po.id} className="flex items-center gap-4 p-3 bg-cream rounded-xl">
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${po.status === 'PARTIAL' ? 'bg-warn/10 text-warn' : 'bg-sky/10 text-sky'}`}>
+                    <Icon name="truck" size={16} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm">{po.supplier}</p>
+                    <p className="text-[11px] text-muted">{po.received ?? `${po.lines} líneas`} · entrega {po.expectedDelivery}</p>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase ${po.status === 'PARTIAL' ? 'bg-warn/10 text-warn' : 'bg-sky/10 text-sky'}`}>
+                    {po.status === 'PARTIAL' ? 'Parcial' : 'En tránsito'}
+                  </span>
+                  <span className="font-display font-bold">{PEN(po.totalCents)}</span>
+                  <button className="text-clay text-xs font-semibold">Recibir</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─────────────────────── CADUCIDAD ───────────────────────
+    function Caducidad({ ingredients }) {
+      const expiring = ingredients
+        .filter(i => i.trackExpiration)
+        .map(i => ({ ...i, valueCents: Math.round(i.current * i.costCents) }))
+        .sort((a, b) => (a.expDays || 999) - (b.expDays || 999));
+
+      return (
+        <div className="space-y-5">
+          <div>
+            <h1 className="font-display text-3xl font-semibold">Productos por caducar</h1>
+            <p className="text-muted mt-1">Lotes con fecha de vencimiento próxima. La IA estima el riesgo de merma.</p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <HeroKpi label="Vencen hoy/mañana" value={expiring.filter(i => i.expDays <= 1).length} accent="danger" icon="alert" />
+            <HeroKpi label="Vencen en 2-3 días" value={expiring.filter(i => i.expDays > 1 && i.expDays <= 3).length} accent="gold" icon="clock" />
+            <HeroKpi label="Valor en riesgo" value={PEN(expiring.filter(i => i.expDays <= 3).reduce((s, i) => s + i.valueCents, 0))} accent="clay" icon="cash" />
+          </div>
+
+          <div className="bg-clay/5 border border-clay/20 rounded-xl p-4 inline-flex items-start gap-3">
+            <Icon name="sparkle" size={18} className="text-clay shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold text-clay">💡 Sugerencia IA</p>
+              <p className="text-xs text-muted mt-1">Tienes 3.2 kg de Corazón de res que vence en 3 días. Promociona "Anticuchos a S/ 22 hoy" para mover el stock antes que se pierda. Estimas evitar S/ 89.60 de merma.</p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            {expiring.map(i => {
+              const tier = i.expDays <= 1 ? "danger" : i.expDays <= 3 ? "warn" : "olive";
+              const tierBg = tier === "danger" ? "bg-danger/10 border-danger/40" : tier === "warn" ? "bg-warn/10 border-warn/40" : "bg-olive/10 border-olive/40";
+              return (
+                <div key={i.id} className={`flex items-center gap-4 p-4 bg-paper border rounded-xl ${tierBg}`}>
+                  <div className="text-3xl">{i.emoji}</div>
+                  <div className="flex-1">
+                    <p className="font-semibold">{i.name}</p>
+                    <p className="text-xs text-muted">{i.current} {i.unit} · vence en <span className={`font-bold text-${tier}`}>{i.expDays} {i.expDays === 1 ? 'día' : 'días'}</span></p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-display font-bold">{PEN(i.valueCents)}</p>
+                    <p className="text-[10px] text-muted">en riesgo</p>
+                  </div>
+                  <button className={`px-3 py-2 rounded-lg text-xs font-semibold bg-${tier} text-white`}>
+                    Ver acciones
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    // ─────────────────────── P&L ───────────────────────
+    function Pnl() {
+      const [view, setView] = useState("day"); // day | waiter | category | hour
+      const todayRevenue = PNL_BY_DAY[PNL_BY_DAY.length - 1].revenue;
+      const todayCogs = PNL_BY_DAY[PNL_BY_DAY.length - 1].cogs;
+      const todayMargin = todayRevenue - todayCogs;
+      const yesterdayRevenue = PNL_BY_DAY[PNL_BY_DAY.length - 2].revenue;
+
+      return (
+        <div className="space-y-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="font-display text-3xl font-semibold">P&L · Pérdidas y Ganancias</h1>
+              <p className="text-muted mt-1">Cómo va el negocio en plata. Vistas múltiples para entender de dónde viene cada sol.</p>
+            </div>
+            <select className="px-3 py-2 bg-paper border border-border rounded-lg text-sm">
+              <option>Hoy</option>
+              <option>Esta semana</option>
+              <option>Este mes</option>
+              <option>Personalizado...</option>
+            </select>
+          </div>
+
+          {/* Top KPIs */}
+          <div className="grid grid-cols-4 gap-4">
+            <HeroKpi label="Ventas (con IGV)" value={PEN(todayRevenue)} icon="cash" accent="clay" trend={{ up: true, text: `+${(((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100).toFixed(1)}% vs ayer` }} />
+            <HeroKpi label="Costo mercadería" value={PEN(todayCogs)} sub={`${((todayCogs / (todayRevenue / 1.18)) * 100).toFixed(1)}% del net`} icon="package" accent="gold" />
+            <HeroKpi label="Margen bruto" value={PEN(todayMargin)} sub={`${((todayMargin / (todayRevenue / 1.18)) * 100).toFixed(1)}% margen`} icon="trendUp" accent="olive" />
+            <HeroKpi label="Propinas" value={PEN(81200)} sub="Repartidas al equipo" icon="gift" accent="sky" />
+          </div>
+
+          {/* View tabs */}
+          <div className="flex gap-1 bg-paper border border-border rounded-xl p-1">
+            {[
+              { id: "day", label: "📅 Por día" },
+              { id: "waiter", label: "👨‍💼 Por mozo" },
+              { id: "category", label: "🍽️ Por categoría" },
+              { id: "hour", label: "🕐 Por hora" }
+            ].map(v => (
+              <button
+                key={v.id}
+                onClick={() => setView(v.id)}
+                className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition ${view === v.id ? 'bg-clay text-white' : 'text-muted hover:bg-cream'}`}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+
+          {view === "day" && <PnlByDay />}
+          {view === "waiter" && <PnlByWaiter />}
+          {view === "category" && <PnlByCategory />}
+          {view === "hour" && <PnlByHour />}
+        </div>
+      );
+    }
+
+    function PnlByDay() {
+      const max = Math.max(...PNL_BY_DAY.map(d => d.revenue));
+      return (
+        <div className="bg-paper border border-border rounded-2xl p-6">
+          <h2 className="font-display text-xl font-semibold mb-4">Últimos 7 días</h2>
+          <div className="space-y-3">
+            {PNL_BY_DAY.map((d, i) => (
+              <div key={i} className="grid grid-cols-12 gap-3 items-center">
+                <span className="col-span-1 text-sm font-semibold">{d.day}</span>
+                <div className="col-span-7 h-8 bg-cream rounded-lg overflow-hidden flex">
+                  <div className="bg-clay flex items-center justify-end px-2 text-white text-xs font-bold" style={{ width: `${(d.cogs / max) * 100}%` }}>
+                    {PENk(d.cogs)}
+                  </div>
+                  <div className="bg-olive flex items-center justify-end px-2 text-white text-xs font-bold" style={{ width: `${(d.margin / max) * 100}%` }}>
+                    {PENk(d.margin)}
+                  </div>
+                </div>
+                <span className="col-span-2 text-right text-sm text-muted">Ventas</span>
+                <span className="col-span-2 text-right font-mono font-bold">{PEN(d.revenue)}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 pt-4 border-t border-border flex items-center gap-4 text-xs text-muted">
+            <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-clay"></span> COGS (costo)</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-olive"></span> Margen bruto</span>
+          </div>
+        </div>
+      );
+    }
+
+    function PnlByWaiter() {
+      const total = PNL_BY_WAITER.reduce((s, w) => s + w.revenue, 0);
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {PNL_BY_WAITER.map(w => (
+            <div key={w.name} className="bg-paper border border-border rounded-2xl p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-12 h-12 rounded-full text-white font-bold text-lg flex items-center justify-center" style={{ background: w.color }}>
+                  {w.name.split(" ").map(s => s[0]).join("")}
+                </div>
+                <div>
+                  <h3 className="font-display text-lg font-semibold">{w.name}</h3>
+                  <p className="text-xs text-muted">{w.orders} pedidos cerrados</p>
+                </div>
+              </div>
+              <p className="font-display text-3xl font-bold">{PEN(w.revenue)}</p>
+              <p className="text-xs text-muted">{((w.revenue / total) * 100).toFixed(1)}% del total</p>
+              <div className="mt-3 h-2 bg-cream rounded-full overflow-hidden">
+                <div className="h-full" style={{ width: `${(w.revenue / total) * 100}%`, background: w.color }}></div>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                <div className="bg-cream rounded-lg p-2">
+                  <p className="text-muted">Ticket promedio</p>
+                  <p className="font-bold">{PEN(w.avgTicket)}</p>
+                </div>
+                <div className="bg-cream rounded-lg p-2">
+                  <p className="text-muted">Propina %</p>
+                  <p className="font-bold">{w.tipsPct}%</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    function PnlByCategory() {
+      const total = PNL_BY_CATEGORY.reduce((s, c) => s + c.revenue, 0);
+      return (
+        <div className="space-y-3">
+          {PNL_BY_CATEGORY.map(c => (
+            <div key={c.name} className="bg-paper border border-border rounded-xl p-4 flex items-center gap-4">
+              <div className="text-4xl">{c.emoji}</div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">{c.name}</h3>
+                  <span className="text-xs text-muted">{((c.revenue / total) * 100).toFixed(1)}% ventas</span>
+                </div>
+                <div className="mt-2 h-3 bg-cream rounded-full overflow-hidden flex">
+                  <div className="bg-clay" style={{ width: `${(c.cogs / c.revenue) * 100}%` }}></div>
+                  <div className="flex-1" style={{ background: c.color }}></div>
+                </div>
+                <div className="mt-2 flex items-center gap-4 text-xs">
+                  <span className="text-muted">Ventas: <span className="font-bold text-ink">{PEN(c.revenue)}</span></span>
+                  <span className="text-muted">COGS: <span className="font-bold text-clay">{PEN(c.cogs)}</span></span>
+                  <span className="text-muted">Margen: <span className="font-bold text-olive">{c.margin}%</span></span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    function PnlByHour() {
+      const hours = Array.from({ length: 12 }, (_, i) => ({
+        h: `${12 + i}:00`,
+        revenue: 80000 + Math.random() * 200000,
+        type: i < 2 || i > 9 ? "valley" : i >= 6 && i <= 8 ? "peak" : "normal"
+      }));
+      const max = Math.max(...hours.map(h => h.revenue));
+      return (
+        <div className="bg-paper border border-border rounded-2xl p-6">
+          <div className="flex items-end gap-2 h-64">
+            {hours.map((h, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                <div className="text-[10px] font-mono font-bold opacity-60">{PENk(h.revenue)}</div>
+                <div className="w-full flex-1 flex flex-col-reverse">
+                  <div
+                    className={`w-full rounded-t-lg grow-bar ${h.type === 'peak' ? 'bg-olive' : h.type === 'valley' ? 'bg-warn' : 'bg-clay'}`}
+                    style={{ height: `${(h.revenue / max) * 100}%` }}
+                  ></div>
+                </div>
+                <span className="text-[10px] text-muted font-mono">{h.h}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 pt-4 border-t border-border flex items-center gap-4 text-xs text-muted">
+            <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-olive"></span> Hora pico (alto tráfico)</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-clay"></span> Normal</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-warn"></span> Hora valle (oportunidad)</span>
+          </div>
+        </div>
+      );
+    }
+
+    // ─────────────────────── CAMPAÑAS AI ───────────────────────
+    function Campanas() {
+      const SEED_CAMPAIGNS = [
+        {
+          id: "c1",
+          title: "Día del Pollo a la Brasa",
+          hook: "🍗 Tu día favorito · 25% off",
+          body: "Este 21 de julio, 3er domingo, celebramos el Día del Pollo a la Brasa. Tu pollo entero a S/ 49.90 (regular S/ 65.90). Solo ese día.",
+          type: "NATIONAL_DAY",
+          rationale: "Fecha nacional clave para la categoría · histórico muestra +180% tráfico",
+          targetAudience: "ALL",
+          revenueLift: 180000,
+          marginImpact: -0.08,
+          status: "SUGGESTED",
+          icon: "🍗",
+          color: "clay"
+        },
+        {
+          id: "c2",
+          title: "Lunes / Martes 2x1 anticuchos",
+          hook: "Lunes y martes 2x1 en anticuchos",
+          body: "Tus anticuchos preferidos al 2x1 los días valle. Aprovecha el corazón fresco que llega los lunes.",
+          type: "OFF_HOUR",
+          rationale: "Horas valle 14h-17h en lunes y martes · 18% menos órdenes vs promedio",
+          targetAudience: "ALL",
+          revenueLift: 65000,
+          marginImpact: -0.12,
+          status: "SUGGESTED",
+          icon: "🍢",
+          color: "gold"
+        },
+        {
+          id: "c3",
+          title: "Te extrañamos · clientes inactivos",
+          hook: "S/ 20 de regalo en tu próxima visita",
+          body: "Hace más de 2 meses que no te vemos. Te dejamos S/ 20 de saldo válido por 14 días para que vuelvas.",
+          type: "LOYALTY",
+          rationale: "1 cliente VIP en RIESGO_FUGA · 90 días sin visita · LTV S/ 184",
+          targetAudience: "RIESGO_FUGA",
+          revenueLift: 50000,
+          marginImpact: 0,
+          status: "SUGGESTED",
+          icon: "💌",
+          color: "sky"
+        },
+        {
+          id: "c4",
+          title: "Especial del chef · insumo a vencer",
+          hook: "Tiradito especial · solo hoy",
+          body: "Hoy nuestro chef prepara tiradito con limón fresco. Plato del día a S/ 28 mientras dure.",
+          type: "SEASONAL",
+          rationale: "4.2 kg de limón vence en 2 días · evita merma de S/ 16",
+          targetAudience: "ALL",
+          revenueLift: 30000,
+          marginImpact: 0.10,
+          status: "SUGGESTED",
+          icon: "🍋",
+          color: "olive"
+        },
+        {
+          id: "c5",
+          title: "Combo Familia · domingo",
+          hook: "Domingo en familia · pollo + jarra GRATIS",
+          body: "Pide el pollo entero los domingos y te regalamos la jarra de chicha morada. Ahorras S/ 14.",
+          type: "BUNDLE",
+          rationale: "Maíz morado tiene baja rotación esta semana · -22% vs promedio",
+          targetAudience: "ALL",
+          revenueLift: 45000,
+          marginImpact: 0.05,
+          status: "ACTIVE",
+          icon: "👨‍👩‍👧",
+          color: "clay"
+        }
+      ];
+      const [campaigns, setCampaigns] = useState(SEED_CAMPAIGNS);
+      const [tab, setTab] = useState("suggested");
+      const [generating, setGenerating] = useState(false);
+
+      const filtered = campaigns.filter(c => c.status === (tab === "suggested" ? "SUGGESTED" : tab === "active" ? "ACTIVE" : "ARCHIVED"));
+
+      const generateNew = () => {
+        setGenerating(true);
+        setTimeout(() => setGenerating(false), 2500);
+      };
+
+      return (
+        <div className="space-y-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
+                <Icon name="sparkle" size={28} className="text-clay" />
+                Campañas con IA
+              </h1>
+              <p className="text-muted mt-1">La IA analiza tu data del negocio y propone campañas para vender más y mejorar margen.</p>
+            </div>
+            <button
+              onClick={generateNew}
+              disabled={generating}
+              className="inline-flex items-center gap-2 px-5 py-3 bg-clay hover:bg-clay-dark disabled:opacity-50 text-white rounded-xl font-semibold"
+            >
+              {generating ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Generando...
+                </>
+              ) : (
+                <>
+                  <Icon name="sparkle" size={16} /> Generar nuevas sugerencias
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Context cards: lo que la AI ve */}
+          <div className="bg-paper border border-border rounded-2xl p-5">
+            <p className="text-sm font-bold mb-3">📊 Lo que la IA está mirando ahora</p>
+            <div className="grid grid-cols-4 gap-3">
+              <ContextCard emoji="📉" label="Insumos baja rotación" value="3" sub="Maíz morado, mantequilla, palta" />
+              <ContextCard emoji="⏰" label="Insumos por vencer" value="4" sub="Próximos 3 días" />
+              <ContextCard emoji="🕐" label="Horas valle" value="14h-17h" sub="Lunes y martes" />
+              <ContextCard emoji="📅" label="Próxima fecha clave" value="Día del Pollo" sub="3er domingo de julio" />
+            </div>
+          </div>
+
+          {/* Tab pills */}
+          <div className="flex gap-2">
+            {[
+              { id: "suggested", label: "💡 Sugeridas", n: campaigns.filter(c => c.status === "SUGGESTED").length },
+              { id: "active", label: "▶ Activas", n: campaigns.filter(c => c.status === "ACTIVE").length },
+              { id: "archived", label: "🗄 Archivadas", n: campaigns.filter(c => c.status === "ARCHIVED").length }
+            ].map(t => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`px-4 py-2 rounded-lg font-semibold text-sm transition ${tab === t.id ? 'bg-charcoal text-white' : 'bg-paper border border-border'}`}
+              >
+                {t.label} {t.n > 0 && <span className="opacity-60 ml-1">({t.n})</span>}
+              </button>
+            ))}
+          </div>
+
+          {/* Campaign cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {filtered.map(c => (
+              <CampaignCard
+                key={c.id}
+                campaign={c}
+                onAction={(action) => {
+                  setCampaigns(prev => prev.map(x => {
+                    if (x.id !== c.id) return x;
+                    if (action === "launch") return { ...x, status: "ACTIVE" };
+                    if (action === "archive") return { ...x, status: "ARCHIVED" };
+                    if (action === "pause") return { ...x, status: "ARCHIVED" };
+                    return x;
+                  }));
+                }}
+              />
+            ))}
+          </div>
+
+          {filtered.length === 0 && (
+            <div className="text-center py-16 bg-paper border border-border rounded-2xl">
+              <p className="font-display text-xl">Sin campañas en {tab === "suggested" ? "sugeridas" : tab === "active" ? "activas" : "archivadas"}</p>
+              <p className="text-sm text-muted mt-1">Genera nuevas sugerencias para empezar</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function ContextCard({ emoji, label, value, sub }) {
+      return (
+        <div className="bg-cream rounded-xl p-3">
+          <div className="text-2xl">{emoji}</div>
+          <p className="text-[10px] text-muted uppercase tracking-wider mt-2">{label}</p>
+          <p className="font-display font-bold text-lg leading-tight">{value}</p>
+          <p className="text-[10px] text-muted leading-tight">{sub}</p>
+        </div>
+      );
+    }
+
+    function CampaignCard({ campaign: c, onAction }) {
+      const colorMap = { clay: "border-clay/40 bg-clay/5", gold: "border-gold/40 bg-gold/5", olive: "border-olive/40 bg-olive/5", sky: "border-sky/40 bg-sky/5" };
+      const isActive = c.status === "ACTIVE";
+      return (
+        <div className={`bg-paper border-2 rounded-2xl p-5 ${colorMap[c.color] || 'border-border'}`}>
+          <div className="flex items-start gap-3">
+            <div className="text-5xl">{c.icon}</div>
+            <div className="flex-1">
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="font-display text-xl font-semibold leading-tight">{c.title}</h3>
+                {isActive && <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-olive/10 text-olive text-[10px] font-bold rounded uppercase"><span className="w-1.5 h-1.5 bg-olive rounded-full pulse-soft"></span>Activa</span>}
+              </div>
+              <p className="text-sm text-clay font-semibold mt-1">{c.hook}</p>
+            </div>
+          </div>
+
+          <p className="text-sm text-ink mt-3 leading-relaxed bg-cream p-3 rounded-lg">{c.body}</p>
+
+          <div className="mt-3 bg-paper border border-border rounded-lg p-3">
+            <p className="text-[10px] uppercase tracking-wider font-bold text-muted">¿Por qué la IA la sugiere?</p>
+            <p className="text-xs mt-1">{c.rationale}</p>
+          </div>
+
+          <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+            <div className="bg-cream rounded-lg p-2">
+              <p className="text-[10px] text-muted">Audiencia</p>
+              <p className="font-bold text-xs mt-0.5">{c.targetAudience}</p>
+            </div>
+            <div className="bg-cream rounded-lg p-2">
+              <p className="text-[10px] text-muted">Lift estimado</p>
+              <p className="font-bold text-olive text-xs mt-0.5">+{PEN(c.revenueLift)}</p>
+            </div>
+            <div className="bg-cream rounded-lg p-2">
+              <p className="text-[10px] text-muted">Impacto margen</p>
+              <p className={`font-bold text-xs mt-0.5 ${c.marginImpact >= 0 ? 'text-olive' : 'text-warn'}`}>{c.marginImpact >= 0 ? '+' : ''}{(c.marginImpact * 100).toFixed(1)}%</p>
+            </div>
+          </div>
+
+          <div className="mt-4 flex gap-2">
+            {!isActive ? (
+              <>
+                <button onClick={() => onAction("archive")} className="flex-1 py-2.5 bg-paper border border-border rounded-lg text-sm font-semibold">
+                  Descartar
+                </button>
+                <button onClick={() => onAction("launch")} className="flex-[2] py-2.5 bg-clay text-white rounded-lg text-sm font-semibold">
+                  ▶ Lanzar campaña
+                </button>
+              </>
+            ) : (
+              <>
+                <button className="flex-1 py-2.5 bg-paper border border-border rounded-lg text-sm font-semibold">
+                  Ver métricas
+                </button>
+                <button onClick={() => onAction("pause")} className="flex-1 py-2.5 bg-paper border border-warn text-warn rounded-lg text-sm font-semibold">
+                  ⏸ Pausar
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ─────────────────────── ALERTAS (consolidado) ───────────────────────
+    function Alertas({ ingredients }) {
+      const critical = ingredients.filter(i => stockStatus(i).code === "critical");
+      const expiring = ingredients.filter(i => i.trackExpiration && i.expDays <= 3);
+      return (
+        <div className="space-y-5">
+          <div>
+            <h1 className="font-display text-3xl font-semibold">Alertas activas</h1>
+            <p className="text-muted mt-1">Todo lo que necesita tu atención, en un solo lugar.</p>
+          </div>
+
+          {critical.length > 0 && (
+            <div className="bg-danger/5 border-2 border-danger/30 rounded-2xl p-5">
+              <h2 className="font-display text-xl font-semibold text-danger mb-3 inline-flex items-center gap-2">
+                <Icon name="alert" size={20} /> {critical.length} insumos en stock CRÍTICO
+              </h2>
+              <div className="grid grid-cols-2 gap-2">
+                {critical.map(i => (
+                  <div key={i.id} className="bg-paper border border-danger/30 rounded-lg p-3 flex items-center gap-3">
+                    <span className="text-2xl">{i.emoji}</span>
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm">{i.name}</p>
+                      <p className="text-xs text-muted">Solo {i.current} {i.unit} · pidir mín. {i.optimal - i.current} más</p>
+                    </div>
+                    <button className="px-3 py-1.5 bg-danger text-white rounded-lg text-xs font-bold">Pedir</button>
+                  </div>
+                ))}
+              </div>
+              <button className="mt-4 w-full py-3 bg-danger text-white rounded-xl font-semibold">
+                Generar pedidos a proveedores ahora
+              </button>
+            </div>
+          )}
+
+          {expiring.length > 0 && (
+            <div className="bg-warn/5 border-2 border-warn/30 rounded-2xl p-5">
+              <h2 className="font-display text-xl font-semibold text-warn mb-3 inline-flex items-center gap-2">
+                <Icon name="clock" size={20} /> {expiring.length} insumos por vencer pronto
+              </h2>
+              <div className="grid grid-cols-2 gap-2">
+                {expiring.map(i => (
+                  <div key={i.id} className="bg-paper border border-warn/30 rounded-lg p-3 flex items-center gap-3">
+                    <span className="text-2xl">{i.emoji}</span>
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm">{i.name}</p>
+                      <p className="text-xs text-muted">Vence en <span className="font-bold text-warn">{i.expDays} {i.expDays === 1 ? 'día' : 'días'}</span></p>
+                    </div>
+                    <button className="px-3 py-1.5 bg-warn text-white rounded-lg text-xs font-bold">💡 Promo</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {critical.length === 0 && expiring.length === 0 && (
+            <div className="bg-olive/10 border-2 border-olive/30 rounded-2xl p-12 text-center">
+              <Icon name="check" size={48} className="text-olive mx-auto" />
+              <h2 className="font-display text-2xl font-semibold text-olive mt-4">¡Todo bajo control!</h2>
+              <p className="text-muted mt-1">No hay alertas pendientes</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ─────────────────────── APP ───────────────────────
+    function App() {
+      const [view, setView] = useState("resumen");
+      const [ingredients, setIngredients] = useState(INGREDIENTS_SEED);
+
+      return (
+        <div className="flex min-h-full">
+          <Sidebar active={view} setActive={setView} />
+          <div className="flex-1 overflow-x-hidden">
+            <main className="p-8">
+              {view === "resumen" && <Resumen ingredients={ingredients} />}
+              {view === "alertas" && <Alertas ingredients={ingredients} />}
+              {view === "inventario" && <Inventario ingredients={ingredients} setIngredients={setIngredients} />}
+              {view === "conteo" && <ConteoFisico ingredients={ingredients} />}
+              {view === "recetas" && <Recetas />}
+              {view === "proveedores" && <Proveedores />}
+              {view === "compras" && <Compras ingredients={ingredients} />}
+              {view === "caducidad" && <Caducidad ingredients={ingredients} />}
+              {view === "pnl" && <Pnl />}
+              {view === "campanas" && <Campanas />}
+            </main>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

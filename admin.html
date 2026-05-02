@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin · La Brasa Dorada</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"Playfair Display"', 'serif'],
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          },
+          colors: {
+            cream: '#FAF7F2',
+            paper: '#FFFFFF',
+            charcoal: '#1F1A17',
+            ink: '#2A1F1A',
+            muted: '#6B5D52',
+            clay: { DEFAULT: '#A0322B', dark: '#7E2820', light: '#C4493A' },
+            gold: { DEFAULT: '#C8941F', light: '#E5B458' },
+            olive: '#2D7D5A',
+            border: '#E8DFD3',
+            sky: '#3B82F6',
+            warn: '#D97706',
+            danger: '#DC2626'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    html, body, #root { height: 100%; margin: 0; }
+    body {
+      background: #FAF7F2;
+      color: #2A1F1A;
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+    .font-display { font-family: 'Playfair Display', serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { scrollbar-width: none; }
+
+    @keyframes pulse-soft { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+    .pulse-soft { animation: pulse-soft 2s infinite; }
+
+    @keyframes growBar {
+      from { transform: scaleY(0); transform-origin: bottom; }
+      to { transform: scaleY(1); transform-origin: bottom; }
+    }
+    .grow-bar { animation: growBar 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" data-presets="env,react">
+    const { useState, useEffect, useMemo } = React;
+
+    const PEN = (n) => "S/ " + n.toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const PEN_K = (n) => n >= 1000 ? `S/ ${(n/1000).toFixed(1)}k` : `S/ ${n.toFixed(0)}`;
+
+    // Icons
+    const Icon = ({ name, size = 18, className = "" }) => {
+      const ics = {
+        home: <><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></>,
+        table: <><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="9" y1="21" x2="9" y2="9" /></>,
+        menu: <><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></>,
+        receipt: <><path d="M4 2v20l2-1.5L8 22l2-1.5L12 22l2-1.5L16 22l2-1.5L20 22V2l-2 1.5L16 2l-2 1.5L12 2l-2 1.5L8 2 6 3.5z" /><line x1="8" y1="7" x2="16" y2="7" /><line x1="8" y1="11" x2="16" y2="11" /><line x1="8" y1="15" x2="13" y2="15" /></>,
+        chart: <><line x1="12" y1="20" x2="12" y2="10" /><line x1="18" y1="20" x2="18" y2="4" /><line x1="6" y1="20" x2="6" y2="16" /></>,
+        users: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>,
+        settings: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></>,
+        bell: <><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9zM13.73 21a2 2 0 0 1-3.46 0" /></>,
+        search: <><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></>,
+        trendUp: <><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></>,
+        trendDown: <><polyline points="23 18 13.5 8.5 8.5 13.5 1 6" /><polyline points="17 18 23 18 23 12" /></>,
+        clock: <><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></>,
+        check: <polyline points="20 6 9 17 4 12" />,
+        plus: <><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></>,
+        chevronDown: <polyline points="6 9 12 15 18 9" />,
+        download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></>,
+        moreH: <><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></>,
+        eye: <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></>,
+        cash: <><rect x="2" y="6" width="20" height="12" rx="2" /><circle cx="12" cy="12" r="2" /><path d="M6 12h.01M18 12h.01" /></>,
+        utensils: <><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7" /></>
+      };
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+          {ics[name]}
+        </svg>
+      );
+    };
+
+    // ───────────────────────────── DATA ─────────────────────────────
+    const TABLES = [
+      { id: 1, x: 1, y: 1, seats: 4, status: "occupied", server: "María", time: 12, total: 156.50, party: 3 },
+      { id: 2, x: 2, y: 1, seats: 4, status: "free" },
+      { id: 3, x: 3, y: 1, seats: 6, status: "occupied", server: "María", time: 8, total: 245.80, party: 5 },
+      { id: 4, x: 4, y: 1, seats: 2, status: "free" },
+      { id: 5, x: 5, y: 1, seats: 4, status: "occupied", server: "Carlos", time: 35, total: 198.00, party: 4 },
+      { id: 6, x: 1, y: 2, seats: 2, status: "cleaning" },
+      { id: 7, x: 2, y: 2, seats: 4, status: "occupied", server: "María", time: 22, total: 287.40, party: 4, alert: "Llamó al mozo" },
+      { id: 8, x: 3, y: 2, seats: 8, status: "reserved", reservation: "20:30 · Familia Rojas" },
+      { id: 9, x: 4, y: 2, seats: 2, status: "occupied", server: "Carlos", time: 18, total: 89.90, party: 2 },
+      { id: 10, x: 5, y: 2, seats: 4, status: "billing", server: "Juan", time: 65, total: 412.50, party: 4 },
+      { id: 11, x: 1, y: 3, seats: 4, status: "free" },
+      { id: 12, x: 2, y: 3, seats: 6, status: "occupied", server: "Juan", time: 45, total: 356.20, party: 6, alert: "Atraso cocina" },
+      { id: 13, x: 3, y: 3, seats: 2, status: "free" },
+      { id: 14, x: 4, y: 3, seats: 4, status: "occupied", server: "María", time: 5, total: 42.00, party: 3 },
+      { id: 15, x: 5, y: 3, seats: 4, status: "free" },
+      { id: 16, x: 6, y: 1, seats: 4, status: "occupied", server: "Carlos", time: 28, total: 178.50, party: 3 }
+    ];
+
+    const TODAY_KPIS = {
+      sales: 8420.50,
+      salesYesterday: 7234.20,
+      orders: 87,
+      ordersYesterday: 78,
+      avgTicket: 96.79,
+      avgYesterday: 92.74,
+      tableTurnover: 2.4,
+      turnoverYesterday: 2.1,
+      activeNow: 9,
+      activeCapacity: 16
+    };
+
+    const HOURLY_SALES = [
+      { h: "12p", v: 320 },
+      { h: "1p", v: 580 },
+      { h: "2p", v: 720 },
+      { h: "3p", v: 410 },
+      { h: "4p", v: 290 },
+      { h: "5p", v: 380 },
+      { h: "6p", v: 590 },
+      { h: "7p", v: 980 },
+      { h: "8p", v: 1240 },
+      { h: "9p", v: 1180 },
+      { h: "10p", v: 890 },
+      { h: "11p", v: 460 }
+    ];
+
+    const TOP_ITEMS = [
+      { name: "1/2 Pollo a la Brasa", qty: 32, revenue: 1244.80, growth: 12 },
+      { name: "Pollo Entero", qty: 18, revenue: 1186.20, growth: 8 },
+      { name: "Combo Familiar", qty: 14, revenue: 1118.60, growth: 22 },
+      { name: "Anticuchos de Corazón", qty: 23, revenue: 644.00, growth: -3 },
+      { name: "Chicha Morada 1L", qty: 41, revenue: 574.00, growth: 5 },
+      { name: "Salchipapa Familiar", qty: 19, revenue: 475.00, growth: -8 }
+    ];
+
+    const RECENT_ORDERS = [
+      { id: "T-1047", mesa: 11, time: "21:42", items: 3, total: 89.90, status: "preparing", server: "María" },
+      { id: "T-1046", mesa: 5, time: "21:40", items: 5, total: 142.50, status: "received", server: "Juan" },
+      { id: "T-1045", mesa: 9, time: "21:38", items: 3, total: 78.40, status: "preparing", server: "Carlos" },
+      { id: "T-1044", mesa: 3, time: "21:34", items: 5, total: 245.80, status: "preparing", server: "María" },
+      { id: "T-1043", mesa: 12, time: "21:30", items: 3, total: 198.00, status: "ready", server: "Juan" },
+      { id: "T-1042", mesa: 7, time: "21:28", items: 4, total: 287.40, status: "served", server: "María" },
+      { id: "T-1041", mesa: 10, time: "21:24", items: 4, total: 412.50, status: "billing", server: "Juan" },
+      { id: "T-1040", mesa: 16, time: "21:20", items: 3, total: 178.50, status: "served", server: "Carlos" }
+    ];
+
+    const CALLS = [
+      { id: 1, mesa: 7, server: "María", reason: "Repetir bebida", time: "hace 1 min" },
+      { id: 2, mesa: 12, server: "Juan", reason: "Pedir la cuenta", time: "hace 3 min" }
+    ];
+
+    // ─────────────────────────── COMPONENTS ───────────────────────────
+    function Sidebar({ active, setActive }) {
+      const items = [
+        { id: "dashboard", label: "Dashboard", icon: "home" },
+        { id: "mesas", label: "Mesas y plano", icon: "table" },
+        { id: "menu", label: "Carta", icon: "menu" },
+        { id: "pedidos", label: "Pedidos", icon: "receipt" },
+        { id: "reportes", label: "Reportes", icon: "chart" },
+        { id: "personal", label: "Personal", icon: "users" },
+        { id: "ajustes", label: "Ajustes", icon: "settings" }
+      ];
+      return (
+        <aside className="w-60 bg-charcoal text-cream p-4 flex flex-col h-screen sticky top-0">
+          <div className="flex items-center gap-3 mb-8 px-2">
+            <div className="w-10 h-10 bg-clay rounded-xl flex items-center justify-center font-bold text-sm">LB</div>
+            <div>
+              <p className="font-display text-lg font-semibold leading-tight">La Brasa</p>
+              <p className="text-[11px] text-cream/50">Admin · Miraflores</p>
+            </div>
+          </div>
+          <nav className="flex-1 space-y-1">
+            {items.map(it => (
+              <button
+                key={it.id}
+                onClick={() => setActive(it.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${active === it.id ? 'bg-clay text-white' : 'text-cream/70 hover:bg-cream/5 hover:text-cream'}`}
+              >
+                <Icon name={it.icon} size={18} />
+                {it.label}
+              </button>
+            ))}
+          </nav>
+          <div className="border-t border-cream/10 pt-3 mt-3">
+            <div className="flex items-center gap-3 px-2 py-2">
+              <div className="w-9 h-9 rounded-full bg-gold flex items-center justify-center font-bold text-charcoal">M</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate">Marcos Vidal</p>
+                <p className="text-[11px] text-cream/50">Administrador</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+      );
+    }
+
+    function TopBar({ alerts }) {
+      return (
+        <header className="bg-paper border-b border-border px-8 py-4 flex items-center justify-between sticky top-0 z-20">
+          <div className="flex-1 max-w-md relative">
+            <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+            <input
+              placeholder="Buscar pedido, mesa, plato, comprobante..."
+              className="w-full pl-9 pr-4 py-2.5 bg-cream border border-border rounded-lg text-sm focus:outline-none focus:border-clay"
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted">Hoy · 1 May 2026</span>
+            <button className="inline-flex items-center gap-1.5 px-3 py-2 border border-border rounded-lg text-sm font-medium hover:bg-cream">
+              <Icon name="download" size={14} />
+              Exportar
+            </button>
+            <button className="relative w-10 h-10 rounded-full bg-cream border border-border flex items-center justify-center text-ink hover:bg-clay/5">
+              <Icon name="bell" size={18} />
+              {alerts > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-clay text-white rounded-full text-[10px] font-bold flex items-center justify-center">
+                  {alerts}
+                </span>
+              )}
+            </button>
+          </div>
+        </header>
+      );
+    }
+
+    function KpiCard({ label, value, prev, formatter = (v) => v, accent = "clay", icon }) {
+      const numValue = typeof value === 'number' ? value : parseFloat(value);
+      const numPrev = typeof prev === 'number' ? prev : parseFloat(prev);
+      const change = prev ? ((numValue - numPrev) / numPrev) * 100 : 0;
+      const positive = change >= 0;
+      return (
+        <div className="bg-paper border border-border rounded-2xl p-5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted uppercase tracking-wider font-semibold">{label}</span>
+            {icon && (
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-${accent}/10 text-${accent}`}>
+                <Icon name={icon} size={16} />
+              </div>
+            )}
+          </div>
+          <p className="font-display text-3xl font-bold mt-3">{formatter(value)}</p>
+          {prev !== undefined && (
+            <div className="mt-2 flex items-center gap-2 text-xs">
+              <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded ${positive ? 'bg-olive/10 text-olive' : 'bg-clay/10 text-clay'}`}>
+                <Icon name={positive ? "trendUp" : "trendDown"} size={11} />
+                {Math.abs(change).toFixed(1)}%
+              </span>
+              <span className="text-muted">vs ayer</span>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function FloorPlanTable({ table, onClick }) {
+      const config = {
+        free: { bg: "bg-paper", border: "border-border", text: "text-muted", label: "Libre" },
+        occupied: { bg: "bg-clay/5", border: "border-clay/30", text: "text-clay", label: "Ocupada" },
+        billing: { bg: "bg-gold/10", border: "border-gold/40", text: "text-gold", label: "Pidió cuenta" },
+        cleaning: { bg: "bg-cream", border: "border-border border-dashed", text: "text-muted", label: "Limpieza" },
+        reserved: { bg: "bg-sky/10", border: "border-sky/40", text: "text-sky", label: "Reservada" }
+      }[table.status];
+      const hasAlert = table.alert;
+      const isLate = table.time > 30 && (table.status === 'occupied' || table.status === 'billing');
+
+      return (
+        <button
+          onClick={() => onClick(table)}
+          className={`relative aspect-square rounded-xl border-2 ${config.border} ${config.bg} p-3 text-left transition hover:shadow-card`}
+        >
+          {hasAlert && (
+            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-clay rounded-full pulse-soft" title={table.alert}></span>
+          )}
+          <div className="flex items-start justify-between">
+            <span className="font-display text-2xl font-bold">{table.id}</span>
+            <span className={`text-[10px] font-semibold uppercase ${config.text}`}>{config.label}</span>
+          </div>
+          {table.status === 'occupied' || table.status === 'billing' ? (
+            <div className="mt-2">
+              <p className="text-[11px] text-muted">{table.party}/{table.seats} pers · {table.server}</p>
+              <p className={`text-[11px] mt-0.5 font-mono ${isLate ? 'text-clay font-semibold' : 'text-muted'}`}>{table.time}'</p>
+              <p className="font-display text-sm font-bold mt-1">{PEN(table.total)}</p>
+            </div>
+          ) : table.status === 'reserved' ? (
+            <p className="text-[11px] text-sky mt-2 leading-tight">{table.reservation}</p>
+          ) : (
+            <p className="text-[11px] text-muted mt-2">{table.seats} asientos</p>
+          )}
+        </button>
+      );
+    }
+
+    function FloorPlan({ onTable }) {
+      const cols = 6;
+      const rows = 3;
+      return (
+        <div className="bg-paper border border-border rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-display text-xl font-semibold">Plano del salón</h3>
+              <p className="text-xs text-muted mt-0.5">Salón principal · 16 mesas · {TODAY_KPIS.activeNow} activas ahora</p>
+            </div>
+            <div className="flex items-center gap-3 text-[11px]">
+              <Legend color="border-border" label="Libre" />
+              <Legend color="border-clay/40 bg-clay/5" label="Ocupada" />
+              <Legend color="border-gold/40 bg-gold/10" label="Pidió cuenta" />
+              <Legend color="border-sky/40 bg-sky/10" label="Reservada" />
+            </div>
+          </div>
+          <div className="grid grid-cols-6 gap-3">
+            {TABLES.map(t => <FloorPlanTable key={t.id} table={t} onClick={onTable} />)}
+          </div>
+        </div>
+      );
+    }
+
+    function Legend({ color, label }) {
+      return (
+        <div className="inline-flex items-center gap-1.5">
+          <span className={`w-3 h-3 rounded border-2 ${color}`}></span>
+          <span className="text-muted">{label}</span>
+        </div>
+      );
+    }
+
+    function SalesChart({ data }) {
+      const max = Math.max(...data.map(d => d.v));
+      const total = data.reduce((s, d) => s + d.v, 0);
+      return (
+        <div className="bg-paper border border-border rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-display text-xl font-semibold">Ventas por hora</h3>
+              <p className="text-xs text-muted mt-0.5">Total del día: <span className="font-bold text-ink">{PEN(total)}</span></p>
+            </div>
+            <select className="text-sm border border-border rounded-lg px-3 py-1.5 bg-cream">
+              <option>Hoy</option>
+              <option>Ayer</option>
+              <option>Esta semana</option>
+              <option>Este mes</option>
+            </select>
+          </div>
+          <div className="h-48 flex items-end gap-1.5">
+            {data.map((d, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center justify-end gap-1.5 group">
+                <span className="text-[10px] text-muted opacity-0 group-hover:opacity-100 font-mono font-bold">{PEN_K(d.v)}</span>
+                <div
+                  className="w-full bg-clay/80 hover:bg-clay rounded-t-md grow-bar transition"
+                  style={{ height: `${(d.v / max) * 100}%` }}
+                ></div>
+                <span className="text-[10px] text-muted">{d.h}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function TopItems({ items }) {
+      return (
+        <div className="bg-paper border border-border rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-display text-xl font-semibold">Más vendidos hoy</h3>
+            <button className="text-xs text-clay font-medium">Ver todo</button>
+          </div>
+          <div className="space-y-3">
+            {items.map((item, i) => (
+              <div key={item.name} className="flex items-center gap-3">
+                <span className="font-mono text-xs text-muted w-5 text-center">#{i + 1}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate">{item.name}</p>
+                  <div className="mt-1 h-1 bg-cream rounded-full overflow-hidden">
+                    <div className="h-full bg-clay" style={{ width: `${(item.qty / items[0].qty) * 100}%` }}></div>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-sm font-bold">{item.qty}</p>
+                  <p className="text-[11px] text-muted">{PEN(item.revenue)}</p>
+                </div>
+                <span className={`text-xs font-semibold w-12 text-right ${item.growth >= 0 ? 'text-olive' : 'text-clay'}`}>
+                  {item.growth >= 0 ? '+' : ''}{item.growth}%
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function StatusBadge({ status }) {
+      const config = {
+        received: { bg: "bg-muted/10", text: "text-muted", label: "Recibido" },
+        preparing: { bg: "bg-warn/10", text: "text-warn", label: "Preparando" },
+        ready: { bg: "bg-sky/10", text: "text-sky", label: "Listo" },
+        served: { bg: "bg-olive/10", text: "text-olive", label: "Servido" },
+        billing: { bg: "bg-gold/10", text: "text-gold", label: "Pidió cuenta" }
+      }[status];
+      return <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${config.bg} ${config.text}`}>{config.label}</span>;
+    }
+
+    function RecentOrders({ orders }) {
+      return (
+        <div className="bg-paper border border-border rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-display text-xl font-semibold">Pedidos recientes</h3>
+              <p className="text-xs text-muted mt-0.5">Últimas 2 horas</p>
+            </div>
+            <button className="text-xs text-clay font-medium">Ver todos</button>
+          </div>
+          <div className="overflow-x-auto -mx-2">
+            <table className="w-full">
+              <thead>
+                <tr className="text-[10px] uppercase tracking-wider text-muted">
+                  <th className="text-left py-2 px-2 font-semibold">Ticket</th>
+                  <th className="text-left py-2 px-2 font-semibold">Hora</th>
+                  <th className="text-left py-2 px-2 font-semibold">Mesa</th>
+                  <th className="text-left py-2 px-2 font-semibold">Mozo</th>
+                  <th className="text-right py-2 px-2 font-semibold">Items</th>
+                  <th className="text-right py-2 px-2 font-semibold">Total</th>
+                  <th className="text-left py-2 px-2 font-semibold">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map(o => (
+                  <tr key={o.id} className="border-t border-border hover:bg-cream/50 cursor-pointer">
+                    <td className="py-3 px-2 font-mono text-xs">{o.id}</td>
+                    <td className="py-3 px-2 text-sm text-muted">{o.time}</td>
+                    <td className="py-3 px-2 text-sm font-semibold">M{o.mesa}</td>
+                    <td className="py-3 px-2 text-sm">{o.server}</td>
+                    <td className="py-3 px-2 text-sm text-right">{o.items}</td>
+                    <td className="py-3 px-2 font-mono text-sm font-bold text-right">{PEN(o.total)}</td>
+                    <td className="py-3 px-2"><StatusBadge status={o.status} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    function ActiveCalls({ calls, onResolve }) {
+      if (calls.length === 0) {
+        return (
+          <div className="bg-olive/5 border border-olive/30 rounded-2xl p-5 text-center">
+            <Icon name="check" size={24} className="text-olive mx-auto" />
+            <p className="text-sm font-semibold text-olive mt-2">Todo bajo control</p>
+            <p className="text-xs text-muted mt-1">Sin llamados pendientes</p>
+          </div>
+        );
+      }
+      return (
+        <div className="bg-clay/5 border border-clay/30 rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Icon name="bell" size={16} className="text-clay" />
+            <h3 className="font-semibold text-clay">Llamados activos</h3>
+            <span className="ml-auto text-xs bg-clay text-white rounded-full px-2 py-0.5 font-bold">{calls.length}</span>
+          </div>
+          <div className="space-y-2">
+            {calls.map(c => (
+              <div key={c.id} className="flex items-center gap-3 p-3 bg-paper rounded-xl border border-border">
+                <div className="w-9 h-9 rounded-lg bg-clay text-white flex items-center justify-center font-bold text-sm">M{c.mesa}</div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate">{c.reason}</p>
+                  <p className="text-[11px] text-muted">{c.server} · {c.time}</p>
+                </div>
+                <button onClick={() => onResolve(c.id)} className="text-xs font-semibold text-olive bg-olive/10 px-3 py-1.5 rounded-lg hover:bg-olive/20">
+                  <Icon name="check" size={12} className="inline mr-1" />Hecho
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Dashboard view
+    function Dashboard() {
+      const [calls, setCalls] = useState(CALLS);
+      const [tableModal, setTableModal] = useState(null);
+
+      return (
+        <div className="space-y-6">
+          <div>
+            <h1 className="font-display text-3xl font-semibold">Buenas noches, Marcos</h1>
+            <p className="text-muted mt-1">Esto es lo que pasa en La Brasa Dorada hoy.</p>
+          </div>
+
+          {/* KPIs */}
+          <div className="grid grid-cols-4 gap-4">
+            <KpiCard label="Ventas hoy" value={TODAY_KPIS.sales} prev={TODAY_KPIS.salesYesterday} formatter={PEN} accent="clay" icon="cash" />
+            <KpiCard label="Pedidos" value={TODAY_KPIS.orders} prev={TODAY_KPIS.ordersYesterday} accent="olive" icon="receipt" />
+            <KpiCard label="Ticket promedio" value={TODAY_KPIS.avgTicket} prev={TODAY_KPIS.avgYesterday} formatter={PEN} accent="gold" icon="utensils" />
+            <KpiCard label="Rotación de mesa" value={TODAY_KPIS.tableTurnover} prev={TODAY_KPIS.turnoverYesterday} formatter={(v) => v.toFixed(1) + 'x'} accent="sky" icon="clock" />
+          </div>
+
+          {/* Floor plan + alerts */}
+          <div className="grid grid-cols-3 gap-6">
+            <div className="col-span-2">
+              <FloorPlan onTable={setTableModal} />
+            </div>
+            <div className="space-y-4">
+              <ActiveCalls calls={calls} onResolve={(id) => setCalls(c => c.filter(x => x.id !== id))} />
+              <div className="bg-paper border border-border rounded-2xl p-5">
+                <h3 className="font-semibold mb-3 text-sm">Estado del salón</h3>
+                <StatusRow color="bg-clay" label="Ocupadas" value="9 / 16" />
+                <StatusRow color="bg-border" label="Libres" value="5 / 16" />
+                <StatusRow color="bg-gold" label="Pidiendo cuenta" value="1 / 16" />
+                <StatusRow color="bg-sky" label="Reservadas" value="1 / 16" />
+                <div className="mt-3 pt-3 border-t border-border">
+                  <p className="text-xs text-muted">Espera estimada nueva mesa: <span className="font-bold text-ink">8 min</span></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Chart + Top items */}
+          <div className="grid grid-cols-3 gap-6">
+            <div className="col-span-2">
+              <SalesChart data={HOURLY_SALES} />
+            </div>
+            <TopItems items={TOP_ITEMS} />
+          </div>
+
+          {/* Recent orders */}
+          <RecentOrders orders={RECENT_ORDERS} />
+
+          {tableModal && <TableModal table={tableModal} onClose={() => setTableModal(null)} />}
+        </div>
+      );
+    }
+
+    function StatusRow({ color, label, value }) {
+      return (
+        <div className="flex items-center gap-2 py-1.5 text-sm">
+          <span className={`w-2.5 h-2.5 rounded-full ${color}`}></span>
+          <span className="flex-1 text-muted">{label}</span>
+          <span className="font-mono font-bold">{value}</span>
+        </div>
+      );
+    }
+
+    function TableModal({ table, onClose }) {
+      return (
+        <div className="fixed inset-0 z-50 bg-charcoal/40 flex items-center justify-center p-6" onClick={onClose}>
+          <div onClick={(e) => e.stopPropagation()} className="bg-paper rounded-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="font-display text-2xl font-semibold">Mesa {table.id}</h2>
+                <p className="text-sm text-muted">{table.seats} asientos</p>
+              </div>
+              <button onClick={onClose} className="w-9 h-9 rounded-full bg-cream flex items-center justify-center">×</button>
+            </div>
+            {table.status === 'occupied' || table.status === 'billing' ? (
+              <div className="space-y-3">
+                <Detail label="Estado" value={table.status === 'billing' ? 'Pidió la cuenta' : 'Ocupada'} />
+                <Detail label="Mozo" value={table.server} />
+                <Detail label="Comensales" value={`${table.party} de ${table.seats}`} />
+                <Detail label="Tiempo en mesa" value={`${table.time} minutos`} />
+                <Detail label="Total acumulado" value={PEN(table.total)} highlight />
+                {table.alert && <p className="bg-clay/10 border border-clay/30 text-clay p-3 rounded-xl text-sm font-medium">⚠ {table.alert}</p>}
+                <div className="flex gap-2 pt-2">
+                  <button className="flex-1 py-2.5 bg-cream border border-border rounded-lg text-sm font-medium">Ver pedido</button>
+                  <button className="flex-1 py-2.5 bg-clay text-white rounded-lg text-sm font-medium">Cobrar</button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <Detail label="Estado" value={table.status === 'free' ? 'Libre' : table.status === 'cleaning' ? 'En limpieza' : 'Reservada'} />
+                {table.reservation && <Detail label="Reserva" value={table.reservation} />}
+                <button className="w-full py-2.5 bg-clay text-white rounded-lg font-medium">Asignar mesa</button>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    function Detail({ label, value, highlight }) {
+      return (
+        <div className="flex justify-between py-2 border-b border-border">
+          <span className="text-sm text-muted">{label}</span>
+          <span className={`text-sm font-semibold ${highlight ? 'font-display text-lg text-clay' : ''}`}>{value}</span>
+        </div>
+      );
+    }
+
+    // Other views (placeholders with appropriate richness)
+    function Mesas() {
+      const [tableModal, setTableModal] = useState(null);
+      return (
+        <div>
+          <h1 className="font-display text-3xl font-semibold">Mesas y plano del salón</h1>
+          <p className="text-muted mt-1">Gestión visual del estado de cada mesa en tiempo real.</p>
+          <div className="mt-6">
+            <FloorPlan onTable={setTableModal} />
+          </div>
+          {tableModal && <TableModal table={tableModal} onClose={() => setTableModal(null)} />}
+        </div>
+      );
+    }
+
+    function MenuView() {
+      return (
+        <div>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="font-display text-3xl font-semibold">Carta</h1>
+              <p className="text-muted mt-1">Gestiona categorías, platos, precios y disponibilidad.</p>
+            </div>
+            <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-clay text-white rounded-lg font-semibold text-sm">
+              <Icon name="plus" size={16} /> Nuevo plato
+            </button>
+          </div>
+          <div className="mt-6 grid grid-cols-3 gap-4">
+            {["Pollos a la Brasa", "Parrillas", "Para Compartir", "Sándwiches", "Ensaladas", "Acompañamientos", "Bebidas", "Postres"].map(c => (
+              <div key={c} className="bg-paper border border-border rounded-2xl p-5 hover:shadow-card cursor-pointer transition">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-display text-lg font-semibold">{c}</h3>
+                  <button className="text-muted"><Icon name="moreH" size={16} /></button>
+                </div>
+                <p className="text-sm text-muted mt-1">{Math.floor(3 + Math.random() * 8)} platos · {Math.floor(70 + Math.random() * 30)}% disponibles</p>
+                <div className="mt-3 flex items-center gap-2">
+                  <div className="flex-1 h-1.5 bg-cream rounded-full overflow-hidden">
+                    <div className="h-full bg-olive" style={{ width: `${70 + Math.random() * 30}%` }}></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function ReportsView() {
+      return (
+        <div>
+          <h1 className="font-display text-3xl font-semibold">Reportes</h1>
+          <p className="text-muted mt-1">Ventas, productos, mozos, métodos de pago.</p>
+          <div className="mt-6 grid grid-cols-4 gap-4">
+            {[
+              { label: "Ventas mes", value: PEN(187420.50), change: "+18%" },
+              { label: "Costo de mercadería", value: PEN(58234.20), change: "+12%" },
+              { label: "Margen bruto", value: "68.9%", change: "+2.1pp" },
+              { label: "Labor cost", value: "23.4%", change: "-0.8pp" }
+            ].map(k => (
+              <div key={k.label} className="bg-paper border border-border rounded-2xl p-5">
+                <p className="text-xs text-muted uppercase tracking-wider">{k.label}</p>
+                <p className="font-display text-2xl font-bold mt-2">{k.value}</p>
+                <p className="text-xs text-olive mt-1">{k.change} vs mes pasado</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6">
+            <SalesChart data={HOURLY_SALES} />
+          </div>
+        </div>
+      );
+    }
+
+    function PersonalView() {
+      const team = [
+        { name: "María Quispe", role: "Mozo · Salón principal", sales: 4280.50, tables: 12, rating: 4.9, color: "#A0322B" },
+        { name: "Juan Cárdenas", role: "Mozo · Salón principal", sales: 3940.20, tables: 10, rating: 4.7, color: "#C8941F" },
+        { name: "Carlos Mendoza", role: "Mozo · Terraza", sales: 2120.80, tables: 8, rating: 4.8, color: "#2D7D5A" },
+        { name: "Lucía Vargas", role: "Cajera", sales: null, rating: 5.0, color: "#3B82F6" },
+        { name: "Enrique Ruiz", role: "Chef ejecutivo", sales: null, rating: 4.9, color: "#1F1A17" },
+        { name: "Pedro Aguilar", role: "Cocinero · Brasa", sales: null, rating: 4.8, color: "#7E2820" }
+      ];
+      return (
+        <div>
+          <h1 className="font-display text-3xl font-semibold">Personal</h1>
+          <p className="text-muted mt-1">Equipo activo hoy.</p>
+          <div className="mt-6 grid grid-cols-2 gap-4">
+            {team.map(t => (
+              <div key={t.name} className="bg-paper border border-border rounded-2xl p-5 flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full text-white font-bold text-xl flex items-center justify-center" style={{ background: t.color }}>
+                  {t.name.split(" ").map(s => s[0]).join("").slice(0, 2)}
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold">{t.name}</p>
+                  <p className="text-xs text-muted">{t.role}</p>
+                  <div className="mt-2 flex gap-3 text-xs">
+                    {t.sales !== null && <span>Ventas: <span className="font-bold">{PEN(t.sales)}</span></span>}
+                    {t.tables && <span>Mesas: <span className="font-bold">{t.tables}</span></span>}
+                    <span>★ <span className="font-bold">{t.rating}</span></span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function PedidosView() {
+      return (
+        <div>
+          <h1 className="font-display text-3xl font-semibold">Pedidos</h1>
+          <p className="text-muted mt-1">Todos los pedidos de hoy.</p>
+          <div className="mt-6">
+            <RecentOrders orders={[...RECENT_ORDERS, ...RECENT_ORDERS]} />
+          </div>
+        </div>
+      );
+    }
+
+    function AjustesView() {
+      return (
+        <div>
+          <h1 className="font-display text-3xl font-semibold">Ajustes</h1>
+          <p className="text-muted mt-1">Configura tu restaurante.</p>
+          <div className="mt-6 grid grid-cols-2 gap-4">
+            {[
+              { title: "Información del restaurante", sub: "Nombre, RUC, dirección, contacto" },
+              { title: "Facturación electrónica", sub: "OSE conectado · Nubefact" },
+              { title: "Métodos de pago", sub: "Yape, Plin, Niubiz, efectivo" },
+              { title: "Impuestos y propinas", sub: "IGV 18% · Propina sugerida 10%" },
+              { title: "Mesas y QRs", sub: "16 mesas · QRs generados" },
+              { title: "Notificaciones", sub: "Email, WhatsApp Business" },
+              { title: "Idiomas de la carta", sub: "Español, Inglés, Portugués" },
+              { title: "Integraciones", sub: "PedidosYa, Rappi, Google Maps" }
+            ].map(s => (
+              <div key={s.title} className="bg-paper border border-border rounded-2xl p-5 hover:shadow-card cursor-pointer transition">
+                <p className="font-semibold">{s.title}</p>
+                <p className="text-xs text-muted mt-0.5">{s.sub}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ─────────────────────────── APP ───────────────────────────
+    function App() {
+      const [view, setView] = useState("dashboard");
+
+      return (
+        <div className="flex min-h-full">
+          <Sidebar active={view} setActive={setView} />
+          <div className="flex-1">
+            <TopBar alerts={CALLS.length} />
+            <main className="p-8">
+              {view === "dashboard" && <Dashboard />}
+              {view === "mesas" && <Mesas />}
+              {view === "menu" && <MenuView />}
+              {view === "pedidos" && <PedidosView />}
+              {view === "reportes" && <ReportsView />}
+              {view === "personal" && <PersonalView />}
+              {view === "ajustes" && <AjustesView />}
+            </main>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

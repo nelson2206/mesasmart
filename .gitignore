@@ -1,0 +1,28 @@
+# Backend
+backend/node_modules/
+backend/dist/
+backend/.env
+backend/.env.local
+backend/prisma/dev.db
+backend/prisma/dev.db-journal
+backend/prisma/migrations/dev/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Coverage
+coverage/
+
+# Misc
+.cache/

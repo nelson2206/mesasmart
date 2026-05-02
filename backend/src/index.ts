@@ -1,0 +1,120 @@
+/**
+ * MesaSmart · Backend entry point
+ */
+
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import { createServer } from "node:http";
+
+import { env } from "./config/env.js";
+import { logger } from "./utils/logger.js";
+import { errorHandler, notFound } from "./middleware/error.js";
+import { initSockets } from "./sockets/index.js";
+
+import { authRoutes } from "./routes/auth.routes.js";
+import { menuRoutes } from "./routes/menu.routes.js";
+import { tableRoutes } from "./routes/tables.routes.js";
+import { orderRoutes } from "./routes/orders.routes.js";
+import { modRoutes } from "./routes/modifications.routes.js";
+import { callRoutes } from "./routes/calls.routes.js";
+import { paymentRoutes } from "./routes/payments.routes.js";
+import { reportRoutes } from "./routes/reports.routes.js";
+import { aiRoutes } from "./routes/ai.routes.js";
+import { ingredientRoutes } from "./routes/ingredients.routes.js";
+import { recipeRoutes } from "./routes/recipes.routes.js";
+import { inventoryRoutes } from "./routes/inventory.routes.js";
+import { supplierRoutes } from "./routes/suppliers.routes.js";
+import { pnlRoutes } from "./routes/pnl.routes.js";
+import { campaignRoutes } from "./routes/campaigns.routes.js";
+
+const app = express();
+const server = createServer(app);
+
+// ─── Security & infra middleware ───
+app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(
+  cors({
+    origin: env.CORS_ORIGINS === "*" ? true : env.CORS_ORIGINS.split(","),
+    credentials: true
+  })
+);
+app.use(express.json({ limit: "1mb" }));
+app.use(
+  rateLimit({
+    windowMs: 60 * 1000,
+    max: 200,
+    standardHeaders: true,
+    legacyHeaders: false
+  })
+);
+
+// ─── Health ───
+app.get("/health", (_req, res) => res.json({ ok: true, ts: Date.now() }));
+app.get("/health/db", async (_req, res, next) => {
+  try {
+    const { prisma } = await import("./prisma.js");
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ ok: true });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// ─── Routes ───
+app.use("/api/auth", authRoutes);
+app.use("/api/menu", menuRoutes);
+app.use("/api/tables", tableRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api", modRoutes); // modifications: /api/modifications/* + /api/orders/:id/items/:id/modifications
+app.use("/api/calls", callRoutes);
+app.use("/api", paymentRoutes); // /api/orders/:id/payment + /api/comprobantes
+app.use("/api/reports", reportRoutes);
+app.use("/api/ai", aiRoutes);
+
+// ERP module
+app.use("/api/ingredients", ingredientRoutes);
+app.use("/api", recipeRoutes); // /api/menu-items/:id/recipe + /api/coverage
+app.use("/api/inventory", inventoryRoutes);
+app.use("/api/suppliers", supplierRoutes);
+app.use("/api/pnl", pnlRoutes);
+app.use("/api/campaigns", campaignRoutes);
+
+// ─── Error handlers (must be last) ───
+app.use(notFound);
+app.use(errorHandler);
+
+// ─── Sockets ───
+initSockets(server);
+
+// ─── Background priority recompute (every 30s) ───
+import("./services/priority.service.js").then(({ refreshOrderPriority }) => {
+  setInterval(async () => {
+    try {
+      const { prisma } = await import("./prisma.js");
+      const open = await prisma.order.findMany({
+        where: { status: { in: ["OPEN", "KITCHEN"] } },
+        select: { id: true }
+      });
+      for (const o of open) await refreshOrderPriority(o.id);
+    } catch (err) {
+      logger.warn({ err }, "priority recompute failed");
+    }
+  }, 30_000);
+});
+
+server.listen(env.PORT, () => {
+  logger.info(`🚀 MesaSmart backend listening on http://localhost:${env.PORT}`);
+  logger.info(`   Env: ${env.NODE_ENV}`);
+  logger.info(`   AI:  ${env.AI_FEATURES_ENABLED && env.ANTHROPIC_API_KEY ? "enabled" : "disabled"}`);
+  logger.info(`   OSE: ${env.MOCK_OSE ? "MOCK" : "live"}`);
+});
+
+// Graceful shutdown
+const shutdown = (signal: string) => {
+  logger.info(`Received ${signal}, shutting down...`);
+  server.close(() => process.exit(0));
+};
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

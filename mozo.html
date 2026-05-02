@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Mozo · La Brasa Dorada</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"Playfair Display"', 'serif'],
+            sans: ['Inter', 'system-ui', 'sans-serif']
+          },
+          colors: {
+            cream: '#FAF7F2',
+            paper: '#FFFFFF',
+            charcoal: '#1F1A17',
+            ink: '#2A1F1A',
+            muted: '#6B5D52',
+            clay: { DEFAULT: '#A0322B', dark: '#7E2820' },
+            gold: '#C8941F',
+            olive: '#2D7D5A',
+            border: '#E8DFD3',
+            sky: '#3B82F6',
+            warn: '#D97706',
+            danger: '#DC2626'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    html, body, #root { height: 100%; margin: 0; }
+    body {
+      background: #FAF7F2;
+      color: #2A1F1A;
+      font-family: 'Inter', system-ui, sans-serif;
+      overscroll-behavior: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .font-display { font-family: 'Playfair Display', serif; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { scrollbar-width: none; }
+
+    @keyframes pulseDot { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.4); opacity: 0.5; } }
+    .pulse-dot { animation: pulseDot 1.2s infinite; }
+
+    @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .slide-up { animation: slideUp .3s cubic-bezier(0.16, 1, 0.3, 1); }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-4px); }
+      40%, 80% { transform: translateX(4px); }
+    }
+    .shake { animation: shake 0.5s; }
+
+    /* Phone container */
+    .phone-frame {
+      max-width: 420px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background: #FAF7F2;
+      box-shadow: 0 0 60px rgba(0,0,0,0.08);
+      position: relative;
+    }
+
+    button { min-height: 40px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" data-presets="env,react">
+    const { useState, useEffect } = React;
+
+    const Icon = ({ name, size = 18, className = "" }) => {
+      const ics = {
+        bell: <><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9zM13.73 21a2 2 0 0 1-3.46 0" /></>,
+        check: <polyline points="20 6 9 17 4 12" />,
+        clock: <><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></>,
+        users: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>,
+        receipt: <><path d="M4 2v20l2-1.5L8 22l2-1.5L12 22l2-1.5L16 22l2-1.5L20 22V2l-2 1.5L16 2l-2 1.5L12 2l-2 1.5L8 2 6 3.5z" /><line x1="8" y1="7" x2="16" y2="7" /><line x1="8" y1="11" x2="16" y2="11" /></>,
+        x: <><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>,
+        chevronRight: <polyline points="9 18 15 12 9 6" />,
+        chevronDown: <polyline points="6 9 12 15 18 9" />,
+        chef: <path d="M12 2a4 4 0 0 0-4 4v2a4 4 0 0 0-4 4v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a4 4 0 0 0-4-4V6a4 4 0 0 0-4-4z" />,
+        utensils: <><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7" /></>,
+        layout: <><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="9" y1="3" x2="9" y2="21" /></>,
+        cash: <><rect x="2" y="6" width="20" height="12" rx="2" /><circle cx="12" cy="12" r="2" /></>,
+        plus: <><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></>,
+        phone: <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />,
+        alert: <><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12" y2="17" /></>,
+        edit: <><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></>
+      };
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+          {ics[name]}
+        </svg>
+      );
+    };
+
+    const PEN = (n) => "S/ " + n.toFixed(2);
+
+    // ───────────────────────────── DATA ─────────────────────────────
+    const ME = { name: "María Quispe", role: "Mozo · Salón principal", shift: "16:00 - 24:00", color: "#A0322B" };
+
+    // All 16 tables in the salón with grid coordinates (col x, row y)
+    const ALL_TABLES_INIT = [
+      { id: 1, x: 0, y: 0, seats: 4, status: "occupied", server: "María", party: 3, time: 12, total: 156.50, zone: "Ventana",
+        items: [
+          { name: "1/4 de Pollo a la Brasa", qty: 2, status: "ready" },
+          { name: "Chicha Morada 1L", qty: 1, status: "ready" },
+          { name: "Ensalada de la Casa", qty: 1, status: "preparing" }
+        ]
+      },
+      { id: 2, x: 1, y: 0, seats: 4, status: "free", zone: "Ventana" },
+      { id: 3, x: 2, y: 0, seats: 6, status: "occupied", server: "María", party: 5, time: 8, total: 245.80, zone: "Centro",
+        items: [
+          { name: "Pollo Entero", qty: 1, status: "preparing" },
+          { name: "Salchipapa Familiar", qty: 1, status: "preparing" },
+          { name: "Inca Kola 1.5L", qty: 1, status: "ready" }
+        ]
+      },
+      { id: 4, x: 3, y: 0, seats: 2, status: "free", zone: "Centro" },
+      { id: 5, x: 4, y: 0, seats: 4, status: "occupied", server: "Carlos", party: 4, time: 35, total: 198.00, zone: "Pared" },
+      { id: 6, x: 0, y: 1, seats: 2, status: "cleaning", zone: "Ventana" },
+      { id: 7, x: 1, y: 1, seats: 4, status: "alert", server: "María", party: 4, time: 22, total: 287.40, zone: "Centro",
+        alert: "Llamó al mozo · Repetir bebida", alertTime: 1,
+        items: [
+          { name: "1/2 Pollo a la Brasa", qty: 2, status: "served" },
+          { name: "Chicha Morada 1L", qty: 1, status: "served" },
+          { name: "Limonada Frozen", qty: 1, status: "served" }
+        ]
+      },
+      { id: 8, x: 2, y: 1, seats: 8, status: "reserved", zone: "Centro", reservation: "20:30 · Familia Rojas" },
+      { id: 9, x: 3, y: 1, seats: 2, status: "occupied", server: "Carlos", party: 2, time: 18, total: 89.90, zone: "Centro" },
+      { id: 10, x: 4, y: 1, seats: 4, status: "billing", server: "Juan", party: 4, time: 65, total: 412.50, zone: "Pared" },
+      { id: 11, x: 0, y: 2, seats: 4, status: "free", zone: "Ventana" },
+      { id: 12, x: 1, y: 2, seats: 6, status: "alert", server: "María", party: 6, time: 45, total: 356.20, zone: "Centro",
+        alert: "Atraso en cocina · 4 min sobre el tiempo", alertTime: 4, urgent: true,
+        items: [
+          { name: "Combo Familiar", qty: 1, status: "preparing" },
+          { name: "Anticuchos de Corazón", qty: 2, status: "preparing" }
+        ]
+      },
+      { id: 13, x: 2, y: 2, seats: 2, status: "free", zone: "Centro" },
+      { id: 14, x: 3, y: 2, seats: 4, status: "occupied", server: "María", party: 3, time: 5, total: 42.00, zone: "Pared",
+        items: [
+          { name: "1/4 de Pollo", qty: 1, status: "received" },
+          { name: "Coca Cola Personal", qty: 1, status: "received" }
+        ]
+      },
+      { id: 15, x: 4, y: 2, seats: 4, status: "free", zone: "Pared" },
+      { id: 16, x: 5, y: 0, seats: 4, status: "occupied", server: "Carlos", party: 3, time: 28, total: 178.50, zone: "Terraza" }
+    ];
+
+    const CALLS = [
+      { id: 1, mesa: 7, reason: "Repetir bebida", time: 1, urgent: false },
+      { id: 2, mesa: 12, reason: "Atraso en cocina", time: 4, urgent: true },
+    ];
+
+    // ─────────────────────────── COMPONENTS ───────────────────────────
+
+    function Header() {
+      return (
+        <header className="bg-charcoal text-cream px-5 pt-12 pb-5 sticky top-0 z-30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-full bg-clay flex items-center justify-center font-bold text-lg">
+                {ME.name.split(" ").map(s => s[0]).join("")}
+              </div>
+              <div>
+                <p className="font-semibold">{ME.name}</p>
+                <p className="text-xs text-cream/60">{ME.role}</p>
+              </div>
+            </div>
+            <button className="relative w-10 h-10 rounded-full bg-cream/10 flex items-center justify-center">
+              <Icon name="bell" size={18} />
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-clay rounded-full text-[10px] font-bold flex items-center justify-center">{CALLS.length}</span>
+            </button>
+          </div>
+          <div className="mt-4 flex items-center gap-3 text-xs">
+            <span className="inline-flex items-center gap-1.5 bg-olive/20 text-olive px-2.5 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-olive pulse-dot"></span> En turno
+            </span>
+            <span className="text-cream/60">{ME.shift}</span>
+          </div>
+        </header>
+      );
+    }
+
+    function Tabs({ active, setActive, callCount }) {
+      const tabs = [
+        { id: "mesas", label: "Mis mesas" },
+        { id: "plano", label: "Plano" },
+        { id: "llamados", label: "Llamados", badge: callCount },
+        { id: "pedidos", label: "Pedidos" }
+      ];
+      return (
+        <div className="bg-paper border-b border-border sticky top-[136px] z-20">
+          <div className="flex">
+            {tabs.map(t => (
+              <button
+                key={t.id}
+                onClick={() => setActive(t.id)}
+                className={`flex-1 py-3 text-xs font-semibold relative ${active === t.id ? 'text-clay' : 'text-muted'}`}
+              >
+                <span className="inline-flex items-center gap-1">
+                  {t.label}
+                  {t.badge > 0 && <span className="bg-clay text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{t.badge}</span>}
+                </span>
+                {active === t.id && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-0.5 bg-clay rounded-full"></span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Status config for floor plan tables
+    const tableStatusConfig = (table, isMine) => {
+      if (table.blocked) return { bg: "bg-charcoal/10", border: "border-charcoal/30 border-dashed", text: "text-charcoal", label: "Bloqueada" };
+      if (table.complaint) return { bg: "bg-danger/10", border: "border-danger", text: "text-danger", label: "Queja" };
+      if (table.joinedWith) return { bg: "bg-gold/10", border: "border-gold", text: "text-gold", label: "Unida" };
+      switch (table.status) {
+        case "free": return { bg: "bg-paper", border: "border-border", text: "text-muted", label: "Libre" };
+        case "occupied": return { bg: isMine ? "bg-clay/10" : "bg-paper", border: isMine ? "border-clay" : "border-border", text: isMine ? "text-clay" : "text-muted", label: "Ocupada" };
+        case "billing": return { bg: "bg-gold/10", border: "border-gold", text: "text-gold", label: "Pidió cuenta" };
+        case "cleaning": return { bg: "bg-cream", border: "border-border border-dashed", text: "text-muted", label: "Limpieza" };
+        case "reserved": return { bg: "bg-sky/10", border: "border-sky", text: "text-sky", label: "Reservada" };
+        case "alert": return { bg: "bg-clay/15", border: "border-clay", text: "text-clay", label: "Alerta" };
+        default: return { bg: "bg-paper", border: "border-border", text: "text-muted", label: "" };
+      }
+    };
+
+    // Floor plan tile
+    function PlanTile({ table, isMine, onTap }) {
+      const c = tableStatusConfig(table, isMine);
+      const hasAlert = table.alert || table.complaint;
+      return (
+        <button
+          onClick={() => onTap(table)}
+          className={`relative aspect-square rounded-xl border-2 ${c.border} ${c.bg} p-2 text-left transition active:scale-95`}
+        >
+          {hasAlert && (
+            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-danger rounded-full pulse-dot border-2 border-cream"></span>
+          )}
+          {table.joinedWith && (
+            <span className="absolute -top-1.5 -left-1.5 w-5 h-5 bg-gold rounded-full text-white text-[10px] font-bold flex items-center justify-center border-2 border-cream">+</span>
+          )}
+          {isMine && !table.blocked && (
+            <span className="absolute top-1 left-1 w-1.5 h-1.5 rounded-full bg-clay"></span>
+          )}
+          <div className="flex items-start justify-between">
+            <span className="font-display text-lg font-bold">{table.id}</span>
+          </div>
+          <p className="text-[9px] text-muted -mt-1">{table.seats} asientos</p>
+          {table.status === 'occupied' || table.status === 'billing' || table.status === 'alert' ? (
+            <div className="mt-1">
+              <p className={`text-[10px] font-semibold ${c.text}`}>{table.party}/{table.seats}</p>
+              <p className="text-[9px] text-muted font-mono">{table.time}'</p>
+            </div>
+          ) : (
+            <p className={`text-[10px] mt-1 font-semibold ${c.text}`}>{c.label}</p>
+          )}
+          {table.server && !isMine && (
+            <p className="text-[8px] text-muted absolute bottom-1 right-1.5">{table.server.split(" ")[0]}</p>
+          )}
+        </button>
+      );
+    }
+
+    // Floor plan view
+    function PlanoView({ tables, onTap, joinMode, joinFirst }) {
+      const cols = 6;
+      const rows = 3;
+      const grid = {};
+      tables.forEach(t => { grid[`${t.x}-${t.y}`] = t; });
+
+      const myTables = tables.filter(t => t.server === ME.name).length;
+      const free = tables.filter(t => t.status === "free").length;
+      const blocked = tables.filter(t => t.blocked).length;
+      const joined = tables.filter(t => t.joinedWith).length;
+
+      // Group by zone for zone labels
+      const zones = ["Ventana", "Centro", "Pared", "Terraza"];
+
+      return (
+        <div className="px-5 py-5 space-y-5">
+          {joinMode && (
+            <div className="bg-gold/10 border-2 border-gold rounded-2xl p-4 anim-fade-in">
+              <p className="font-bold text-gold text-sm">{joinFirst ? `Mesa ${joinFirst.id} seleccionada` : "Selecciona la primera mesa"}</p>
+              <p className="text-xs text-muted mt-1">{joinFirst ? "Toca una segunda mesa adyacente para unir" : "Estás en modo unir mesas"}</p>
+            </div>
+          )}
+
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-display text-xl font-semibold">Plano del salón</h2>
+              <span className="text-[11px] text-muted">{myTables} tuyas · {free} libres</span>
+            </div>
+
+            <div className="bg-paper border border-border rounded-2xl p-3">
+              <div className="text-[10px] text-muted uppercase tracking-wider mb-2 px-2 flex items-center gap-1">
+                <Icon name="layout" size={11} /> Vista superior · Salón principal
+              </div>
+              <div className="grid grid-cols-6 gap-1.5">
+                {Array.from({ length: rows }).map((_, y) =>
+                  Array.from({ length: cols }).map((_, x) => {
+                    const t = grid[`${x}-${y}`];
+                    if (!t) return <div key={`${x}-${y}`} className="aspect-square"></div>;
+                    return <PlanTile key={t.id} table={t} isMine={t.server === ME.name} onTap={onTap} />;
+                  })
+                )}
+              </div>
+              {/* Legend */}
+              <div className="mt-3 pt-3 border-t border-border flex flex-wrap gap-2 text-[10px] text-muted">
+                <Legend dot="bg-clay" label="Mías" />
+                <Legend dot="bg-border" label="Otras" />
+                <Legend dot="bg-charcoal/30" label="Bloqueada" dashed />
+                <Legend dot="bg-gold" label="Unida" />
+                <Legend dot="bg-danger" label="Queja" />
+              </div>
+            </div>
+          </div>
+
+          {(blocked > 0 || joined > 0) && (
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {blocked > 0 && (
+                <div className="bg-paper border border-border rounded-xl p-3">
+                  <p className="text-muted text-[10px] uppercase">Bloqueadas</p>
+                  <p className="font-display text-2xl font-bold mt-1">{blocked}</p>
+                </div>
+              )}
+              {joined > 0 && (
+                <div className="bg-paper border border-border rounded-xl p-3">
+                  <p className="text-muted text-[10px] uppercase">Mesas unidas</p>
+                  <p className="font-display text-2xl font-bold mt-1">{joined / 2}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="text-[11px] text-muted bg-paper border border-border rounded-xl p-3 leading-relaxed">
+            <p className="font-semibold text-ink mb-1">Tip para mozos nuevos</p>
+            Las mesas marcadas con un <span className="inline-block w-1.5 h-1.5 rounded-full bg-clay mx-0.5"></span> son tuyas. Toca cualquier mesa para ver el detalle. Si juntas dos mesas físicamente, márcalas como "unidas" para que otros mozos no se confundan.
+          </div>
+        </div>
+      );
+    }
+
+    function Legend({ dot, label, dashed }) {
+      return (
+        <span className="inline-flex items-center gap-1">
+          <span className={`w-2 h-2 rounded-full ${dot} ${dashed ? 'border border-dashed border-charcoal/40' : ''}`}></span>
+          {label}
+        </span>
+      );
+    }
+
+    // Action sheet for table operations
+    function TableActionSheet({ open, table, onClose, onAction }) {
+      if (!open || !table) return null;
+      const isMine = table.server === ME.name;
+      const c = tableStatusConfig(table, isMine);
+
+      return (
+        <div className="fixed inset-0 z-50 bg-charcoal/40 flex items-end" onClick={onClose}>
+          <div onClick={(e) => e.stopPropagation()} className="slide-up bg-cream w-full max-w-[420px] mx-auto rounded-t-3xl max-h-[88vh] overflow-y-auto no-scrollbar">
+            <div className="p-5 border-b border-border bg-paper sticky top-0 z-10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-12 h-12 rounded-xl ${c.bg} ${c.border} border-2 flex items-center justify-center font-display text-xl font-bold ${c.text}`}>
+                    {table.id}
+                  </div>
+                  <div>
+                    <p className="font-display text-xl font-bold">Mesa {table.id}</p>
+                    <p className="text-xs text-muted">{table.zone || "Salón"} · {table.seats} asientos · <span className={c.text}>{c.label}</span></p>
+                  </div>
+                </div>
+                <button onClick={onClose} className="w-9 h-9 rounded-full bg-cream border border-border"><Icon name="x" size={16} className="mx-auto" /></button>
+              </div>
+            </div>
+
+            {table.complaint && (
+              <div className="m-5 p-3 bg-danger/10 border border-danger/30 rounded-xl">
+                <p className="text-xs font-bold text-danger inline-flex items-center gap-1.5">
+                  <Icon name="alert" size={12} /> Queja activa
+                </p>
+                <p className="text-sm mt-1">{table.complaint}</p>
+                <button onClick={() => onAction("clearComplaint", table.id)} className="mt-2 text-xs text-olive font-semibold">
+                  ✓ Resolver queja
+                </button>
+              </div>
+            )}
+
+            {table.joinedWith && (
+              <div className="mx-5 mt-5 p-3 bg-gold/10 border border-gold/30 rounded-xl">
+                <p className="text-xs font-bold text-gold">Unida con Mesa {table.joinedWith}</p>
+                <p className="text-[11px] text-muted mt-0.5">Capacidad combinada: {table.seats + (table.joinedSeats || 0)} asientos</p>
+                <button onClick={() => onAction("unjoin", table.id)} className="mt-2 text-xs text-clay font-semibold">
+                  Separar mesas
+                </button>
+              </div>
+            )}
+
+            {table.blocked && (
+              <div className="mx-5 mt-5 p-3 bg-charcoal/5 border border-charcoal/20 rounded-xl">
+                <p className="text-xs font-bold">Mesa bloqueada</p>
+                <p className="text-[11px] text-muted mt-0.5">{table.blockedReason || "No disponible"}</p>
+                <button onClick={() => onAction("unblock", table.id)} className="mt-2 text-xs text-olive font-semibold">
+                  Desbloquear
+                </button>
+              </div>
+            )}
+
+            <div className="p-5">
+              {(table.status === 'occupied' || table.status === 'billing' || table.status === 'alert') && isMine && (
+                <div className="mb-4 grid grid-cols-3 gap-2">
+                  <StatCard label="Comensales" value={`${table.party}/${table.seats}`} />
+                  <StatCard label="Tiempo" value={`${table.time}'`} />
+                  <StatCard label="Total" value={PEN(table.total)} />
+                </div>
+              )}
+
+              <p className="text-[11px] font-bold uppercase tracking-wider text-muted mb-2">Acciones rápidas</p>
+              <div className="space-y-2">
+                {!table.complaint && (
+                  <ActionButton
+                    icon="alert" color="danger"
+                    title="Marcar queja del cliente"
+                    desc="Sube prioridad y notifica a cocina y admin"
+                    onClick={() => onAction("complaint", table.id)}
+                  />
+                )}
+                {!table.blocked && !table.joinedWith && (
+                  <ActionButton
+                    icon="layout" color="gold"
+                    title="Unir con otra mesa"
+                    desc="Cuando juntas físicamente 2 mesas para un grupo"
+                    onClick={() => onAction("joinStart", table.id)}
+                  />
+                )}
+                {!table.blocked && table.status === 'free' && (
+                  <ActionButton
+                    icon="x" color="charcoal"
+                    title="Bloquear mesa"
+                    desc="Indicar que no está disponible (limpieza, daño, etc.)"
+                    onClick={() => onAction("blockStart", table.id)}
+                  />
+                )}
+                <ActionButton
+                  icon="edit" color="muted"
+                  title="Editar capacidad"
+                  desc={`Actualmente ${table.seats} asientos`}
+                  onClick={() => onAction("editStart", table.id)}
+                />
+                {(table.status === 'occupied' || table.status === 'alert') && isMine && (
+                  <ActionButton
+                    icon="receipt" color="olive"
+                    title="Ver pedido"
+                    desc="Detalle de items y estados"
+                    onClick={() => onAction("viewOrder", table.id)}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function ActionButton({ icon, color, title, desc, onClick }) {
+      const colorMap = { danger: "bg-danger/10 text-danger", gold: "bg-gold/10 text-gold", charcoal: "bg-charcoal/5 text-charcoal", muted: "bg-cream text-muted", olive: "bg-olive/10 text-olive" };
+      return (
+        <button onClick={onClick} className="w-full flex items-center gap-3 p-3 bg-paper border border-border rounded-xl text-left hover:border-clay transition">
+          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorMap[color]}`}>
+            <Icon name={icon} size={18} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold">{title}</p>
+            <p className="text-[11px] text-muted">{desc}</p>
+          </div>
+          <Icon name="chevronRight" size={14} className="text-muted" />
+        </button>
+      );
+    }
+
+    // Block reason modal
+    function BlockReasonModal({ open, onClose, onConfirm }) {
+      const reasons = [
+        { id: "cleaning", label: "Limpieza profunda", icon: "x" },
+        { id: "damaged", label: "Mesa o silla dañada", icon: "alert" },
+        { id: "private", label: "Reserva privada / VIP", icon: "users" },
+        { id: "other", label: "Otro motivo", icon: "edit" }
+      ];
+      if (!open) return null;
+      return (
+        <div className="fixed inset-0 z-[60] bg-charcoal/40 flex items-end" onClick={onClose}>
+          <div onClick={(e) => e.stopPropagation()} className="slide-up bg-cream w-full max-w-[420px] mx-auto rounded-t-3xl p-5">
+            <p className="font-display text-xl font-semibold mb-1">Bloquear mesa</p>
+            <p className="text-xs text-muted mb-4">Otros mozos verán esta mesa como no disponible.</p>
+            <div className="space-y-2">
+              {reasons.map(r => (
+                <button key={r.id} onClick={() => onConfirm(r.label)} className="w-full flex items-center gap-3 p-3 bg-paper border border-border rounded-xl text-left hover:border-clay">
+                  <div className="w-9 h-9 rounded-lg bg-charcoal/5 flex items-center justify-center text-charcoal">
+                    <Icon name={r.icon} size={16} />
+                  </div>
+                  <span className="text-sm font-medium flex-1">{r.label}</span>
+                </button>
+              ))}
+            </div>
+            <button onClick={onClose} className="w-full mt-4 py-3 text-sm text-muted">Cancelar</button>
+          </div>
+        </div>
+      );
+    }
+
+    // Complaint modal
+    function ComplaintModal({ open, onClose, onConfirm }) {
+      const reasons = [
+        "Demora excesiva",
+        "Plato frío",
+        "Plato incorrecto / mal preparado",
+        "Trato del personal",
+        "Limpieza del lugar",
+        "Otro motivo"
+      ];
+      if (!open) return null;
+      return (
+        <div className="fixed inset-0 z-[60] bg-charcoal/40 flex items-end" onClick={onClose}>
+          <div onClick={(e) => e.stopPropagation()} className="slide-up bg-cream w-full max-w-[420px] mx-auto rounded-t-3xl p-5">
+            <p className="font-display text-xl font-semibold mb-1 text-danger">Queja del cliente</p>
+            <p className="text-xs text-muted mb-4">Esta mesa subirá a prioridad alta en cocina y admin será notificado.</p>
+            <div className="space-y-2">
+              {reasons.map(r => (
+                <button key={r} onClick={() => onConfirm(r)} className="w-full flex items-center gap-3 p-3 bg-paper border border-danger/30 rounded-xl text-left hover:bg-danger/5">
+                  <Icon name="alert" size={14} className="text-danger" />
+                  <span className="text-sm font-medium flex-1 text-danger">{r}</span>
+                </button>
+              ))}
+            </div>
+            <button onClick={onClose} className="w-full mt-4 py-3 text-sm text-muted">Cancelar</button>
+          </div>
+        </div>
+      );
+    }
+
+    // Edit capacity modal
+    function EditCapacityModal({ open, table, onClose, onConfirm }) {
+      const [seats, setSeats] = useState(table?.seats || 4);
+      useEffect(() => { if (table) setSeats(table.seats); }, [table]);
+      if (!open || !table) return null;
+      return (
+        <div className="fixed inset-0 z-[60] bg-charcoal/40 flex items-end" onClick={onClose}>
+          <div onClick={(e) => e.stopPropagation()} className="slide-up bg-cream w-full max-w-[420px] mx-auto rounded-t-3xl p-5">
+            <p className="font-display text-xl font-semibold mb-1">Mesa {table.id} · Editar</p>
+            <p className="text-xs text-muted mb-4">Cambia cuántos asientos tiene esta mesa.</p>
+            <div className="bg-paper border border-border rounded-xl p-4 flex items-center justify-between">
+              <span className="text-sm text-muted">Asientos</span>
+              <div className="inline-flex items-center bg-cream rounded-full">
+                <button onClick={() => setSeats(Math.max(1, seats - 1))} className="w-10 h-10 text-clay font-bold">−</button>
+                <span className="w-10 text-center font-display text-xl font-bold">{seats}</span>
+                <button onClick={() => setSeats(Math.min(20, seats + 1))} className="w-10 h-10 text-clay font-bold">+</button>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mt-4">
+              <button onClick={onClose} className="py-3 bg-cream border border-border rounded-xl text-sm font-semibold">Cancelar</button>
+              <button onClick={() => onConfirm(seats)} className="py-3 bg-clay text-white rounded-xl text-sm font-semibold">Guardar</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function StatCard({ label, value, sub }) {
+      return (
+        <div className="bg-paper border border-border rounded-2xl p-3.5 flex-1">
+          <p className="text-[11px] text-muted uppercase tracking-wider">{label}</p>
+          <p className="font-display text-2xl font-bold mt-1">{value}</p>
+          {sub && <p className="text-[10px] text-muted mt-0.5">{sub}</p>}
+        </div>
+      );
+    }
+
+    function ItemStatus({ status }) {
+      const c = {
+        received: { color: "text-muted", label: "Recibido" },
+        preparing: { color: "text-warn", label: "Preparando" },
+        ready: { color: "text-sky", label: "Listo p/ servir" },
+        served: { color: "text-olive", label: "Servido" }
+      }[status];
+      return (
+        <span className={`text-[10px] font-semibold uppercase ${c.color}`}>{c.label}</span>
+      );
+    }
+
+    function TableCard({ table, onClick }) {
+      const isAlert = table.status === "alert";
+      return (
+        <button
+          onClick={() => onClick(table)}
+          className={`w-full text-left bg-paper border rounded-2xl p-4 transition ${isAlert ? (table.urgent ? 'border-danger bg-danger/5 shake' : 'border-clay bg-clay/5') : 'border-border'}`}
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-display text-xl font-bold ${isAlert ? 'bg-clay text-white' : 'bg-cream border border-border'}`}>
+                {table.id}
+              </div>
+              <div>
+                <p className="font-semibold text-sm">Mesa {table.id}</p>
+                <p className="text-xs text-muted inline-flex items-center gap-1">
+                  <Icon name="users" size={11} /> {table.party}/{table.seats}
+                  <span className="mx-1">·</span>
+                  <Icon name="clock" size={11} /> {table.time}'
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="font-display font-bold text-clay">{PEN(table.total)}</p>
+              {isAlert && <p className="text-[10px] font-semibold text-clay mt-0.5">⚠ ¡Atender!</p>}
+            </div>
+          </div>
+
+          {isAlert && table.alert && (
+            <div className={`mt-3 p-2.5 rounded-xl ${table.urgent ? 'bg-danger/10 border border-danger/30' : 'bg-clay/10 border border-clay/30'}`}>
+              <p className={`text-xs font-semibold ${table.urgent ? 'text-danger' : 'text-clay'} inline-flex items-center gap-1.5`}>
+                <Icon name="alert" size={12} />
+                {table.alert}
+              </p>
+              <p className="text-[10px] text-muted mt-0.5">hace {table.alertTime} min</p>
+            </div>
+          )}
+
+          {table.items && table.items.length > 0 && (
+            <div className="mt-3 space-y-1.5">
+              {table.items.slice(0, 3).map((it, i) => {
+                const c = it.status;
+                const dot = c === 'ready' ? 'bg-sky' : c === 'preparing' ? 'bg-warn' : c === 'served' ? 'bg-olive' : 'bg-muted';
+                return (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className={`w-1.5 h-1.5 rounded-full ${dot} shrink-0`}></span>
+                    <span className="text-xs flex-1 truncate text-ink">{it.qty}× {it.name}</span>
+                    <ItemStatus status={it.status} />
+                  </div>
+                );
+              })}
+              {table.items.length > 3 && (
+                <p className="text-[11px] text-muted">+ {table.items.length - 3} más</p>
+              )}
+            </div>
+          )}
+        </button>
+      );
+    }
+
+    function CallCard({ call, onResolve }) {
+      return (
+        <div className={`bg-paper border rounded-2xl p-4 ${call.urgent ? 'border-danger bg-danger/5 shake' : 'border-clay bg-clay/5'}`}>
+          <div className="flex items-start gap-3">
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-display text-lg font-bold text-white shrink-0 ${call.urgent ? 'bg-danger' : 'bg-clay'}`}>
+              {call.mesa}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={`text-sm font-bold inline-flex items-center gap-1.5 ${call.urgent ? 'text-danger' : 'text-clay'}`}>
+                {call.urgent && <Icon name="alert" size={14} />}
+                Mesa {call.mesa}
+              </p>
+              <p className="text-sm font-semibold mt-0.5">{call.reason}</p>
+              <p className="text-[11px] text-muted mt-0.5">hace {call.time} min</p>
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <button className="py-2.5 bg-cream border border-border rounded-lg text-xs font-semibold">
+              Ver mesa
+            </button>
+            <button onClick={() => onResolve(call.id)} className="py-2.5 bg-olive text-white rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1">
+              <Icon name="check" size={14} /> Atendido
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    function TableDetail({ table, onClose }) {
+      if (!table) return null;
+      const itemsByStatus = {
+        ready: table.items.filter(i => i.status === 'ready'),
+        preparing: table.items.filter(i => i.status === 'preparing'),
+        served: table.items.filter(i => i.status === 'served'),
+        received: table.items.filter(i => i.status === 'received')
+      };
+      return (
+        <div className="fixed inset-0 z-50 bg-charcoal/40 flex items-end" onClick={onClose}>
+          <div onClick={(e) => e.stopPropagation()} className="slide-up bg-cream w-full max-w-[420px] mx-auto rounded-t-3xl max-h-[90vh] overflow-y-auto no-scrollbar">
+            <div className="bg-paper px-5 py-4 border-b border-border flex items-center justify-between sticky top-0 z-10">
+              <div>
+                <h2 className="font-display text-2xl font-bold">Mesa {table.id}</h2>
+                <p className="text-xs text-muted">{table.party} comensales · {table.time} min en mesa</p>
+              </div>
+              <button onClick={onClose} className="w-9 h-9 rounded-full bg-cream flex items-center justify-center">
+                <Icon name="x" size={18} />
+              </button>
+            </div>
+
+            {table.alert && (
+              <div className={`m-5 p-3 rounded-xl ${table.urgent ? 'bg-danger/10 border border-danger/30' : 'bg-clay/10 border border-clay/30'}`}>
+                <p className={`text-sm font-semibold ${table.urgent ? 'text-danger' : 'text-clay'} inline-flex items-center gap-1.5`}>
+                  <Icon name="alert" size={14} />
+                  {table.alert}
+                </p>
+              </div>
+            )}
+
+            <div className="px-5 py-3">
+              <div className="flex gap-2">
+                <StatCard label="Subtotal" value={PEN(table.total)} />
+                <StatCard label="Items" value={table.items.length} sub={`${itemsByStatus.ready.length} listos`} />
+              </div>
+            </div>
+
+            {itemsByStatus.ready.length > 0 && (
+              <div className="px-5 mb-4">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-sky mb-2">⚡ Listos para servir ({itemsByStatus.ready.length})</p>
+                <div className="bg-paper border border-sky/30 rounded-2xl divide-y divide-border">
+                  {itemsByStatus.ready.map((it, i) => (
+                    <div key={i} className="flex items-center justify-between p-3">
+                      <div>
+                        <p className="text-sm font-semibold">{it.qty}× {it.name}</p>
+                      </div>
+                      <button className="px-3 py-1.5 bg-olive text-white text-xs font-semibold rounded-lg">
+                        Servido
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {itemsByStatus.preparing.length > 0 && (
+              <div className="px-5 mb-4">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-warn mb-2">⏳ En preparación ({itemsByStatus.preparing.length})</p>
+                <div className="bg-paper border border-border rounded-2xl divide-y divide-border">
+                  {itemsByStatus.preparing.map((it, i) => (
+                    <div key={i} className="flex items-center justify-between p-3">
+                      <p className="text-sm font-medium">{it.qty}× {it.name}</p>
+                      <span className="text-xs text-warn font-semibold">Cocinando</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {itemsByStatus.served.length > 0 && (
+              <div className="px-5 mb-4">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-olive mb-2">✓ Servido ({itemsByStatus.served.length})</p>
+                <div className="bg-paper border border-border rounded-2xl divide-y divide-border opacity-70">
+                  {itemsByStatus.served.map((it, i) => (
+                    <div key={i} className="flex items-center justify-between p-3">
+                      <p className="text-sm">{it.qty}× {it.name}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {itemsByStatus.received.length > 0 && (
+              <div className="px-5 mb-4">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-muted mb-2">Recibido ({itemsByStatus.received.length})</p>
+                <div className="bg-paper border border-border rounded-2xl divide-y divide-border">
+                  {itemsByStatus.received.map((it, i) => (
+                    <div key={i} className="flex items-center justify-between p-3">
+                      <p className="text-sm">{it.qty}× {it.name}</p>
+                      <span className="text-xs text-muted">Esperando cocina</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="sticky bottom-0 bg-paper border-t border-border p-4 grid grid-cols-3 gap-2">
+              <button className="py-3 bg-cream border border-border rounded-xl text-xs font-semibold inline-flex flex-col items-center gap-1">
+                <Icon name="plus" size={16} />
+                Agregar
+              </button>
+              <button className="py-3 bg-cream border border-border rounded-xl text-xs font-semibold inline-flex flex-col items-center gap-1">
+                <Icon name="receipt" size={16} />
+                Ver pedido
+              </button>
+              <button className="py-3 bg-clay text-white rounded-xl text-xs font-semibold inline-flex flex-col items-center gap-1">
+                <Icon name="cash" size={16} />
+                Cobrar
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function MesasView({ tables, onTable }) {
+      const stats = {
+        active: tables.length,
+        alerts: tables.filter(t => t.status === 'alert').length,
+        revenue: tables.reduce((s, t) => s + (t.total || 0), 0)
+      };
+      return (
+        <div className="px-5 py-5 space-y-5">
+          <div className="grid grid-cols-3 gap-2">
+            <StatCard label="Mesas" value={stats.active} sub="activas" />
+            <StatCard label="Alertas" value={stats.alerts} sub="por atender" />
+            <StatCard label="Ventas" value={PEN(stats.revenue)} sub="del turno" />
+          </div>
+
+          <div>
+            <h2 className="font-display text-lg font-semibold mb-3">Tus mesas</h2>
+            <div className="space-y-3">
+              {tables.map(t => <TableCard key={t.id} table={t} onClick={onTable} />)}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function LlamadosView({ calls, onResolve }) {
+      const urgent = calls.filter(c => c.urgent);
+      const regular = calls.filter(c => !c.urgent);
+      return (
+        <div className="px-5 py-5 space-y-5">
+          {calls.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="w-16 h-16 mx-auto rounded-full bg-olive/10 text-olive flex items-center justify-center">
+                <Icon name="check" size={28} />
+              </div>
+              <p className="font-display text-xl font-semibold mt-4">¡Todo bajo control!</p>
+              <p className="text-sm text-muted mt-1">No hay llamados pendientes</p>
+            </div>
+          ) : (
+            <>
+              {urgent.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-danger mb-2">Urgentes ({urgent.length})</p>
+                  <div className="space-y-3">
+                    {urgent.map(c => <CallCard key={c.id} call={c} onResolve={onResolve} />)}
+                  </div>
+                </div>
+              )}
+              {regular.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-clay mb-2">Llamados ({regular.length})</p>
+                  <div className="space-y-3">
+                    {regular.map(c => <CallCard key={c.id} call={c} onResolve={onResolve} />)}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      );
+    }
+
+    function PedidosView() {
+      const recent = [
+        { id: "T-1042", mesa: 7, time: "21:28", total: 287.40, status: "served" },
+        { id: "T-1043", mesa: 12, time: "21:30", total: 198.00, status: "ready" },
+        { id: "T-1044", mesa: 3, time: "21:34", total: 245.80, status: "preparing" },
+        { id: "T-1045", mesa: 9, time: "21:38", total: 78.40, status: "preparing" },
+        { id: "T-1047", mesa: 11, time: "21:42", total: 89.90, status: "preparing" }
+      ];
+      return (
+        <div className="px-5 py-5 space-y-3">
+          <h2 className="font-display text-lg font-semibold">Pedidos del turno</h2>
+          {recent.map(p => (
+            <div key={p.id} className="bg-paper border border-border rounded-2xl p-4 flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-cream flex items-center justify-center font-display font-bold">{p.mesa}</div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm">Mesa {p.mesa}</p>
+                <p className="text-[11px] text-muted">{p.time} · {p.id}</p>
+              </div>
+              <div className="text-right">
+                <p className="font-display font-bold">{PEN(p.total)}</p>
+                <ItemStatus status={p.status} />
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // ─────────────────────────── APP ───────────────────────────
+    function App() {
+      const [tab, setTab] = useState("mesas");
+      const [tables, setTables] = useState(ALL_TABLES_INIT);
+      const [calls, setCalls] = useState(CALLS);
+      const [selectedTable, setSelectedTable] = useState(null); // for "mis mesas" detail
+      const [actionTable, setActionTable] = useState(null);     // for plano action sheet
+      const [blockTarget, setBlockTarget] = useState(null);
+      const [complaintTarget, setComplaintTarget] = useState(null);
+      const [editTarget, setEditTarget] = useState(null);
+      const [joinFirst, setJoinFirst] = useState(null);
+      const [toast, setToast] = useState(null);
+
+      const myTables = tables.filter(t => t.server === ME.name);
+
+      const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2200); };
+
+      const handleAction = (action, tableId) => {
+        const table = tables.find(t => t.id === tableId);
+        switch (action) {
+          case "complaint":
+            setActionTable(null);
+            setComplaintTarget(table);
+            break;
+          case "clearComplaint":
+            setTables(prev => prev.map(t => t.id === tableId ? { ...t, complaint: null } : t));
+            setActionTable(null);
+            showToast(`Queja resuelta · Mesa ${tableId}`);
+            break;
+          case "joinStart":
+            setActionTable(null);
+            setJoinFirst(table);
+            setTab("plano");
+            showToast(`Selecciona la segunda mesa a unir con M${tableId}`);
+            break;
+          case "unjoin": {
+            const partnerId = table.joinedWith;
+            setTables(prev => prev.map(t => {
+              if (t.id === tableId || t.id === partnerId) return { ...t, joinedWith: null, joinedSeats: 0 };
+              return t;
+            }));
+            setActionTable(null);
+            showToast(`Mesas separadas`);
+            break;
+          }
+          case "blockStart":
+            setActionTable(null);
+            setBlockTarget(table);
+            break;
+          case "unblock":
+            setTables(prev => prev.map(t => t.id === tableId ? { ...t, blocked: false, blockedReason: null } : t));
+            setActionTable(null);
+            showToast(`Mesa ${tableId} desbloqueada`);
+            break;
+          case "editStart":
+            setActionTable(null);
+            setEditTarget(table);
+            break;
+          case "viewOrder":
+            setActionTable(null);
+            setSelectedTable(table);
+            break;
+        }
+      };
+
+      const handlePlanoTap = (table) => {
+        // If in join mode and we have a first selection, complete the join
+        if (joinFirst) {
+          if (joinFirst.id === table.id) {
+            setJoinFirst(null);
+            return;
+          }
+          // Adjacency check (any adjacent x or y)
+          const adjacent = Math.abs(joinFirst.x - table.x) + Math.abs(joinFirst.y - table.y) <= 2;
+          if (!adjacent) {
+            showToast("Las mesas deben estar cerca para unirse");
+            return;
+          }
+          if (table.blocked || table.joinedWith) {
+            showToast("Esta mesa no está disponible");
+            return;
+          }
+          setTables(prev => prev.map(t => {
+            if (t.id === joinFirst.id) return { ...t, joinedWith: table.id, joinedSeats: table.seats };
+            if (t.id === table.id) return { ...t, joinedWith: joinFirst.id, joinedSeats: joinFirst.seats };
+            return t;
+          }));
+          showToast(`Mesas ${joinFirst.id} y ${table.id} unidas · ${joinFirst.seats + table.seats} asientos`);
+          setJoinFirst(null);
+          return;
+        }
+        setActionTable(table);
+      };
+
+      return (
+        <div className="phone-frame">
+          <Header />
+          <Tabs active={tab} setActive={setTab} callCount={calls.length} />
+
+          {tab === "mesas" && <MesasView tables={myTables} onTable={setSelectedTable} />}
+          {tab === "plano" && <PlanoView tables={tables} onTap={handlePlanoTap} joinMode={!!joinFirst} joinFirst={joinFirst} />}
+          {tab === "llamados" && <LlamadosView calls={calls} onResolve={(id) => setCalls(c => c.filter(x => x.id !== id))} />}
+          {tab === "pedidos" && <PedidosView />}
+
+          <TableDetail table={selectedTable} onClose={() => setSelectedTable(null)} />
+          <TableActionSheet open={!!actionTable} table={actionTable} onClose={() => setActionTable(null)} onAction={handleAction} />
+          <BlockReasonModal
+            open={!!blockTarget}
+            onClose={() => setBlockTarget(null)}
+            onConfirm={(reason) => {
+              setTables(prev => prev.map(t => t.id === blockTarget.id ? { ...t, blocked: true, blockedReason: reason } : t));
+              showToast(`Mesa ${blockTarget.id} bloqueada · ${reason}`);
+              setBlockTarget(null);
+            }}
+          />
+          <ComplaintModal
+            open={!!complaintTarget}
+            onClose={() => setComplaintTarget(null)}
+            onConfirm={(reason) => {
+              setTables(prev => prev.map(t => t.id === complaintTarget.id ? { ...t, complaint: reason } : t));
+              showToast(`Queja registrada · Cocina notificada`);
+              setComplaintTarget(null);
+            }}
+          />
+          <EditCapacityModal
+            open={!!editTarget}
+            table={editTarget}
+            onClose={() => setEditTarget(null)}
+            onConfirm={(seats) => {
+              setTables(prev => prev.map(t => t.id === editTarget.id ? { ...t, seats } : t));
+              showToast(`Mesa ${editTarget.id} actualizada · ${seats} asientos`);
+              setEditTarget(null);
+            }}
+          />
+
+          {joinFirst && (
+            <button
+              onClick={() => setJoinFirst(null)}
+              className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 px-5 py-3 bg-gold text-white text-sm font-bold rounded-full shadow-lg"
+            >
+              Cancelar unión de mesas
+            </button>
+          )}
+
+          {toast && (
+            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-5 py-3 bg-charcoal text-cream text-sm font-medium rounded-full shadow-lg max-w-[90%] text-center">
+              {toast}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

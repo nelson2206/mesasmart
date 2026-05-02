@@ -1,0 +1,1640 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#A0322B" />
+  <title>La Brasa Dorada · Mesa 7</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"Playfair Display"', 'serif'],
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            cream: '#FAF7F2',
+            paper: '#FFFFFF',
+            charcoal: '#1F1A17',
+            ink: '#2A1F1A',
+            muted: '#6B5D52',
+            clay: { DEFAULT: '#A0322B', dark: '#7E2820', light: '#C4493A' },
+            gold: { DEFAULT: '#C8941F', light: '#E5B458' },
+            olive: '#2D7D5A',
+            border: '#E8DFD3',
+          },
+          boxShadow: {
+            soft: '0 1px 3px rgba(31,26,23,0.04), 0 1px 2px rgba(31,26,23,0.06)',
+            card: '0 4px 16px rgba(31,26,23,0.06), 0 1px 4px rgba(31,26,23,0.04)',
+            float: '0 12px 32px rgba(31,26,23,0.10)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    html, body, #root { height: 100%; margin: 0; }
+    body {
+      background: #FAF7F2;
+      font-family: 'Inter', system-ui, sans-serif;
+      color: #2A1F1A;
+      overscroll-behavior: none;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .font-display { font-family: 'Playfair Display', serif; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { scrollbar-width: none; }
+
+    @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes slideDown { from { transform: translateY(-20%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes pop { 0% { transform: scale(.85); opacity: 0; } 70% { transform: scale(1.02); } 100% { transform: scale(1); opacity: 1; } }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .anim-slide-up { animation: slideUp .35s cubic-bezier(0.16, 1, 0.3, 1); }
+    .anim-fade-in { animation: fadeIn .25s ease-out; }
+    .anim-pop { animation: pop .3s cubic-bezier(0.16, 1, 0.3, 1); }
+    .shimmer {
+      background: linear-gradient(90deg, #f0e8db 25%, #faf7f2 50%, #f0e8db 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+
+    .img-fade-in { animation: fadeIn .4s ease-out; }
+
+    /* Image fallback gradient pattern */
+    .fallback-bg {
+      background-image:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,0.15) 0%, transparent 50%),
+        radial-gradient(circle at 70% 80%, rgba(0,0,0,0.10) 0%, transparent 50%);
+    }
+
+    button { min-height: 40px; }
+
+    /* Custom hr */
+    .divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, #E8DFD3, transparent);
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" data-presets="env,react">
+    const { useState, useEffect, useMemo, useRef } = React;
+
+    // ───────────────────────────── DATA ─────────────────────────────
+    const RESTAURANT = {
+      name: "La Brasa Dorada",
+      tagline: "Pollería · Desde 1985",
+      description: "Carbón, paciencia y receta familiar. Cuatro generaciones cocinando el mejor pollo a la brasa de Lima.",
+      ruc: "20512345678",
+      address: "Av. Larco 845, Miraflores · Lima",
+      tableNumber: 7,
+      heroImage: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1600&q=80"
+    };
+
+    const CATEGORIES = [
+      { id: "todo", name: "Todo" },
+      { id: "pollos", name: "Pollos a la Brasa" },
+      { id: "parrillas", name: "Parrillas" },
+      { id: "compartir", name: "Para Compartir" },
+      { id: "sandwiches", name: "Sándwiches" },
+      { id: "ensaladas", name: "Ensaladas" },
+      { id: "acompanamientos", name: "Acompañamientos" },
+      { id: "bebidas", name: "Bebidas" },
+      { id: "postres", name: "Postres" }
+    ];
+
+    const DIETARY_FILTERS = [
+      { id: "vegetariano", label: "Vegetariano" },
+      { id: "sin_gluten", label: "Sin gluten" },
+      { id: "sin_lacteos", label: "Sin lácteos" },
+      { id: "picante", label: "Picante" }
+    ];
+
+    // Reliable Unsplash food photo IDs
+    const IMG = (id, w = 600) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`;
+
+    const MENU = [
+      // POLLOS
+      { id: 1, cat: "pollos", img: IMG("1598103442097-8b74394b95c6"), fb: { color: "#A0322B", emoji: "🍗" },
+        name: "1/4 de Pollo a la Brasa", price: 22.90, time: 15, popular: true,
+        desc: "Cuarto de pollo macerado por 24 horas en nuestra receta secreta de la abuela, asado al carbón de algarrobo. Acompañado de papas fritas crocantes y ensalada fresca de la casa.",
+        tags: [], spicy: 0, calories: 580 },
+      { id: 2, cat: "pollos", img: IMG("1610057099443-fde8c4d50f91"), fb: { color: "#A0322B", emoji: "🍗" },
+        name: "1/2 Pollo a la Brasa", price: 38.90, time: 18, popular: true, recommended: true,
+        desc: "Medio pollo entero, dorado a la leña, jugoso por dentro. Con papas fritas, ensalada y nuestras 5 cremas de la casa.",
+        tags: [], spicy: 0, calories: 920 },
+      { id: 3, cat: "pollos", img: IMG("1626082929543-5bab6f17e2e8"), fb: { color: "#7E2820", emoji: "🍗" },
+        name: "Pollo Entero a la Brasa", price: 65.90, time: 22, popular: true,
+        desc: "Pollo entero asado a fuego lento. Papas fritas familiares y ensalada grande. Perfecto para 3-4 personas.",
+        tags: [], spicy: 0, calories: 1820 },
+      { id: 4, cat: "pollos", img: IMG("1604908176997-125f25cc6f3d"), fb: { color: "#C8941F", emoji: "👨‍👩‍👧" },
+        name: "Combo Familiar", price: 79.90, time: 22,
+        desc: "Pollo entero + 4 gaseosas personales + papas familiares + ensalada grande. Ahorra S/ 12 vs comprar por separado.",
+        tags: [], spicy: 0, calories: 2400 },
+      { id: 5, cat: "pollos", img: IMG("1593504049359-74330189a345"), fb: { color: "#C4493A", emoji: "💑" },
+        name: "Combo Pareja", price: 49.90, time: 18, recommended: true,
+        desc: "1/2 pollo + 2 gaseosas + papas + ensalada. La cita perfecta sin complicaciones.",
+        tags: [], spicy: 0, calories: 1280 },
+
+      // PARRILLAS
+      { id: 10, cat: "parrillas", img: IMG("1529692236671-f1f6cf9683ba"), fb: { color: "#7E2820", emoji: "🍢" },
+        name: "Anticuchos de Corazón", price: 28.00, time: 15, popular: true,
+        desc: "Cuatro brochetas de corazón de res marinadas en ají panca y vinagre. Servidas con papa dorada, choclo y rocoto.",
+        tags: ["picante"], spicy: 2, calories: 480 },
+      { id: 11, cat: "parrillas", img: IMG("1532550907401-a500c9a57435"), fb: { color: "#7E2820", emoji: "🥩" },
+        name: "Parrilla Mixta Personal", price: 42.00, time: 20,
+        desc: "Bife angosto, chorizo parrillero, alitas BBQ y un anticucho. Con papas y yuca frita.",
+        tags: [], spicy: 1, calories: 1100 },
+      { id: 12, cat: "parrillas", img: IMG("1567620832903-9fc6debc209f"), fb: { color: "#C8941F", emoji: "🍗" },
+        name: "Alitas BBQ (10 unid.)", price: 32.00, time: 17,
+        desc: "Diez alitas crocantes bañadas en salsa BBQ ahumada. Con papas en bastón y aderezo ranch.",
+        tags: [], spicy: 1, calories: 720 },
+      { id: 13, cat: "parrillas", img: IMG("1555939594-58d7cb561ad1"), fb: { color: "#C8941F", emoji: "🍢" },
+        name: "Brochetas de Pollo", price: 24.00, time: 14,
+        desc: "Brochetas de pechuga marinada con pimientos y cebolla morada. Servidas con arroz blanco y ensalada.",
+        tags: ["sin_gluten"], spicy: 0, calories: 540 },
+
+      // COMPARTIR
+      { id: 20, cat: "compartir", img: IMG("1565299507177-b0ac66763828"), fb: { color: "#A0322B", emoji: "🍤" },
+        name: "Piqueo Brasa", price: 58.00, time: 18, popular: true, recommended: true,
+        desc: "Tabla generosa con alitas BBQ, anticuchos, salchipapa, mollejitas al ajo y chicharrón de pollo. Para 3-4 personas.",
+        tags: ["picante"], spicy: 2, calories: 1850 },
+      { id: 21, cat: "compartir", img: IMG("1573080496219-bb080dd4f877"), fb: { color: "#C8941F", emoji: "🍟" },
+        name: "Salchipapa Familiar", price: 25.00, time: 12,
+        desc: "Generosa porción de papas fritas con salchichas, queso parmesano y nuestras cinco salsas de la casa.",
+        tags: [], spicy: 0, calories: 980 },
+      { id: 22, cat: "compartir", img: IMG("1599487488170-d11ec9c172f0"), fb: { color: "#C8941F", emoji: "🧄" },
+        name: "Mollejitas al Ajo", price: 22.00, time: 13,
+        desc: "Mollejitas de pollo salteadas con ajo crocante y perejil. Con papas nativas a la huancaína.",
+        tags: ["sin_gluten"], spicy: 0, calories: 420 },
+
+      // SANDWICHES
+      { id: 30, cat: "sandwiches", img: IMG("1568901346375-23c9450c58cd"), fb: { color: "#C8941F", emoji: "🥪" },
+        name: "Sándwich de Pollo a la Brasa", price: 18.00, time: 10,
+        desc: "Pan francés artesanal con pollo deshilachado, lechuga, tomate y mayonesa de la casa. Con papas al hilo.",
+        tags: [], spicy: 0, calories: 620 },
+      { id: 31, cat: "sandwiches", img: IMG("1567234669003-dce7a7a88821"), fb: { color: "#A0322B", emoji: "🥪" },
+        name: "Sándwich de Chicharrón de Pollo", price: 16.00, time: 11,
+        desc: "Pan francés crocante, chicharrón de pollo, salsa criolla con ají rocoto y mayonesa. Con yuca frita.",
+        tags: ["picante"], spicy: 1, calories: 580 },
+
+      // ENSALADAS
+      { id: 40, cat: "ensaladas", img: IMG("1546069901-ba9599a7e63c"), fb: { color: "#2D7D5A", emoji: "🥗" },
+        name: "Ensalada César con Pollo", price: 24.00, time: 8,
+        desc: "Lechuga romana fresca, croutons artesanales, parmesano en lascas, pollo a la brasa y aderezo César clásico.",
+        tags: [], spicy: 0, calories: 380 },
+      { id: 41, cat: "ensaladas", img: IMG("1512621776951-a57141f2eefd"), fb: { color: "#2D7D5A", emoji: "🥗" },
+        name: "Ensalada de la Casa", price: 18.00, time: 6,
+        desc: "Mix de lechugas, palta cremosa, tomate cherry, choclo serrano y vinagreta de maracuyá.",
+        tags: ["vegetariano", "sin_gluten", "sin_lacteos"], spicy: 0, calories: 240 },
+
+      // ACOMPAÑAMIENTOS
+      { id: 50, cat: "acompanamientos", img: IMG("1576107232684-1279f390859f"), fb: { color: "#C8941F", emoji: "🍟" },
+        name: "Papas Fritas", price: 12.00, time: 7,
+        desc: "Papas amarillas frescas, cortadas a mano y fritas al momento. Crocantes por fuera, suaves por dentro.",
+        tags: ["vegetariano", "sin_lacteos"], spicy: 0, calories: 420 },
+      { id: 51, cat: "acompanamientos", img: IMG("1623238913973-99f0d2b3b3b3"), fb: { color: "#C8941F", emoji: "🍠" },
+        name: "Yuca Frita", price: 10.00, time: 8,
+        desc: "Bastones de yuca peruana frita hasta dorar. Servida con salsa huancaína y rocoto al lado.",
+        tags: ["vegetariano", "sin_gluten"], spicy: 0, calories: 380 },
+      { id: 52, cat: "acompanamientos", img: IMG("1551316679-9c6ae9dec224"), fb: { color: "#C8941F", emoji: "🌽" },
+        name: "Choclo con Queso", price: 14.00, time: 9,
+        desc: "Choclo serrano grande hervido, servido con queso fresco andino y huacatay.",
+        tags: ["vegetariano", "sin_gluten"], spicy: 0, calories: 320 },
+      { id: 53, cat: "acompanamientos", img: IMG("1505253716362-afaea1d3d1af"), fb: { color: "#2D7D5A", emoji: "🥗" },
+        name: "Ensalada Fresca", price: 8.00, time: 5,
+        desc: "Mix de hojas verdes, tomate, pepino y cebolla. Aderezo de aceite de oliva extra virgen.",
+        tags: ["vegetariano", "sin_gluten", "sin_lacteos"], spicy: 0, calories: 120 },
+
+      // BEBIDAS
+      { id: 60, cat: "bebidas", img: IMG("1556679343-c7306c1976bc"), fb: { color: "#7E2820", emoji: "🍷" },
+        name: "Chicha Morada · Jarra 1L", price: 14.00, time: 3, popular: true, recommended: true,
+        desc: "Bebida tradicional peruana de maíz morado, piña, canela, clavo y manzana. Sin alcohol, refrescante y dulce.",
+        tags: ["vegetariano", "sin_gluten", "sin_lacteos"], spicy: 0, calories: 180 },
+      { id: 61, cat: "bebidas", img: IMG("1437418747212-8d9709afab22"), fb: { color: "#C8941F", emoji: "🍋" },
+        name: "Limonada Frozen", price: 12.00, time: 4,
+        desc: "Limón fresco recién exprimido, licuado con hielo. Refrescante y natural.",
+        tags: ["vegetariano", "sin_gluten", "sin_lacteos"], spicy: 0, calories: 90 },
+      { id: 62, cat: "bebidas", img: IMG("1554866585-cd94860890b7"), fb: { color: "#C8941F", emoji: "🥤" },
+        name: "Inca Kola · 1.5L", price: 11.00, time: 2,
+        desc: "La bebida del sabor nacional. Botella familiar 1.5 litros bien fría.",
+        tags: ["vegetariano", "sin_gluten", "sin_lacteos"], spicy: 0, calories: 240 },
+      { id: 63, cat: "bebidas", img: IMG("1581636625402-29b2a704ef13"), fb: { color: "#A0322B", emoji: "🥤" },
+        name: "Coca Cola Personal", price: 6.00, time: 2,
+        desc: "Coca Cola fría, presentación personal 500 ml.",
+        tags: ["vegetariano", "sin_gluten", "sin_lacteos"], spicy: 0, calories: 200 },
+      { id: 64, cat: "bebidas", img: IMG("1535958636474-b021ee887b13"), fb: { color: "#C8941F", emoji: "🍺" },
+        name: "Cerveza Cusqueña", price: 12.00, time: 2,
+        desc: "Cerveza peruana premium dorada. Botella 620 ml. Solo mayores de 18 años.",
+        tags: [], spicy: 0, calories: 220 },
+      { id: 65, cat: "bebidas", img: IMG("1559839734-2b71ea197ec2"), fb: { color: "#2D7D5A", emoji: "💧" },
+        name: "Agua Sin Gas", price: 5.00, time: 1,
+        desc: "Botella de agua mineral sin gas, 625 ml.",
+        tags: ["vegetariano", "sin_gluten", "sin_lacteos"], spicy: 0, calories: 0 },
+
+      // POSTRES
+      { id: 70, cat: "postres", img: IMG("1551024506-0bccd828d307"), fb: { color: "#C8941F", emoji: "🍮" },
+        name: "Suspiro a la Limeña", price: 14.00, time: 5, recommended: true,
+        desc: "Postre tradicional limeño: manjar blanco coronado con merengue al oporto y canela espolvoreada.",
+        tags: ["vegetariano"], spicy: 0, calories: 480 },
+      { id: 71, cat: "postres", img: IMG("1565958011703-44f9829ba187"), fb: { color: "#7E2820", emoji: "🍰" },
+        name: "Torta de Chocolate", price: 12.00, time: 4,
+        desc: "Torta húmeda de chocolate belga con ganache y chispas. Servida con bolita de helado de vainilla.",
+        tags: ["vegetariano"], spicy: 0, calories: 540 },
+      { id: 72, cat: "postres", img: IMG("1547047803-ab2e169d6e8a"), fb: { color: "#7E2820", emoji: "🟣" },
+        name: "Mazamorra Morada", price: 10.00, time: 4,
+        desc: "Postre típico peruano de maíz morado con frutas y especias. Servido tibio en taza de barro.",
+        tags: ["vegetariano", "sin_gluten", "sin_lacteos"], spicy: 0, calories: 280 },
+      { id: 73, cat: "postres", img: IMG("1565958011703-44f9829ba187"), fb: { color: "#C4493A", emoji: "🍰" },
+        name: "Cheesecake de Fresa", price: 14.00, time: 4,
+        desc: "Cheesecake clásico cremoso con coulis de fresas frescas y base de galleta de mantequilla.",
+        tags: ["vegetariano"], spicy: 0, calories: 460 }
+    ];
+
+    const PEN = (n) => "S/ " + n.toFixed(2);
+    const IGV_RATE = 0.18;
+
+    // ─────────────────────────── ICONS (lucide style) ───────────────────────────
+    const Icon = ({ name, size = 20, className = "" }) => {
+      const icons = {
+        search: <path d="M21 21l-4.35-4.35M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />,
+        heart: <path d="M19.5 12.572L12 20l-7.5-7.428A5 5 0 1 1 12 6.006a5 5 0 1 1 7.5 6.572z" />,
+        cart: <><path d="M9 22a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm11-2a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM1 1h4l2.68 13.39A2 2 0 0 0 9.62 16H19a2 2 0 0 0 1.97-1.66L23 6H6" /></>,
+        bell: <><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9zM13.73 21a2 2 0 0 1-3.46 0" /></>,
+        x: <path d="M18 6L6 18M6 6l12 12" />,
+        plus: <path d="M12 5v14M5 12h14" />,
+        minus: <path d="M5 12h14" />,
+        clock: <><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></>,
+        flame: <path d="M8.5 14.5C9.5 16 12 18 12 18s2.5-2 3.5-3.5C18 11 17 7 12 4c-5 3-6 7-3.5 10.5z" />,
+        check: <polyline points="20 6 9 17 4 12" />,
+        chevronLeft: <polyline points="15 18 9 12 15 6" />,
+        chevronRight: <polyline points="9 18 15 12 9 6" />,
+        chevronDown: <polyline points="6 9 12 15 18 9" />,
+        leaf: <><path d="M11 20A7 7 0 0 1 4 13c0-2 1-4 3-6 4-3 9-3 13-3 0 4 0 9-3 13-2 2-4 3-6 3z" /><path d="M2 22l8-8" /></>,
+        info: <><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="8" /></>,
+        star: <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />,
+        utensils: <><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" /><path d="M7 2v20" /><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7" /></>,
+        chef: <path d="M12 2a4 4 0 0 0-4 4v2a4 4 0 0 0-4 4v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a4 4 0 0 0-4-4V6a4 4 0 0 0-4-4z" />,
+        bag: <><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></>
+      };
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+          {icons[name] || null}
+        </svg>
+      );
+    };
+
+    // ─────────────────────────── COMPONENTS ───────────────────────────
+
+    function FoodImage({ src, fb, alt, className = "" }) {
+      const [error, setError] = useState(false);
+      if (error || !src) {
+        return (
+          <div className={`fallback-bg flex items-center justify-center ${className}`} style={{ background: `linear-gradient(135deg, ${fb.color}, ${fb.color}dd)` }}>
+            <span className="text-7xl filter drop-shadow-lg">{fb.emoji}</span>
+          </div>
+        );
+      }
+      return (
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          onError={() => setError(true)}
+          className={`object-cover img-fade-in ${className}`}
+        />
+      );
+    }
+
+    // Welcome / Hero
+    function WelcomeScreen({ onStart }) {
+      return (
+        <div className="h-full relative overflow-hidden">
+          <div className="absolute inset-0">
+            <FoodImage
+              src={RESTAURANT.heroImage}
+              fb={{ color: "#1F1A17", emoji: "🍽️" }}
+              alt="Restaurante"
+              className="w-full h-full"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/60 to-charcoal/30"></div>
+          </div>
+          <div className="relative h-full flex flex-col justify-end px-12 pb-16 text-white">
+            <div className="max-w-3xl">
+              <p className="text-gold-light tracking-widest uppercase text-sm font-medium">{RESTAURANT.tagline}</p>
+              <h1 className="font-display text-7xl font-bold mt-3 leading-tight">{RESTAURANT.name}</h1>
+              <p className="text-lg text-white/80 mt-4 max-w-xl leading-relaxed">{RESTAURANT.description}</p>
+
+              <div className="mt-12 flex items-center gap-6">
+                <button
+                  onClick={onStart}
+                  className="group inline-flex items-center gap-3 px-10 py-5 bg-clay hover:bg-clay-dark text-white text-lg font-semibold rounded-full shadow-float transition"
+                >
+                  Ver la carta
+                  <Icon name="chevronRight" size={22} />
+                </button>
+                <div className="text-white/70">
+                  <p className="text-xs uppercase tracking-wider">Estás en</p>
+                  <p className="font-display text-2xl">Mesa {RESTAURANT.tableNumber}</p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-12 flex items-center gap-6 text-sm text-white/60">
+              <button className="hover:text-white transition">🇪🇸 Español</button>
+              <span>·</span>
+              <button className="hover:text-white transition">🇬🇧 English</button>
+              <span>·</span>
+              <button className="hover:text-white transition">🇧🇷 Português</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Header (cliente)
+    function Header({ tableNumber, onHome, favCount, onFavs }) {
+      return (
+        <header className="sticky top-0 z-30 bg-cream/90 backdrop-blur border-b border-border">
+          <div className="px-6 py-3 flex items-center justify-between">
+            <button onClick={onHome} className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-clay rounded-xl flex items-center justify-center text-white font-display font-bold">
+                LB
+              </div>
+              <div className="text-left">
+                <h1 className="font-display text-lg font-semibold leading-tight">{RESTAURANT.name}</h1>
+                <p className="text-xs text-muted">Mesa {tableNumber} · Atendido por María</p>
+              </div>
+            </button>
+            <button
+              onClick={onFavs}
+              className="relative w-11 h-11 rounded-full bg-paper border border-border flex items-center justify-center text-clay hover:bg-clay/5 transition"
+            >
+              <Icon name="heart" size={20} />
+              {favCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-clay text-white rounded-full text-[10px] font-bold flex items-center justify-center">
+                  {favCount}
+                </span>
+              )}
+            </button>
+          </div>
+        </header>
+      );
+    }
+
+    // Search + filters
+    function FiltersBar({ category, setCategory, search, setSearch, dietary, setDietary, showFav, setShowFav, favCount }) {
+      return (
+        <div className="sticky top-[68px] z-20 bg-cream/95 backdrop-blur border-b border-border">
+          <div className="px-6 py-3">
+            <div className="relative">
+              <Icon name="search" size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar plato o ingrediente..."
+                className="w-full pl-11 pr-4 py-3 bg-paper border border-border rounded-full text-sm focus:outline-none focus:border-clay"
+              />
+            </div>
+          </div>
+          <div className="px-6 pb-3 flex gap-2 overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => setShowFav(!showFav)}
+              className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition ${showFav ? 'bg-clay text-white' : 'bg-paper border border-border text-ink'}`}
+            >
+              <Icon name="heart" size={14} />
+              Favoritos {favCount > 0 && `(${favCount})`}
+            </button>
+            {CATEGORIES.map(c => (
+              <button
+                key={c.id}
+                onClick={() => { setCategory(c.id); setShowFav(false); }}
+                className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition ${category === c.id && !showFav ? 'bg-charcoal text-white' : 'bg-paper border border-border text-ink hover:border-charcoal'}`}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+          {(dietary.length > 0 || category !== "todo") && (
+            <div className="px-6 pb-3 flex gap-2 overflow-x-auto no-scrollbar">
+              {DIETARY_FILTERS.map(d => (
+                <button
+                  key={d.id}
+                  onClick={() => setDietary(prev => prev.includes(d.id) ? prev.filter(x => x !== d.id) : [...prev, d.id])}
+                  className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition ${dietary.includes(d.id) ? 'bg-olive/10 border-olive text-olive border' : 'bg-paper border border-border text-muted'}`}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Hero featured card (large)
+    function FeaturedCard({ item, isFav, onFav, onClick }) {
+      return (
+        <button
+          onClick={onClick}
+          className="group relative w-80 shrink-0 rounded-2xl overflow-hidden shadow-card text-left bg-paper hover:shadow-float transition"
+        >
+          <div className="relative h-52 overflow-hidden">
+            <FoodImage src={item.img} fb={item.fb} alt={item.name} className="w-full h-full group-hover:scale-105 transition duration-500" />
+            <button
+              onClick={(e) => { e.stopPropagation(); onFav(item.id); }}
+              className="absolute top-3 right-3 w-9 h-9 rounded-full bg-paper/95 backdrop-blur flex items-center justify-center shadow"
+            >
+              <Icon name="heart" size={16} className={isFav ? "fill-clay text-clay" : "text-ink"} />
+            </button>
+            {item.recommended && (
+              <span className="absolute top-3 left-3 inline-flex items-center gap-1 px-2.5 py-1 bg-charcoal/90 text-white text-[11px] font-medium rounded-full">
+                <Icon name="star" size={11} className="fill-gold text-gold" /> Recomendado
+              </span>
+            )}
+          </div>
+          <div className="p-4">
+            <h3 className="font-display text-xl font-semibold leading-tight">{item.name}</h3>
+            <p className="text-sm text-muted mt-1 line-clamp-2">{item.desc}</p>
+            <div className="mt-3 flex items-center justify-between">
+              <span className="font-display text-2xl font-bold text-clay">{PEN(item.price)}</span>
+              <span className="text-xs text-muted inline-flex items-center gap-1">
+                <Icon name="clock" size={12} /> {item.time} min
+              </span>
+            </div>
+          </div>
+        </button>
+      );
+    }
+
+    // Standard menu card
+    function MenuCard({ item, isFav, onFav, onClick }) {
+      return (
+        <button
+          onClick={onClick}
+          className="group bg-paper rounded-2xl overflow-hidden shadow-soft hover:shadow-card text-left transition border border-border/50"
+        >
+          <div className="relative aspect-[4/3] overflow-hidden">
+            <FoodImage src={item.img} fb={item.fb} alt={item.name} className="w-full h-full group-hover:scale-105 transition duration-500" />
+            <button
+              onClick={(e) => { e.stopPropagation(); onFav(item.id); }}
+              className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-paper/95 backdrop-blur flex items-center justify-center shadow"
+            >
+              <Icon name="heart" size={14} className={isFav ? "fill-clay text-clay" : "text-ink"} />
+            </button>
+            <div className="absolute top-2.5 left-2.5 flex flex-col gap-1">
+              {item.popular && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-clay text-white text-[10px] font-medium rounded-full">
+                  <Icon name="flame" size={10} /> Popular
+                </span>
+              )}
+              {item.spicy >= 2 && (
+                <span className="px-2 py-0.5 bg-paper/95 text-clay text-[10px] font-medium rounded-full">
+                  🌶 Picante
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="p-4">
+            <h3 className="font-semibold text-[15px] leading-tight line-clamp-2 min-h-[2.4em]">{item.name}</h3>
+            <p className="text-xs text-muted mt-1.5 line-clamp-2 leading-relaxed">{item.desc}</p>
+            <div className="mt-3 flex items-center justify-between">
+              <span className="font-display text-xl font-bold text-clay">{PEN(item.price)}</span>
+              <span className="text-[11px] text-muted inline-flex items-center gap-1">
+                <Icon name="clock" size={10} /> {item.time}'
+              </span>
+            </div>
+          </div>
+        </button>
+      );
+    }
+
+    // Bottom sheet detail
+    function DetailSheet({ item, onClose, onAdd, isFav, onFav }) {
+      const [qty, setQty] = useState(1);
+      const [notes, setNotes] = useState("");
+      useEffect(() => { setQty(1); setNotes(""); }, [item?.id]);
+      if (!item) return null;
+      const recs = MENU.filter(m => m.id !== item.id && m.cat === "bebidas" && m.recommended).slice(0, 2);
+
+      return (
+        <div className="fixed inset-0 z-50 bg-charcoal/40 anim-fade-in flex items-end justify-center" onClick={onClose}>
+          <div onClick={(e) => e.stopPropagation()} className="anim-slide-up bg-cream rounded-t-3xl w-full max-w-2xl max-h-[94vh] overflow-y-auto no-scrollbar">
+            <div className="relative h-80">
+              <FoodImage src={item.img} fb={item.fb} alt={item.name} className="w-full h-full" />
+              <div className="absolute inset-0 bg-gradient-to-t from-charcoal/40 to-transparent" />
+              <button onClick={onClose} className="absolute top-4 right-4 w-11 h-11 rounded-full bg-paper/95 flex items-center justify-center shadow">
+                <Icon name="x" size={20} />
+              </button>
+              <button onClick={() => onFav(item.id)} className="absolute top-4 left-4 w-11 h-11 rounded-full bg-paper/95 flex items-center justify-center shadow">
+                <Icon name="heart" size={20} className={isFav ? "fill-clay text-clay" : "text-ink"} />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <h2 className="font-display text-3xl font-semibold leading-tight">{item.name}</h2>
+                  <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted">
+                    <span className="inline-flex items-center gap-1"><Icon name="clock" size={12} /> {item.time} min</span>
+                    <span>·</span>
+                    <span className="inline-flex items-center gap-1"><Icon name="flame" size={12} /> {item.calories} kcal</span>
+                    {item.spicy > 0 && <><span>·</span><span>{"🌶".repeat(item.spicy)} picante</span></>}
+                  </div>
+                </div>
+                <span className="font-display text-4xl font-bold text-clay">{PEN(item.price)}</span>
+              </div>
+
+              <p className="text-ink/80 mt-4 leading-relaxed">{item.desc}</p>
+
+              {item.tags?.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {item.tags.map(t => {
+                    const f = DIETARY_FILTERS.find(d => d.id === t);
+                    return f ? (
+                      <span key={t} className="inline-flex items-center gap-1 px-3 py-1 bg-olive/10 text-olive text-xs font-medium rounded-full">
+                        <Icon name="leaf" size={10} /> {f.label}
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              )}
+
+              <div className="mt-6">
+                <label className="text-sm font-semibold">Indicaciones especiales</label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Sin cebolla, bien cocido, ají al lado..."
+                  rows="2"
+                  className="mt-2 w-full p-3 bg-paper border border-border rounded-xl text-sm focus:outline-none focus:border-clay resize-none"
+                />
+              </div>
+
+              {recs.length > 0 && (
+                <div className="mt-6">
+                  <p className="text-sm font-semibold inline-flex items-center gap-1.5">
+                    <Icon name="info" size={14} className="text-clay" /> Va perfecto con
+                  </p>
+                  <div className="mt-3 flex gap-3 overflow-x-auto no-scrollbar">
+                    {recs.map(r => (
+                      <div key={r.id} className="flex items-center gap-3 p-2.5 pr-4 bg-paper border border-border rounded-xl shrink-0">
+                        <div className="w-12 h-12 rounded-lg overflow-hidden">
+                          <FoodImage src={r.img} fb={r.fb} alt={r.name} className="w-full h-full" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold leading-tight">{r.name}</p>
+                          <p className="text-xs text-clay font-bold mt-0.5">{PEN(r.price)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="sticky bottom-0 bg-cream border-t border-border px-6 py-4 flex items-center gap-4">
+              <div className="inline-flex items-center bg-paper border border-border rounded-full">
+                <button onClick={() => setQty(Math.max(1, qty - 1))} className="w-11 h-11 flex items-center justify-center text-clay">
+                  <Icon name="minus" size={18} />
+                </button>
+                <span className="w-10 text-center font-bold">{qty}</span>
+                <button onClick={() => setQty(qty + 1)} className="w-11 h-11 flex items-center justify-center text-clay">
+                  <Icon name="plus" size={18} />
+                </button>
+              </div>
+              <button
+                onClick={() => { onAdd(item, qty, notes); onClose(); }}
+                className="flex-1 inline-flex items-center justify-center gap-2 py-4 bg-clay hover:bg-clay-dark text-white font-semibold rounded-full transition"
+              >
+                Agregar al pedido · {PEN(item.price * qty)}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Cart bottom sticky bar
+    function CartBar({ count, total, onClick }) {
+      if (count === 0) return null;
+      return (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-30 anim-pop">
+          <button
+            onClick={onClick}
+            className="inline-flex items-center gap-4 pl-5 pr-3 py-3 bg-charcoal text-white rounded-full shadow-float hover:bg-ink transition"
+          >
+            <span className="inline-flex items-center gap-2 font-medium">
+              <span className="w-7 h-7 bg-white/15 rounded-full inline-flex items-center justify-center text-sm font-bold">{count}</span>
+              {count === 1 ? '1 plato' : `${count} platos`}
+            </span>
+            <span className="opacity-50">·</span>
+            <span className="font-display font-bold">{PEN(total)}</span>
+            <span className="ml-2 inline-flex items-center gap-1 px-4 py-2 bg-clay rounded-full text-sm font-semibold">
+              Ver pedido <Icon name="chevronRight" size={14} />
+            </span>
+          </button>
+        </div>
+      );
+    }
+
+    // Cart sheet (right drawer)
+    function CartSheet({ open, onClose, cart, updateQty, onCheckout, onCallWaiter }) {
+      if (!open) return null;
+      const subtotal = cart.reduce((s, c) => s + c.item.price * c.qty, 0);
+      return (
+        <div className="fixed inset-0 z-50 bg-charcoal/40 anim-fade-in flex justify-end" onClick={onClose}>
+          <div onClick={(e) => e.stopPropagation()} className="bg-cream w-full max-w-md h-full flex flex-col anim-slide-up">
+            <div className="flex items-center justify-between p-5 border-b border-border">
+              <div>
+                <h2 className="font-display text-2xl font-semibold">Tu pedido</h2>
+                <p className="text-xs text-muted mt-0.5">Mesa {RESTAURANT.tableNumber}</p>
+              </div>
+              <button onClick={onClose} className="w-10 h-10 rounded-full bg-paper border border-border flex items-center justify-center">
+                <Icon name="x" size={18} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5 space-y-3">
+              {cart.length === 0 ? (
+                <div className="text-center py-16 text-muted">
+                  <div className="w-16 h-16 mx-auto rounded-full bg-paper border border-border flex items-center justify-center">
+                    <Icon name="bag" size={28} className="text-muted" />
+                  </div>
+                  <p className="mt-4 font-medium">Tu carrito está vacío</p>
+                  <p className="text-sm">Agrega platos desde la carta</p>
+                </div>
+              ) : (
+                cart.map((c, i) => (
+                  <div key={i} className="flex gap-3 bg-paper border border-border rounded-2xl p-3">
+                    <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0">
+                      <FoodImage src={c.item.img} fb={c.item.fb} alt={c.item.name} className="w-full h-full" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm leading-tight">{c.item.name}</p>
+                      {c.notes && <p className="text-xs text-muted italic mt-1 truncate">"{c.notes}"</p>}
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="inline-flex items-center bg-cream rounded-full">
+                          <button onClick={() => updateQty(i, Math.max(0, c.qty - 1))} className="w-7 h-7 flex items-center justify-center text-clay">
+                            <Icon name="minus" size={14} />
+                          </button>
+                          <span className="w-6 text-center text-sm font-bold">{c.qty}</span>
+                          <button onClick={() => updateQty(i, c.qty + 1)} className="w-7 h-7 flex items-center justify-center text-clay">
+                            <Icon name="plus" size={14} />
+                          </button>
+                        </div>
+                        <span className="font-display font-bold text-clay">{PEN(c.item.price * c.qty)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            {cart.length > 0 && (
+              <div className="border-t border-border p-5 space-y-3 bg-paper">
+                <div className="flex justify-between">
+                  <span className="text-muted">Subtotal</span>
+                  <span className="font-bold">{PEN(subtotal)}</span>
+                </div>
+                <p className="text-xs text-muted">El IGV (18%) se calculará al pedir la cuenta.</p>
+                <button
+                  onClick={onCheckout}
+                  className="w-full py-4 bg-clay hover:bg-clay-dark text-white font-semibold rounded-full transition"
+                >
+                  Enviar pedido a cocina
+                </button>
+                <button onClick={onCallWaiter} className="w-full py-3 text-sm text-muted hover:text-ink transition">
+                  ¿Necesitas ayuda? Llamar al mozo
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Menu screen
+    function MenuScreen({ onItem, favorites, onFav }) {
+      const [category, setCategory] = useState("todo");
+      const [search, setSearch] = useState("");
+      const [dietary, setDietary] = useState([]);
+      const [showFav, setShowFav] = useState(false);
+
+      const filtered = useMemo(() => {
+        return MENU.filter(m => {
+          if (showFav && !favorites.includes(m.id)) return false;
+          if (category !== "todo" && m.cat !== category) return false;
+          if (search && !m.name.toLowerCase().includes(search.toLowerCase()) && !m.desc.toLowerCase().includes(search.toLowerCase())) return false;
+          if (dietary.length > 0) {
+            for (const d of dietary) {
+              if (d === "picante") { if (m.spicy === 0) return false; }
+              else if (!m.tags.includes(d)) return false;
+            }
+          }
+          return true;
+        });
+      }, [category, search, dietary, showFav, favorites]);
+
+      const featured = MENU.filter(m => m.recommended);
+      const popular = MENU.filter(m => m.popular).slice(0, 6);
+      const showHero = category === "todo" && !search && dietary.length === 0 && !showFav;
+
+      return (
+        <div>
+          <FiltersBar
+            category={category} setCategory={setCategory}
+            search={search} setSearch={setSearch}
+            dietary={dietary} setDietary={setDietary}
+            showFav={showFav} setShowFav={setShowFav}
+            favCount={favorites.length}
+          />
+
+          {showHero && (
+            <>
+              <section className="px-6 pt-8">
+                <div className="flex items-end justify-between mb-4">
+                  <div>
+                    <h2 className="font-display text-2xl font-semibold">Recomendado del chef</h2>
+                    <p className="text-sm text-muted mt-0.5">Lo que no te puedes perder</p>
+                  </div>
+                </div>
+                <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 -mx-6 px-6">
+                  {featured.map(item => (
+                    <FeaturedCard key={item.id} item={item} isFav={favorites.includes(item.id)} onFav={onFav} onClick={() => onItem(item)} />
+                  ))}
+                </div>
+              </section>
+
+              <section className="px-6 pt-10">
+                <div className="flex items-end justify-between mb-4">
+                  <div>
+                    <h2 className="font-display text-2xl font-semibold">Más pedidos hoy</h2>
+                    <p className="text-sm text-muted mt-0.5">Lo que la gente está disfrutando ahora</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                  {popular.map(item => (
+                    <MenuCard key={item.id} item={item} isFav={favorites.includes(item.id)} onFav={onFav} onClick={() => onItem(item)} />
+                  ))}
+                </div>
+              </section>
+            </>
+          )}
+
+          <section className="px-6 pt-10 pb-32">
+            <div className="flex items-end justify-between mb-4">
+              <div>
+                <h2 className="font-display text-2xl font-semibold">
+                  {showFav ? "Tus favoritos" : (CATEGORIES.find(c => c.id === category)?.name || "Toda la carta")}
+                </h2>
+                <p className="text-sm text-muted mt-0.5">{filtered.length} {filtered.length === 1 ? 'plato disponible' : 'platos disponibles'}</p>
+              </div>
+            </div>
+            {filtered.length === 0 ? (
+              <div className="text-center py-16 bg-paper rounded-2xl border border-border">
+                <p className="font-display text-xl">Sin resultados</p>
+                <p className="text-sm text-muted mt-1">Prueba ajustando los filtros</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {filtered.map(item => (
+                  <MenuCard key={item.id} item={item} isFav={favorites.includes(item.id)} onFav={onFav} onClick={() => onItem(item)} />
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+      );
+    }
+
+    // Modification Request Modal
+    function ModifySheet({ open, item, onClose, onSubmit }) {
+      const [reason, setReason] = useState(null);
+      const [note, setNote] = useState("");
+      useEffect(() => { if (open) { setReason(null); setNote(""); } }, [open]);
+      if (!open || !item) return null;
+      const reasons = [
+        { id: "cancel", label: "Cancelar este plato", icon: "x", color: "danger" },
+        { id: "qty", label: "Cambiar cantidad", icon: "plus", color: "ink" },
+        { id: "ingredients", label: "Quitar / agregar ingredientes", icon: "leaf", color: "olive" },
+        { id: "cooking", label: "Cambiar punto de cocción", icon: "flame", color: "clay" },
+        { id: "swap", label: "Cambiar por otro plato", icon: "utensils", color: "ink" },
+        { id: "other", label: "Otro motivo", icon: "info", color: "muted" }
+      ];
+      const itemStatus = item.kitchenStatus || "received";
+      const tooLate = itemStatus === "ready" || itemStatus === "served";
+      return (
+        <div className="fixed inset-0 z-[60] bg-charcoal/40 anim-fade-in flex items-end justify-center" onClick={onClose}>
+          <div onClick={(e) => e.stopPropagation()} className="anim-slide-up bg-cream rounded-t-3xl w-full max-w-md max-h-[88vh] overflow-y-auto no-scrollbar">
+            <div className="p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex gap-3">
+                  <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0">
+                    <FoodImage src={item.item.img} fb={item.item.fb} alt={item.item.name} className="w-full h-full" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted">Modificar plato</p>
+                    <h2 className="font-display text-xl font-semibold leading-tight">{item.item.name}</h2>
+                  </div>
+                </div>
+                <button onClick={onClose} className="w-9 h-9 rounded-full bg-paper border border-border flex items-center justify-center shrink-0">
+                  <Icon name="x" size={16} />
+                </button>
+              </div>
+
+              {tooLate ? (
+                <div className="mt-5 p-4 bg-clay/10 border border-clay/30 rounded-xl">
+                  <p className="text-sm font-semibold text-clay">Este plato ya está listo para servir</p>
+                  <p className="text-xs text-muted mt-1">Las modificaciones tienen baja probabilidad de aceptarse en este punto. Te sugerimos hablar con el mozo directamente.</p>
+                </div>
+              ) : (
+                <div className="mt-5 p-3 bg-paper border border-border rounded-xl flex items-start gap-3">
+                  <Icon name="info" size={16} className="text-clay shrink-0 mt-0.5" />
+                  <p className="text-xs text-muted leading-relaxed">
+                    Tu solicitud será revisada por la cocina. Si el plato ya está en preparación avanzada, es posible que no pueda modificarse.
+                  </p>
+                </div>
+              )}
+
+              <p className="mt-5 text-sm font-semibold">¿Qué quieres cambiar?</p>
+              <div className="mt-3 space-y-2">
+                {reasons.map(r => (
+                  <button
+                    key={r.id}
+                    onClick={() => setReason(r.id)}
+                    className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition ${reason === r.id ? 'border-clay bg-clay/5' : 'border-border bg-paper'}`}
+                  >
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center bg-${r.color}/10 text-${r.color === 'danger' ? 'red-600' : r.color === 'olive' ? 'olive' : r.color === 'clay' ? 'clay' : 'ink'}`}>
+                      <Icon name={r.icon} size={16} />
+                    </div>
+                    <span className="text-sm font-medium flex-1">{r.label}</span>
+                    {reason === r.id && <Icon name="check" size={18} className="text-clay" />}
+                  </button>
+                ))}
+              </div>
+
+              {reason && (
+                <div className="mt-4 anim-fade-in">
+                  <label className="text-sm font-semibold">Detalles (opcional)</label>
+                  <textarea
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder={reason === "ingredients" ? "Ej: sin cebolla, agregar palta..." : reason === "cooking" ? "Ej: bien cocido, jugoso..." : "Cuéntanos más"}
+                    rows="2"
+                    className="mt-2 w-full p-3 bg-paper border border-border rounded-xl text-sm focus:outline-none focus:border-clay resize-none"
+                  />
+                </div>
+              )}
+
+              <button
+                onClick={() => onSubmit({ reason, note })}
+                disabled={!reason}
+                className={`w-full mt-5 py-4 rounded-full font-semibold transition ${reason ? 'bg-clay hover:bg-clay-dark text-white' : 'bg-cream border border-border text-muted cursor-not-allowed'}`}
+              >
+                Enviar solicitud a cocina
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Order Status — improved
+    function OrderStatusScreen({ cart, setCart, onBack, onBill }) {
+      // Auto-advance per-item kitchen status
+      useEffect(() => {
+        const flow = ["received", "preparing", "ready", "served"];
+        const interval = setInterval(() => {
+          setCart(prev => prev.map((it, idx) => {
+            const cur = it.kitchenStatus || "received";
+            const i = flow.indexOf(cur);
+            if (i < flow.length - 1) {
+              // Items advance at different speeds based on prep time
+              const advanceProb = Math.min(0.4, (it.item.time || 10) / 60);
+              if (Math.random() < advanceProb) {
+                return { ...it, kitchenStatus: flow[i + 1] };
+              }
+            }
+            return it;
+          }));
+        }, 3500);
+        return () => clearInterval(interval);
+      }, []);
+
+      // Modification request handling
+      const [modifyTarget, setModifyTarget] = useState(null);
+
+      const submitModify = ({ reason, note }) => {
+        const targetIdx = modifyTarget.idx;
+        // Mark as pending
+        setCart(prev => prev.map((c, i) => i === targetIdx ? { ...c, modRequest: { status: "pending", reason, note } } : c));
+        setModifyTarget(null);
+
+        // Simulate kitchen response after 3-4 seconds
+        setTimeout(() => {
+          setCart(prev => prev.map((c, i) => {
+            if (i !== targetIdx) return c;
+            const itemStatus = c.kitchenStatus || "received";
+            // Logic: accepted if received or just preparing, more likely rejected if preparing > halfway
+            const acceptable = itemStatus === "received" || (itemStatus === "preparing" && Math.random() > 0.4);
+            return {
+              ...c,
+              modRequest: {
+                ...c.modRequest,
+                status: acceptable ? "accepted" : "rejected",
+                kitchenNote: acceptable
+                  ? (reason === "cancel" ? "Cancelado, no se cobrará." : reason === "qty" ? "Cantidad ajustada." : "Cambio aplicado.")
+                  : (itemStatus === "preparing" ? "Lo sentimos, ya está cocinándose." : "No es posible cambiarlo en este punto.")
+              }
+            };
+          }));
+        }, 3500 + Math.random() * 1500);
+      };
+
+      const subtotal = cart.reduce((s, c) => s + c.item.price * c.qty, 0);
+      const totalItems = cart.length;
+      const readyItems = cart.filter(c => c.kitchenStatus === "ready" || c.kitchenStatus === "served").length;
+      const allServed = cart.every(c => c.kitchenStatus === "served");
+      const overallStage = allServed ? 3 : readyItems === totalItems ? 2 : cart.some(c => c.kitchenStatus === "preparing" || c.kitchenStatus === "ready") ? 1 : 0;
+      const stages = ["Recibido", "Preparando", "Listo", "Servido"];
+      const stageProgress = ((overallStage + 1) / stages.length) * 100;
+
+      return (
+        <div className="px-6 py-8 max-w-3xl mx-auto pb-32">
+          <h1 className="font-display text-4xl font-semibold">Tu pedido en vivo</h1>
+          <p className="text-muted mt-1">Mesa {RESTAURANT.tableNumber} · {cart.reduce((s,c) => s+c.qty,0)} platos · ETA {Math.max(2, 18 - overallStage * 5)} min</p>
+
+          {/* Visual progress bar */}
+          <div className="mt-6 bg-paper rounded-2xl shadow-soft border border-border overflow-hidden">
+            <div className="px-6 py-5 bg-gradient-to-r from-clay/5 to-gold/5">
+              <div className="flex items-center justify-between text-xs text-muted mb-2">
+                <span className="font-medium">Progreso general</span>
+                <span className="font-mono font-bold text-ink">{Math.round(stageProgress)}%</span>
+              </div>
+              <div className="h-2 bg-cream rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-clay to-gold transition-all duration-1000 rounded-full" style={{ width: `${stageProgress}%` }}></div>
+              </div>
+              <div className="mt-4 grid grid-cols-4 gap-1">
+                {stages.map((s, i) => (
+                  <div key={s} className="text-center">
+                    <div className={`w-7 h-7 mx-auto rounded-full flex items-center justify-center text-[11px] font-bold transition ${i < overallStage ? 'bg-olive text-white' : i === overallStage ? 'bg-clay text-white scale-110 shadow-card' : 'bg-cream border border-border text-muted'}`}>
+                      {i < overallStage ? '✓' : i + 1}
+                    </div>
+                    <p className={`text-[10px] mt-1 font-medium ${i <= overallStage ? 'text-ink' : 'text-muted'}`}>{s}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Per-item live tracking */}
+          <div className="mt-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-display text-xl font-semibold">Cada plato en vivo</h2>
+              <span className="text-xs text-muted font-medium">{readyItems}/{totalItems} listos</span>
+            </div>
+            <div className="space-y-3">
+              {cart.map((c, i) => <ItemTracker key={i} ci={c} idx={i} onModify={() => setModifyTarget({ idx: i, ...c })} />)}
+            </div>
+          </div>
+
+          <div className="mt-6 bg-paper rounded-2xl shadow-soft border border-border p-5">
+            <div className="flex items-center justify-between">
+              <span className="text-muted">Subtotal</span>
+              <span className="font-display text-xl font-bold text-clay">{PEN(subtotal)}</span>
+            </div>
+          </div>
+
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <button onClick={onBack} className="py-4 bg-paper border border-border text-ink font-semibold rounded-full hover:border-charcoal transition">
+              Pedir más platos
+            </button>
+            <button onClick={onBill} className="py-4 bg-clay hover:bg-clay-dark text-white font-semibold rounded-full transition">
+              Pedir la cuenta
+            </button>
+          </div>
+
+          <ModifySheet open={!!modifyTarget} item={modifyTarget} onClose={() => setModifyTarget(null)} onSubmit={submitModify} />
+        </div>
+      );
+    }
+
+    // Per-item tracker card
+    function ItemTracker({ ci, idx, onModify }) {
+      const status = ci.kitchenStatus || "received";
+      const config = {
+        received: { color: "muted", label: "En cola", desc: "La cocina lo ha recibido", dot: "bg-muted", barWidth: 15 },
+        preparing: { color: "warn", label: "Preparándose", desc: "El chef está cocinando", dot: "bg-warn", barWidth: 60 },
+        ready: { color: "sky", label: "Listo para servir", desc: "El mozo lo está llevando", dot: "bg-sky", barWidth: 90 },
+        served: { color: "olive", label: "Servido", desc: "Disfruta tu plato", dot: "bg-olive", barWidth: 100 }
+      }[status];
+      const mod = ci.modRequest;
+      const canModify = status !== "served" && (!mod || mod.status === "rejected");
+
+      return (
+        <div className="bg-paper border border-border rounded-2xl p-4">
+          <div className="flex gap-3">
+            <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0">
+              <FoodImage src={ci.item.img} fb={ci.item.fb} alt={ci.item.name} className="w-full h-full" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-2">
+                <p className="font-semibold text-sm leading-tight">
+                  <span className="text-muted mr-1.5">{ci.qty}×</span>{ci.item.name}
+                </p>
+                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-${config.color}/10 text-${config.color === 'olive' ? 'olive' : config.color === 'sky' ? 'sky' : config.color === 'warn' ? 'warn' : 'muted'} shrink-0`}>
+                  {config.label}
+                </span>
+              </div>
+              {ci.notes && <p className="text-xs text-muted italic mt-1 truncate">"{ci.notes}"</p>}
+
+              <div className="mt-2.5 flex items-center gap-2">
+                <div className="flex-1 h-1 bg-cream rounded-full overflow-hidden">
+                  <div className={`h-full transition-all duration-1000 ${config.dot} ${status === 'preparing' ? 'shimmer' : ''}`} style={{ width: `${config.barWidth}%` }}></div>
+                </div>
+                <span className="text-[11px] text-muted font-medium w-10 text-right">{config.barWidth}%</span>
+              </div>
+              <p className="text-[11px] text-muted mt-1">{config.desc}</p>
+            </div>
+          </div>
+
+          {/* Modification request status */}
+          {mod && (
+            <div className={`mt-3 p-3 rounded-xl border ${mod.status === 'pending' ? 'bg-warn/5 border-warn/30' : mod.status === 'accepted' ? 'bg-olive/5 border-olive/30' : 'bg-clay/5 border-clay/30'}`}>
+              <div className="flex items-start gap-2">
+                {mod.status === 'pending' && (
+                  <>
+                    <div className="w-5 h-5 rounded-full border-2 border-warn border-t-transparent animate-spin shrink-0 mt-0.5"></div>
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-warn">Solicitud enviada · Esperando cocina...</p>
+                      <p className="text-[11px] text-muted mt-0.5">{mod.note || "Modificación pedida"}</p>
+                    </div>
+                  </>
+                )}
+                {mod.status === 'accepted' && (
+                  <>
+                    <Icon name="check" size={16} className="text-olive shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-olive">Cocina aceptó tu cambio</p>
+                      <p className="text-[11px] text-muted mt-0.5">{mod.kitchenNote}</p>
+                    </div>
+                  </>
+                )}
+                {mod.status === 'rejected' && (
+                  <>
+                    <Icon name="info" size={16} className="text-clay shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-clay">No se pudo aplicar</p>
+                      <p className="text-[11px] text-muted mt-0.5">{mod.kitchenNote}</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              onClick={onModify}
+              disabled={!canModify || (mod && mod.status === 'pending')}
+              className={`flex-1 py-2 text-xs font-semibold rounded-lg border transition ${canModify && (!mod || mod.status === 'rejected') ? 'border-clay text-clay hover:bg-clay/5' : 'border-border text-muted cursor-not-allowed bg-cream'}`}
+            >
+              {mod && mod.status === 'pending' ? 'Solicitud pendiente' : mod && mod.status === 'accepted' ? '✓ Modificación aceptada' : 'Modificar plato'}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Bill
+    function BillScreen({ cart, tip, setTip, splitN, setSplitN, onBack, onBilling }) {
+      const subtotal = cart.reduce((s, c) => s + c.item.price * c.qty, 0);
+      const subtotalSinIGV = subtotal / (1 + IGV_RATE);
+      const igvAmount = subtotal - subtotalSinIGV;
+      const tipAmount = subtotal * (tip / 100);
+      const total = subtotal + tipAmount;
+      return (
+        <div className="px-6 py-8 max-w-2xl mx-auto pb-32">
+          <button onClick={onBack} className="inline-flex items-center gap-1 text-clay font-medium mb-4">
+            <Icon name="chevronLeft" size={16} /> Volver
+          </button>
+          <h1 className="font-display text-4xl font-semibold">Tu cuenta</h1>
+          <p className="text-muted mt-1">Mesa {RESTAURANT.tableNumber}</p>
+
+          <div className="mt-6 bg-paper rounded-2xl shadow-soft border border-border p-6">
+            {cart.map((c, i) => (
+              <div key={i} className="flex justify-between py-3 border-b border-border last:border-0">
+                <div className="flex gap-3">
+                  <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0">
+                    <FoodImage src={c.item.img} fb={c.item.fb} alt={c.item.name} className="w-full h-full" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">{c.qty}× {c.item.name}</p>
+                    <p className="text-xs text-muted mt-0.5">{PEN(c.item.price)} c/u</p>
+                  </div>
+                </div>
+                <span className="font-display font-bold">{PEN(c.item.price * c.qty)}</span>
+              </div>
+            ))}
+            <div className="pt-4 mt-4 space-y-2 text-sm border-t border-border">
+              <div className="flex justify-between text-muted">
+                <span>Op. gravadas</span>
+                <span>{PEN(subtotalSinIGV)}</span>
+              </div>
+              <div className="flex justify-between text-muted">
+                <span>IGV (18%)</span>
+                <span>{PEN(igvAmount)}</span>
+              </div>
+              <div className="flex justify-between font-bold pt-2 border-t border-border">
+                <span>Subtotal</span>
+                <span>{PEN(subtotal)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 bg-paper rounded-2xl shadow-soft border border-border p-5">
+            <div className="flex items-center justify-between mb-3">
+              <p className="font-semibold">Propina al equipo</p>
+              <p className="text-xs text-muted">Cobra el restaurante para repartir</p>
+            </div>
+            <div className="flex gap-2">
+              {[0, 5, 10, 15].map(p => (
+                <button key={p} onClick={() => setTip(p)} className={`flex-1 py-3 rounded-xl text-sm font-semibold transition ${tip === p ? 'bg-charcoal text-white' : 'bg-cream border border-border text-ink'}`}>
+                  {p === 0 ? 'No' : `${p}%`}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-5 bg-paper rounded-2xl shadow-soft border border-border p-5">
+            <p className="font-semibold mb-3">Dividir cuenta</p>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted">Entre</span>
+              <div className="inline-flex items-center bg-cream border border-border rounded-full">
+                <button onClick={() => setSplitN(Math.max(1, splitN - 1))} className="w-10 h-10 flex items-center justify-center text-clay">
+                  <Icon name="minus" size={16} />
+                </button>
+                <span className="w-10 text-center font-bold">{splitN}</span>
+                <button onClick={() => setSplitN(splitN + 1)} className="w-10 h-10 flex items-center justify-center text-clay">
+                  <Icon name="plus" size={16} />
+                </button>
+              </div>
+              <span className="text-sm text-muted">{splitN > 1 ? 'personas' : 'persona'}</span>
+            </div>
+            {splitN > 1 && (
+              <p className="mt-3 text-center text-sm">
+                Cada uno paga: <span className="font-display font-bold text-clay text-xl">{PEN(total / splitN)}</span>
+              </p>
+            )}
+          </div>
+
+          <div className="mt-6 bg-charcoal text-white rounded-2xl p-6">
+            <div className="flex justify-between text-base">
+              <span className="opacity-80">Subtotal</span>
+              <span>{PEN(subtotal)}</span>
+            </div>
+            {tip > 0 && (
+              <div className="flex justify-between text-sm opacity-70 mt-1">
+                <span>Propina ({tip}%)</span>
+                <span>{PEN(tipAmount)}</span>
+              </div>
+            )}
+            <div className="flex justify-between font-display text-3xl font-bold mt-3 pt-3 border-t border-white/15">
+              <span>Total</span>
+              <span>{PEN(total)}</span>
+            </div>
+          </div>
+
+          <button onClick={onBilling} className="w-full mt-6 py-5 bg-clay hover:bg-clay-dark text-white text-lg font-semibold rounded-full shadow-card transition">
+            Continuar al pago
+          </button>
+        </div>
+      );
+    }
+
+    function Field({ label, value, onChange, placeholder, type = "text", maxLength, pattern }) {
+      return (
+        <div>
+          <label className="text-sm font-semibold">{label}</label>
+          <input
+            type={type}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            maxLength={maxLength}
+            pattern={pattern}
+            className="mt-1.5 w-full px-4 py-3 bg-cream border border-border rounded-xl text-sm focus:outline-none focus:border-clay focus:bg-paper transition"
+          />
+        </div>
+      );
+    }
+
+    // Billing
+    function BillingScreen({ total, onBack, onPay }) {
+      const [type, setType] = useState("boleta");
+      const [doc, setDoc] = useState("");
+      const [name, setName] = useState("");
+      const [address, setAddress] = useState("");
+      const [email, setEmail] = useState("");
+      const [error, setError] = useState("");
+
+      const validate = () => {
+        if (type === "factura") {
+          if (!/^\d{11}$/.test(doc)) return setError("El RUC debe tener 11 dígitos") || false;
+          if (!name.trim()) return setError("Ingresa la razón social") || false;
+          if (!address.trim()) return setError("Ingresa la dirección fiscal") || false;
+        } else if (type === "boleta") {
+          if (total > 700 && !/^\d{8}$/.test(doc)) return setError("Boleta > S/ 700: DNI obligatorio") || false;
+          if (doc && !/^\d{8}$/.test(doc)) return setError("DNI debe tener 8 dígitos") || false;
+        }
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError("Email inválido") || false;
+        setError("");
+        return true;
+      };
+
+      return (
+        <div className="px-6 py-8 max-w-2xl mx-auto pb-32">
+          <button onClick={onBack} className="inline-flex items-center gap-1 text-clay font-medium mb-4">
+            <Icon name="chevronLeft" size={16} /> Volver
+          </button>
+          <h1 className="font-display text-4xl font-semibold">Comprobante</h1>
+          <p className="text-muted mt-1">Total a pagar: <span className="font-bold text-clay">{PEN(total)}</span></p>
+
+          <div className="mt-6 bg-paper rounded-2xl shadow-soft border border-border p-6">
+            <p className="font-semibold mb-3">Tipo de comprobante</p>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { id: 'boleta', title: 'Boleta', sub: 'Consumidor final' },
+                { id: 'factura', title: 'Factura', sub: 'Con RUC' },
+                { id: 'ticket', title: 'Ticket', sub: 'Sin datos' }
+              ].map(opt => (
+                <button key={opt.id} onClick={() => setType(opt.id)} className={`p-4 rounded-2xl border-2 text-left transition ${type === opt.id ? 'border-clay bg-clay/5' : 'border-border bg-cream'}`}>
+                  <p className="font-semibold">{opt.title}</p>
+                  <p className="text-xs text-muted mt-0.5">{opt.sub}</p>
+                </button>
+              ))}
+            </div>
+
+            {type === 'factura' && (
+              <div className="mt-5 space-y-3 anim-fade-in">
+                <Field label="RUC" value={doc} onChange={setDoc} placeholder="11 dígitos" maxLength={11} />
+                <Field label="Razón social" value={name} onChange={setName} placeholder="Empresa S.A.C." />
+                <Field label="Dirección fiscal" value={address} onChange={setAddress} placeholder="Av. ..." />
+                <Field label="Email" value={email} onChange={setEmail} placeholder="contacto@empresa.com" type="email" />
+                <p className="text-xs text-muted">Validamos el RUC contra SUNAT al emitir el comprobante.</p>
+              </div>
+            )}
+            {type === 'boleta' && (
+              <div className="mt-5 space-y-3 anim-fade-in">
+                <Field label={`DNI ${total > 700 ? '(obligatorio)' : '(opcional)'}`} value={doc} onChange={setDoc} placeholder="8 dígitos" maxLength={8} />
+                <Field label="Nombres y apellidos (opcional)" value={name} onChange={setName} placeholder="Tu nombre" />
+                <Field label="Email (te enviamos la boleta)" value={email} onChange={setEmail} placeholder="tu@email.com" type="email" />
+                {total > 700 && <p className="text-xs text-clay bg-clay/5 border border-clay/20 p-3 rounded-xl">SUNAT exige DNI para boletas mayores a S/ 700.</p>}
+              </div>
+            )}
+            {type === 'ticket' && (
+              <p className="mt-5 text-sm text-muted bg-cream p-4 rounded-xl border border-border">El ticket no es válido para crédito fiscal ni gastos deducibles. Si los necesitas, elige boleta o factura.</p>
+            )}
+
+            {error && <p className="mt-4 text-sm text-clay bg-clay/5 border border-clay/20 p-3 rounded-xl">{error}</p>}
+          </div>
+
+          <button
+            onClick={() => { if (validate()) onPay({ type, doc, name, address, email }); }}
+            className="w-full mt-6 py-5 bg-clay hover:bg-clay-dark text-white text-lg font-semibold rounded-full shadow-card transition"
+          >
+            Continuar al pago
+          </button>
+          <p className="text-center text-xs text-muted mt-3">
+            Tus datos se procesan según la Ley N° 29733 de Protección de Datos.
+          </p>
+        </div>
+      );
+    }
+
+    // Payment
+    function PaymentScreen({ total, billingData, onBack, onSuccess }) {
+      const [method, setMethod] = useState(null);
+      const [processing, setProcessing] = useState(false);
+      const methods = [
+        { id: 'yape', name: 'Yape', desc: 'Escanea el QR con tu app', color: '#9333EA' },
+        { id: 'plin', name: 'Plin', desc: 'Pago directo desde tu banco', color: '#0EA5E9' },
+        { id: 'card', name: 'Tarjeta', desc: 'Visa, Mastercard, Amex', color: '#1F1A17' },
+        { id: 'cash', name: 'Efectivo', desc: 'El mozo se acercará a cobrar', color: '#2D7D5A' }
+      ];
+      const handlePay = (m) => { setMethod(m); setProcessing(true); setTimeout(() => onSuccess(m), 2200); };
+
+      if (processing) {
+        return (
+          <div className="h-full flex flex-col items-center justify-center px-8">
+            <div className="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold text-white" style={{ background: method.color }}>
+              {method.name[0]}
+            </div>
+            <h2 className="font-display text-2xl font-semibold mt-6">Procesando con {method.name}</h2>
+            <p className="text-muted mt-1">No cierres la tablet, esto toma unos segundos.</p>
+            <div className="mt-8 w-64 h-1 bg-border rounded-full overflow-hidden">
+              <div className="h-full bg-clay shimmer" style={{ width: '70%' }}></div>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="px-6 py-8 max-w-2xl mx-auto pb-32">
+          <button onClick={onBack} className="inline-flex items-center gap-1 text-clay font-medium mb-4">
+            <Icon name="chevronLeft" size={16} /> Volver
+          </button>
+          <h1 className="font-display text-4xl font-semibold">Método de pago</h1>
+          <p className="text-muted mt-1">Total: <span className="font-display text-2xl font-bold text-clay">{PEN(total)}</span></p>
+
+          <div className="mt-6 grid grid-cols-2 gap-4">
+            {methods.map(m => (
+              <button
+                key={m.id}
+                onClick={() => handlePay(m)}
+                className="p-6 rounded-2xl bg-paper border border-border hover:shadow-card text-left transition group"
+              >
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg" style={{ background: m.color }}>
+                  {m.name[0]}
+                </div>
+                <p className="font-display text-2xl font-semibold mt-4">{m.name}</p>
+                <p className="text-xs text-muted mt-1">{m.desc}</p>
+                <div className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-clay opacity-0 group-hover:opacity-100 transition">
+                  Pagar <Icon name="chevronRight" size={12} />
+                </div>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-8 bg-paper rounded-2xl border border-border p-5">
+            <h3 className="font-semibold mb-3">Resumen del comprobante</h3>
+            <div className="text-sm text-muted space-y-1">
+              <p>Tipo: <span className="font-semibold text-ink uppercase">{billingData.type}</span></p>
+              {billingData.doc && <p>{billingData.type === 'factura' ? 'RUC' : 'DNI'}: <span className="font-semibold text-ink">{billingData.doc}</span></p>}
+              {billingData.name && <p>{billingData.type === 'factura' ? 'Razón social' : 'Nombre'}: <span className="font-semibold text-ink">{billingData.name}</span></p>}
+              {billingData.email && <p>Enviar a: <span className="font-semibold text-ink">{billingData.email}</span></p>}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Success
+    function SuccessScreen({ paymentMethod, total, billingData, onSurvey }) {
+      const serial = (billingData.type === 'factura' ? 'F001-' : 'B001-') + String(Math.floor(Math.random() * 99999)).padStart(5, '0');
+      return (
+        <div className="px-6 py-8 max-w-xl mx-auto pb-32">
+          <div className="text-center anim-pop">
+            <div className="w-20 h-20 mx-auto rounded-full bg-olive flex items-center justify-center text-white shadow-card">
+              <Icon name="check" size={40} />
+            </div>
+            <h1 className="font-display text-4xl font-semibold mt-5">Pago exitoso</h1>
+            <p className="text-muted mt-2">Gracias por visitarnos. Vuelve pronto.</p>
+          </div>
+
+          <div className="mt-8 bg-paper rounded-2xl shadow-soft border border-border overflow-hidden">
+            <div className="bg-clay text-white px-6 py-3 flex items-center justify-between text-sm">
+              <span className="font-semibold">Comprobante electrónico</span>
+              <span>{serial}</span>
+            </div>
+            <div className="p-6">
+              <p className="font-display text-xl font-semibold">{RESTAURANT.name}</p>
+              <p className="text-xs text-muted">RUC {RESTAURANT.ruc}</p>
+              <p className="text-xs text-muted">{RESTAURANT.address}</p>
+              <div className="divider my-4"></div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted">Mesa</span>
+                <span className="font-semibold">{RESTAURANT.tableNumber}</span>
+              </div>
+              <div className="flex justify-between text-sm mt-1">
+                <span className="text-muted">Tipo</span>
+                <span className="font-semibold uppercase">{billingData.type}</span>
+              </div>
+              <div className="flex justify-between text-sm mt-1">
+                <span className="text-muted">Pagado con</span>
+                <span className="font-semibold">{paymentMethod.name}</span>
+              </div>
+              <div className="divider my-4"></div>
+              <div className="flex justify-between font-display text-2xl font-bold">
+                <span>Total</span>
+                <span className="text-clay">{PEN(total)}</span>
+              </div>
+              <div className="mt-5 flex items-center justify-center gap-4 p-4 bg-cream rounded-xl border border-border">
+                <div className="w-20 h-20 grid grid-cols-5 gap-px bg-charcoal p-1">
+                  {[...Array(25)].map((_, i) => (
+                    <div key={i} style={{ background: Math.random() > 0.45 ? 'white' : '#1F1A17' }} />
+                  ))}
+                </div>
+                <div className="text-xs text-muted">
+                  <p className="font-semibold text-ink">Validado por SUNAT</p>
+                  <p>Vía OSE Nubefact</p>
+                  <p>Hash 7E4A...B3F2</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {billingData.email && (
+            <p className="text-center text-sm text-muted mt-4">
+              Enviamos tu comprobante a <span className="font-semibold text-ink">{billingData.email}</span>
+            </p>
+          )}
+
+          <button onClick={onSurvey} className="w-full mt-8 py-5 bg-clay hover:bg-clay-dark text-white text-lg font-semibold rounded-full shadow-card transition">
+            Calificar mi experiencia
+          </button>
+          <button className="w-full mt-3 py-3 text-sm text-muted hover:text-ink transition">
+            Libro de Reclamaciones (INDECOPI)
+          </button>
+        </div>
+      );
+    }
+
+    function SurveyScreen({ onFinish }) {
+      const [stars, setStars] = useState(0);
+      const [comment, setComment] = useState("");
+      return (
+        <div className="px-6 py-8 max-w-xl mx-auto text-center pb-32">
+          <h1 className="font-display text-4xl font-semibold">¿Qué tal estuvo?</h1>
+          <p className="text-muted mt-2">Tu opinión nos ayuda a seguir mejorando.</p>
+
+          <div className="flex justify-center gap-1 mt-10">
+            {[1,2,3,4,5].map(n => (
+              <button key={n} onClick={() => setStars(n)} className="p-2">
+                <Icon name="star" size={48} className={n <= stars ? "fill-gold text-gold" : "text-border"} />
+              </button>
+            ))}
+          </div>
+
+          {stars > 0 && (
+            <div className="mt-6 anim-fade-in">
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Cuéntanos más (opcional)..."
+                rows={4}
+                className="w-full p-4 bg-paper border border-border rounded-xl text-sm focus:outline-none focus:border-clay"
+              />
+              {stars >= 4 && (
+                <p className="text-sm text-muted mt-3">¿Te gustaría dejar una reseña en Google? Te tomará 30 segundos.</p>
+              )}
+              <button onClick={onFinish} className="w-full mt-5 py-5 bg-olive hover:bg-olive/90 text-white text-lg font-semibold rounded-full shadow-card transition">
+                Enviar y finalizar
+              </button>
+            </div>
+          )}
+          <button onClick={onFinish} className="mt-6 text-muted underline text-sm">Saltar</button>
+        </div>
+      );
+    }
+
+    // Call waiter
+    function CallWaiterModal({ open, onClose, onConfirm }) {
+      const reasons = [
+        { id: 'ayuda', label: 'Necesito ayuda' },
+        { id: 'servilletas', label: 'Más servilletas' },
+        { id: 'bebida', label: 'Repetir bebida' },
+        { id: 'cuenta', label: 'Pedir la cuenta' },
+        { id: 'queja', label: 'Tengo una queja' },
+        { id: 'otro', label: 'Otro motivo' }
+      ];
+      if (!open) return null;
+      return (
+        <div className="fixed inset-0 z-50 bg-charcoal/40 anim-fade-in flex items-center justify-center p-6" onClick={onClose}>
+          <div onClick={(e) => e.stopPropagation()} className="bg-cream rounded-3xl p-6 max-w-md w-full anim-pop">
+            <div className="text-center">
+              <div className="w-14 h-14 mx-auto rounded-full bg-clay flex items-center justify-center text-white">
+                <Icon name="bell" size={26} />
+              </div>
+              <h2 className="font-display text-2xl font-semibold mt-3">Llamar al mozo</h2>
+              <p className="text-sm text-muted">Selecciona el motivo</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mt-5">
+              {reasons.map(r => (
+                <button
+                  key={r.id}
+                  onClick={() => onConfirm(r)}
+                  className="p-3 bg-paper border border-border hover:border-clay hover:bg-clay/5 rounded-xl text-sm font-medium transition"
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+            <button onClick={onClose} className="w-full mt-4 py-3 text-sm text-muted">Cancelar</button>
+          </div>
+        </div>
+      );
+    }
+
+    function Toast({ message, show }) {
+      if (!show) return null;
+      return (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[60] anim-pop">
+          <div className="inline-flex items-center gap-2 px-5 py-3 bg-charcoal text-white rounded-full shadow-float font-medium text-sm">
+            <Icon name="check" size={16} className="text-olive" />
+            {message}
+          </div>
+        </div>
+      );
+    }
+
+    function CallWaiterFAB({ onClick, called }) {
+      return (
+        <button
+          onClick={onClick}
+          className={`fixed bottom-4 right-4 z-30 w-14 h-14 rounded-full shadow-float flex items-center justify-center transition ${called ? 'bg-olive text-white' : 'bg-paper border border-border text-clay hover:bg-clay hover:text-white'}`}
+          title="Llamar al mozo"
+        >
+          <Icon name={called ? "check" : "bell"} size={22} />
+        </button>
+      );
+    }
+
+    // ─────────────────────────── APP ───────────────────────────
+    function App() {
+      const [screen, setScreen] = useState("welcome");
+      const [selectedItem, setSelectedItem] = useState(null);
+      const [cart, setCart] = useState([]);
+      const [favorites, setFavorites] = useState([]);
+      const [cartOpen, setCartOpen] = useState(false);
+      const [waiterOpen, setWaiterOpen] = useState(false);
+      const [waiterCalled, setWaiterCalled] = useState(false);
+      const [tip, setTip] = useState(10);
+      const [splitN, setSplitN] = useState(1);
+      const [billingData, setBillingData] = useState(null);
+      const [paymentMethod, setPaymentMethod] = useState(null);
+      const [toast, setToast] = useState(null);
+
+      const showToast = (m) => { setToast(m); setTimeout(() => setToast(null), 1800); };
+      const addToCart = (item, qty, notes) => {
+        setCart(prev => [...prev, { item, qty, notes }]);
+        showToast(`${item.name} agregado`);
+      };
+      const updateQty = (idx, qty) => {
+        if (qty === 0) setCart(prev => prev.filter((_, i) => i !== idx));
+        else setCart(prev => prev.map((c, i) => i === idx ? { ...c, qty } : c));
+      };
+      const toggleFav = (id) => setFavorites(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+      const callWaiter = (reason) => {
+        setWaiterOpen(false); setWaiterCalled(true);
+        showToast(`Mozo notificado: ${reason.label}`);
+        setTimeout(() => setWaiterCalled(false), 8000);
+      };
+
+      const subtotal = cart.reduce((s, c) => s + c.item.price * c.qty, 0);
+      const total = subtotal * (1 + tip / 100);
+      const cartCount = cart.reduce((s, c) => s + c.qty, 0);
+
+      if (screen === "welcome") return <WelcomeScreen onStart={() => setScreen("menu")} />;
+
+      return (
+        <div className="min-h-full">
+          <Header tableNumber={RESTAURANT.tableNumber} onHome={() => setScreen("menu")} favCount={favorites.length} onFavs={() => setScreen("menu")} />
+
+          {screen === "menu" && <MenuScreen onItem={setSelectedItem} favorites={favorites} onFav={toggleFav} />}
+          {screen === "orderStatus" && <OrderStatusScreen cart={cart} setCart={setCart} onBack={() => setScreen("menu")} onBill={() => setScreen("bill")} />}
+          {screen === "bill" && <BillScreen cart={cart} tip={tip} setTip={setTip} splitN={splitN} setSplitN={setSplitN} onBack={() => setScreen("orderStatus")} onBilling={() => setScreen("billing")} />}
+          {screen === "billing" && <BillingScreen total={total} onBack={() => setScreen("bill")} onPay={(d) => { setBillingData(d); setScreen("payment"); }} />}
+          {screen === "payment" && <PaymentScreen total={total} billingData={billingData} onBack={() => setScreen("billing")} onSuccess={(m) => { setPaymentMethod(m); setScreen("success"); }} />}
+          {screen === "success" && <SuccessScreen paymentMethod={paymentMethod} total={total} billingData={billingData} onSurvey={() => setScreen("survey")} />}
+          {screen === "survey" && <SurveyScreen onFinish={() => {
+            showToast("¡Gracias por tu visita!");
+            setTimeout(() => {
+              setCart([]); setFavorites([]); setBillingData(null); setPaymentMethod(null);
+              setScreen("welcome");
+            }, 1500);
+          }} />}
+
+          <DetailSheet item={selectedItem} onClose={() => setSelectedItem(null)} onAdd={addToCart} isFav={selectedItem && favorites.includes(selectedItem.id)} onFav={toggleFav} />
+          <CartSheet open={cartOpen} onClose={() => setCartOpen(false)} cart={cart} updateQty={updateQty} onCheckout={() => { setCartOpen(false); setScreen("orderStatus"); }} onCallWaiter={() => { setCartOpen(false); setWaiterOpen(true); }} />
+          <CallWaiterModal open={waiterOpen} onClose={() => setWaiterOpen(false)} onConfirm={callWaiter} />
+
+          {screen === "menu" && <CartBar count={cartCount} total={subtotal} onClick={() => setCartOpen(true)} />}
+          {screen !== "success" && screen !== "survey" && <CallWaiterFAB onClick={() => setWaiterOpen(true)} called={waiterCalled} />}
+
+          <Toast message={toast} show={!!toast} />
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

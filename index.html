@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#A0322B" />
+  <title>MesaSmart · Sistema integral para restaurantes</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --cream: #FAF7F2;
+      --paper: #FFFFFF;
+      --charcoal: #1F1A17;
+      --ink: #2A1F1A;
+      --muted: #6B5D52;
+      --clay: #A0322B;
+      --clay-dark: #7E2820;
+      --gold: #C8941F;
+      --olive: #2D7D5A;
+      --border: #E8DFD3;
+      --sky: #3B82F6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+    }
+    .display { font-family: 'Playfair Display', serif; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, var(--charcoal) 0%, var(--clay-dark) 100%);
+      color: var(--cream);
+      padding: 80px 0 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 80% 20%, rgba(200,148,31,0.15) 0%, transparent 50%),
+        radial-gradient(circle at 10% 80%, rgba(160,50,43,0.20) 0%, transparent 50%);
+    }
+    .hero-content { position: relative; z-index: 1; }
+    .brand {
+      display: inline-flex; align-items: center; gap: 12px;
+      padding: 6px 16px 6px 6px;
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(10px);
+      border-radius: 100px;
+      border: 1px solid rgba(255,255,255,0.15);
+      margin-bottom: 24px;
+    }
+    .brand-logo {
+      width: 32px; height: 32px;
+      background: var(--clay);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px;
+    }
+    .brand-text { font-size: 13px; font-weight: 600; letter-spacing: 0.05em; }
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(40px, 7vw, 72px);
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      max-width: 800px;
+    }
+    .hero h1 em { color: var(--gold); font-style: normal; }
+    .hero p {
+      font-size: 18px;
+      line-height: 1.5;
+      color: rgba(250,247,242,0.75);
+      max-width: 580px;
+      margin-top: 20px;
+    }
+    .badges {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-top: 32px;
+    }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--olive); }
+
+    /* Roles */
+    .roles {
+      padding: 80px 0;
+    }
+    .section-title {
+      display: flex; align-items: end; justify-content: space-between;
+      margin-bottom: 32px;
+    }
+    .section-title h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .section-title p { color: var(--muted); margin-top: 4px; }
+
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .role-card {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+      display: flex; flex-direction: column;
+      min-height: 320px;
+    }
+    .role-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: var(--accent, var(--clay));
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .role-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(31,26,23,0.08);
+      border-color: var(--accent, var(--clay));
+    }
+    .role-card:hover::before { opacity: 1; }
+    .role-icon {
+      width: 56px; height: 56px;
+      border-radius: 16px;
+      background: var(--accent-soft, rgba(160,50,43,0.08));
+      color: var(--accent, var(--clay));
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px;
+    }
+    .role-card h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .role-meta {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .role-card p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.55;
+      flex: 1;
+    }
+    .role-features {
+      list-style: none;
+      margin-top: 16px;
+      padding: 0;
+    }
+    .role-features li {
+      font-size: 13px;
+      color: var(--ink);
+      padding: 4px 0;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .role-features li::before {
+      content: '';
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: var(--accent, var(--clay));
+    }
+    .role-cta {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent, var(--clay));
+    }
+    .role-cta svg { transition: transform 0.2s; }
+    .role-card:hover .role-cta svg { transform: translateX(4px); }
+
+    /* Role accents */
+    .accent-clay { --accent: var(--clay); --accent-soft: rgba(160,50,43,0.08); }
+    .accent-charcoal { --accent: var(--charcoal); --accent-soft: rgba(31,26,23,0.06); }
+    .accent-gold { --accent: var(--gold); --accent-soft: rgba(200,148,31,0.10); }
+    .accent-olive { --accent: var(--olive); --accent-soft: rgba(45,125,90,0.08); }
+
+    /* Resources */
+    .resources {
+      background: var(--paper);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 60px 0;
+    }
+    .resource-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+    .resource-card {
+      padding: 20px;
+      background: var(--cream);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s;
+    }
+    .resource-card:hover { border-color: var(--clay); }
+    .resource-card h4 { font-weight: 700; font-size: 15px; }
+    .resource-card p { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+    /* Footer */
+    footer {
+      padding: 40px 0 60px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    footer p { margin-bottom: 8px; }
+
+    /* Stats */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 32px;
+      margin-top: 48px;
+      padding-top: 32px;
+      border-top: 1px solid rgba(255,255,255,0.10);
+    }
+    .stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--gold);
+    }
+    .stat-label {
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(250,247,242,0.6);
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <section class="hero">
+    <div class="container hero-content">
+      <div class="brand">
+        <div class="brand-logo">M</div>
+        <span class="brand-text">MESASMART</span>
+      </div>
+      <h1>El sistema operativo del restaurante <em>peruano moderno.</em></h1>
+      <p>Una plataforma, cuatro experiencias. Diseñado desde el cliente hasta la cocina, cumpliendo SUNAT al 100%.</p>
+      <div class="badges">
+        <span class="badge"><span class="badge-dot"></span>Cumple SUNAT (RS 097-2012)</span>
+        <span class="badge"><span class="badge-dot"></span>Yape · Plin · Tarjeta</span>
+        <span class="badge"><span class="badge-dot"></span>OSE integrado</span>
+        <span class="badge"><span class="badge-dot"></span>Ley 29733 PDP</span>
+      </div>
+      <div class="stats">
+        <div>
+          <div class="stat-num">−30%</div>
+          <div class="stat-label">tiempo de atención</div>
+        </div>
+        <div>
+          <div class="stat-num">+18%</div>
+          <div class="stat-label">ticket promedio</div>
+        </div>
+        <div>
+          <div class="stat-num">12 min</div>
+          <div class="stat-label">ahorrados por mesa</div>
+        </div>
+        <div>
+          <div class="stat-num">5×</div>
+          <div class="stat-label">más reseñas Google</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="roles">
+    <div class="container">
+      <div class="section-title">
+        <div>
+          <h2>Elige una vista</h2>
+          <p>Cada rol tiene su propia interfaz, optimizada para su contexto y dispositivo.</p>
+        </div>
+      </div>
+
+      <div class="role-grid">
+
+        <a href="cliente.html" class="role-card accent-clay">
+          <div class="role-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="6" width="20" height="14" rx="2" />
+              <line x1="6" y1="20" x2="18" y2="20" />
+              <line x1="12" y1="20" x2="12" y2="22" />
+            </svg>
+          </div>
+          <p class="role-meta">Tablet · Tablet en mesa</p>
+          <h3>Cliente</h3>
+          <p>Carta digital con fotos profesionales, filtros, favoritos, llamar al mozo, pago y comprobante electrónico.</p>
+          <ul class="role-features">
+            <li>Carta foto-first con búsqueda</li>
+            <li>Carrito sticky y bottom sheets</li>
+            <li>Boleta / Factura SUNAT</li>
+            <li>Yape, Plin, tarjeta, efectivo</li>
+          </ul>
+          <span class="role-cta">
+            Abrir vista cliente
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </span>
+        </a>
+
+        <a href="cocina.html" class="role-card accent-charcoal">
+          <div class="role-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" />
+              <line x1="6" y1="17" x2="18" y2="17" />
+            </svg>
+          </div>
+          <p class="role-meta">Pantalla · Cocina</p>
+          <h3>KDS · Cocina</h3>
+          <p>Display de tickets en tiempo real con semáforo de tiempos, routing por estación y bump system.</p>
+          <ul class="role-features">
+            <li>Tema oscuro alta legibilidad</li>
+            <li>Color por edad del ticket</li>
+            <li>Brasa · Parrilla · Frío · Bebidas</li>
+            <li>Cronómetro automático</li>
+          </ul>
+          <span class="role-cta">
+            Abrir KDS cocina
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </span>
+        </a>
+
+        <a href="admin.html" class="role-card accent-gold">
+          <div class="role-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="20" x2="12" y2="10" />
+              <line x1="18" y1="20" x2="18" y2="4" />
+              <line x1="6" y1="20" x2="6" y2="16" />
+            </svg>
+          </div>
+          <p class="role-meta">Web · PC del administrador</p>
+          <h3>Administrador</h3>
+          <p>Dashboard con KPIs en vivo, plano de mesas, reportes de ventas y gestión completa del restaurante.</p>
+          <ul class="role-features">
+            <li>Floor plan en tiempo real</li>
+            <li>Ventas por hora y top platos</li>
+            <li>Llamados activos del salón</li>
+            <li>Personal y reportes</li>
+          </ul>
+          <span class="role-cta">
+            Abrir panel admin
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </span>
+        </a>
+
+        <a href="mozo.html" class="role-card accent-olive">
+          <div class="role-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="2" width="14" height="20" rx="2" />
+              <line x1="12" y1="18" x2="12" y2="18" />
+            </svg>
+          </div>
+          <p class="role-meta">Smartphone · Mozo</p>
+          <h3>Mozo</h3>
+          <p>App móvil con notificaciones de llamados, mesas asignadas, plano del salón, unión de mesas y cobro rápido.</p>
+          <ul class="role-features">
+            <li>Plano del salón con ubicación</li>
+            <li>Llamados con prioridad urgente</li>
+            <li>Unir / bloquear mesas</li>
+            <li>Marcar quejas con prioridad</li>
+          </ul>
+          <span class="role-cta">
+            Abrir vista mozo
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </span>
+        </a>
+
+        <a href="erp.html" class="role-card" style="--accent: #C8941F; --accent-soft: rgba(200,148,31,0.10);">
+          <div class="role-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+              <line x1="12" y1="22.08" x2="12" y2="12" />
+            </svg>
+          </div>
+          <p class="role-meta">Web · Administrador y dueño</p>
+          <h3>ERP + Marketing IA</h3>
+          <p>Inventario foto-first, recetas, proveedores con auto-pedido, P&L por mozo/día/categoría y campañas IA inteligentes.</p>
+          <ul class="role-features">
+            <li>Conteo de inventario por foto IA</li>
+            <li>Caducidad y auto-restock</li>
+            <li>P&L con vistas múltiples</li>
+            <li>Campañas IA con análisis de data</li>
+          </ul>
+          <span class="role-cta">
+            Abrir ERP
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </span>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <section class="resources">
+    <div class="container">
+      <div class="section-title">
+        <div>
+          <h2>Recursos del proyecto</h2>
+          <p>Documentación y referencias del MVP.</p>
+        </div>
+      </div>
+      <div class="resource-grid">
+        <a href="BENCHMARK.md" class="resource-card">
+          <h4>Benchmark UX/UI</h4>
+          <p>Análisis de Mr. Yum, Toast, Sunday, Lightspeed con lecciones aplicables.</p>
+        </a>
+        <a href="README.md" class="resource-card">
+          <h4>README del prototipo</h4>
+          <p>Guía rápida de uso, flujos demo y siguientes pasos.</p>
+        </a>
+        <a href="../Prompt_App_Restaurante_Peru.md" class="resource-card">
+          <h4>Prompt estructurado</h4>
+          <p>Especificación completa para arrancar el desarrollo full-stack.</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <p><strong>MesaSmart</strong> · Prototipo MVP · La Brasa Dorada (caso demo)</p>
+      <p>Cumple SUNAT (RS 097-2012/SUNAT) · Ley N° 29733 PDP · INDECOPI Libro de Reclamaciones</p>
+    </div>
+  </footer>
+
+</body>
+</html>
