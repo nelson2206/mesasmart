@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MesaSmart · Iniciar sesión</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script>window.MESASMART_BACKEND_URL = "https://mesasmart-backend.onrender.com";</script>
+  <script src="./assets/api.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gold: #C8941F;
+      --gold-light: #E5B458;
+      --olive: #2D7D5A;
+      --warn: #D97706;
+      --clay: #A0322B;
+    }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      color: white;
+      min-height: 100vh;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    .display { font-family: 'Playfair Display', serif; }
+
+    /* ATMOSPHERIC BACKGROUND */
+    .bg {
+      position: fixed; inset: 0;
+      background-image: url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=2400&q=85');
+      background-size: cover;
+      background-position: center;
+      z-index: 0;
+      transform: scale(1.1);
+      animation: drift 60s ease-in-out infinite alternate;
+    }
+    @keyframes drift {
+      0% { transform: scale(1.1) translate(0, 0); }
+      100% { transform: scale(1.15) translate(-1%, 1%); }
+    }
+    .bg::after {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse at 50% 50%, rgba(31,26,23,0.3) 0%, rgba(31,26,23,0.7) 50%, rgba(31,26,23,0.9) 100%),
+        linear-gradient(135deg, rgba(160,50,43,0.25) 0%, transparent 50%, rgba(200,148,31,0.15) 100%);
+    }
+
+    /* FLOATING ORBS (ambient) */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.4;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .orb-1 {
+      width: 500px; height: 500px;
+      background: var(--clay);
+      top: -100px; right: -100px;
+      animation: float1 20s ease-in-out infinite;
+    }
+    .orb-2 {
+      width: 400px; height: 400px;
+      background: var(--gold);
+      bottom: -100px; left: -50px;
+      animation: float2 25s ease-in-out infinite;
+    }
+    @keyframes float1 {
+      0%,100% { transform: translate(0,0); }
+      50% { transform: translate(-50px, 50px); }
+    }
+    @keyframes float2 {
+      0%,100% { transform: translate(0,0); }
+      50% { transform: translate(50px, -50px); }
+    }
+
+    /* CONTENT */
+    .layout {
+      position: relative;
+      z-index: 10;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+    }
+
+    /* BRAND */
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+      animation: fadeIn 0.8s ease-out;
+    }
+    .brand-mark {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--clay) 0%, var(--gold) 100%);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 16px;
+      box-shadow: 0 8px 24px rgba(160,50,43,0.4);
+    }
+    .brand-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    /* TAGLINE */
+    .tagline {
+      text-align: center;
+      margin-bottom: 32px;
+      animation: fadeIn 0.8s ease-out 0.1s both;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.20);
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--gold-light);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .eyebrow .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold-light);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.4); }
+    }
+    h1.headline {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(36px, 5vw, 56px);
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      line-height: 1.05;
+      margin-top: 16px;
+      max-width: 540px;
+    }
+    h1.headline em {
+      color: var(--gold-light);
+      font-style: normal;
+    }
+
+    /* GLASS CARD */
+    .glass {
+      width: 100%;
+      max-width: 400px;
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow:
+        0 24px 60px rgba(0,0,0,0.30),
+        0 0 0 1px rgba(255,255,255,0.05) inset,
+        0 1px 0 rgba(255,255,255,0.20) inset;
+      animation: fadeIn 0.8s ease-out 0.2s both;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .status-line {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 16px;
+    }
+    .status-line .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--olive);
+      box-shadow: 0 0 8px var(--olive);
+    }
+    .status-line.warn .dot { background: var(--warn); box-shadow: 0 0 8px var(--warn); animation: pulse 1.5s infinite; }
+    .status-line.warn { color: var(--gold-light); }
+
+    .field {
+      margin-top: 16px;
+    }
+    .field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.85);
+      display: block;
+      margin-bottom: 8px;
+      letter-spacing: 0.02em;
+    }
+    .field input {
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.20);
+      border-radius: 12px;
+      color: white;
+      font-size: 15px;
+      font-family: inherit;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: all 0.2s;
+    }
+    .field input::placeholder { color: rgba(255,255,255,0.45); }
+    .field input:focus {
+      outline: none;
+      background: rgba(255,255,255,0.15);
+      border-color: var(--gold-light);
+      box-shadow: 0 0 0 4px rgba(229,180,88,0.15);
+    }
+
+    .submit {
+      width: 100%;
+      margin-top: 20px;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--clay) 0%, var(--gold) 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 8px 24px rgba(160,50,43,0.3);
+    }
+    .submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(160,50,43,0.4);
+    }
+    .submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .error-msg {
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: rgba(160,50,43,0.20);
+      border: 1px solid rgba(160,50,43,0.40);
+      color: white;
+      border-radius: 10px;
+      font-size: 13px;
+      display: none;
+    }
+
+    .quick-row {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.10);
+    }
+    .quick-label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.55);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .quick-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .chip {
+      padding: 7px 12px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 100px;
+      color: rgba(255,255,255,0.85);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .chip:hover {
+      background: rgba(255,255,255,0.18);
+      border-color: rgba(255,255,255,0.30);
+      transform: translateY(-1px);
+    }
+    .chip-emoji { margin-right: 4px; }
+
+    .footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+    }
+    .footer a {
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(255,255,255,0.20);
+    }
+    .footer a:hover { color: white; border-color: rgba(255,255,255,0.50); }
+
+    @media (max-width: 540px) {
+      h1.headline { font-size: 32px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div class="layout">
+
+  <div class="brand">
+    <div class="brand-mark">M</div>
+    <div class="brand-text">MesaSmart</div>
+  </div>
+
+  <div class="tagline">
+    <div class="eyebrow">
+      <span class="dot"></span>
+      Sistema operativo del restaurante
+    </div>
+    <h1 class="headline">Bienvenido a la <em>experiencia</em>.</h1>
+  </div>
+
+  <div class="glass">
+    <div id="status" class="status-line warn">
+      <span class="dot"></span>
+      <span id="status-text">Conectando con backend...</span>
+    </div>
+
+    <form id="login-form" autocomplete="on">
+      <div class="field">
+        <label for="email">Correo</label>
+        <input id="email" type="email" required value="admin@labrasa.pe" autocomplete="email" placeholder="tu@restaurante.pe" />
+      </div>
+      <div class="field">
+        <label for="password">Contraseña</label>
+        <input id="password" type="password" required value="demo1234" autocomplete="current-password" placeholder="••••••••" />
+      </div>
+      <button type="submit" id="submit" class="submit">
+        Entrar
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+      <p id="error" class="error-msg"></p>
+    </form>
+
+    <div class="quick-row">
+      <div class="quick-label">Acceso rápido demo</div>
+      <div class="quick-chips">
+        <button class="chip" data-email="admin@labrasa.pe"><span class="chip-emoji">👨‍💼</span>Admin</button>
+        <button class="chip" data-email="maria@labrasa.pe"><span class="chip-emoji">🙋‍♀️</span>Mozo</button>
+        <button class="chip" data-email="cocina@labrasa.pe"><span class="chip-emoji">👨‍🍳</span>Cocina</button>
+        <button class="chip" data-email="caja@labrasa.pe"><span class="chip-emoji">💳</span>Caja</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <a href="./index.html">Volver al hub</a>
+  </div>
+
+</div>
+
+<script>
+  const api = window.MesaSmartAPI;
+  const statusPill = document.getElementById('status');
+  const statusText = document.getElementById('status-text');
+  const errorEl = document.getElementById('error');
+
+  checkBackend();
+  async function checkBackend() {
+    statusPill.className = 'status-line warn';
+    statusText.textContent = 'Conectando con backend...';
+    try {
+      const res = await fetch(api.getBaseUrl() + '/health');
+      if (!res.ok) throw 0;
+      statusPill.className = 'status-line';
+      statusText.textContent = 'Conectado · listo para entrar';
+    } catch {
+      statusText.textContent = 'Backend dormido · puede tardar 30s';
+      setTimeout(checkBackend, 8000);
+    }
+  }
+
+  document.querySelectorAll('.chip').forEach(c => {
+    c.onclick = (e) => {
+      e.preventDefault();
+      document.getElementById('email').value = c.dataset.email;
+      document.getElementById('password').value = 'demo1234';
+    };
+  });
+
+  document.getElementById('login-form').onsubmit = async (e) => {
+    e.preventDefault();
+    errorEl.style.display = 'none';
+    const submit = document.getElementById('submit');
+    submit.disabled = true;
+    submit.innerHTML = 'Entrando...';
+    try {
+      const data = await api.login(document.getElementById('email').value, document.getElementById('password').value);
+      const target = { ADMIN: 'admin.html', CASHIER: 'admin.html', KITCHEN: 'cocina.html', WAITER: 'mozo.html' }[data.user.role] || 'index.html';
+      window.location.href = target;
+    } catch (err) {
+      errorEl.textContent = err.message || 'Error al iniciar sesión';
+      errorEl.style.display = 'block';
+      submit.disabled = false;
+      submit.innerHTML = 'Entrar <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+    }
+  };
+</script>
+
+</body>
+</html>
