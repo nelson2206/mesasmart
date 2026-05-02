@@ -158,7 +158,49 @@ class PnlService {
     total.avgTicketCents = total.ordersCount > 0 ? Math.round(total.revenueCents / total.ordersCount) : 0;
 
     const sortedBuckets = [...buckets.values()].sort((a, b) => b.revenueCents - a.revenueCents);
-    return { buckets: sortedBuckets, total };
+    // ─── LABOR COST del periodo ───
+    // Suma sueldos brutos mensuales de empleados activos × (1 + overhead) × (días / 30)
+    const restaurant = await prisma.restaurant.findUnique({ where: { id: input.restaurantId } });
+    const overhead = restaurant?.laborOverheadPct ?? 0.40;
+    const employees = await prisma.user.findMany({
+      where: { restaurantId: input.restaurantId, active: true }
+    });
+    const days = Math.max(1, Math.ceil((input.to.getTime() - input.from.getTime()) / 86400000));
+    const periodFraction = days / 30;
+    const totalMonthlyLaborCents = employees.reduce((s, u) => {
+      const base = u.monthlySalaryCents ||
+        (u.hourlyRateCents && u.expectedHoursPerWeek
+          ? Math.round(u.hourlyRateCents * u.expectedHoursPerWeek * 4.33)
+          : 0);
+      return s + Math.round(base * (1 + overhead));
+    }, 0);
+    const laborPeriodCents = Math.round(totalMonthlyLaborCents * periodFraction);
+
+    // Apply labor to total
+    const ebitdaCents = total.grossProfitCents - laborPeriodCents;
+    const ebitdaMarginPct = total.netRevenueCents > 0 ? (ebitdaCents / total.netRevenueCents) * 100 : 0;
+    const labor = {
+      monthlyCostCents: totalMonthlyLaborCents,
+      periodCostCents: laborPeriodCents,
+      headcount: employees.length,
+      laborOverheadPct: overhead,
+      laborPctOfRevenue: total.netRevenueCents > 0 ? (laborPeriodCents / total.netRevenueCents) * 100 : 0,
+      days
+    };
+
+    return {
+      buckets: sortedBuckets,
+      total: {
+        ...total,
+        // Extiendo el total con campos de labor + ebitda
+        ...(({ } as any))
+      },
+      labor,
+      ebitda: {
+        cents: ebitdaCents,
+        marginPct: ebitdaMarginPct
+      }
+    } as any;
   }
 }
 

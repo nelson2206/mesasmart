@@ -41,6 +41,8 @@ model Restaurant {
   facturaSerie   String   @default("F001")
   boletaSeq      Int      @default(0)
   facturaSeq     Int      @default(0)
+  // Costos laborales (Perú): ESSALUD 9% + gratifs 16.67% + CTS 8.33% + vacaciones = ~40% sobrecostos
+  laborOverheadPct  Float   @default(0.40)
   active         Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -72,6 +74,19 @@ model User {
   role          String     // ADMIN | CASHIER | WAITER | KITCHEN
   name          String
   avatarColor   String     @default("#A0322B")
+
+  // Datos laborales / nómina
+  position             String?   // Mozo, Chef, Cocinero, Cajero, Bartender, Limpieza, Admin
+  contractType         String?   // FULL_TIME | PART_TIME | HOURLY | TIPPED | EXTERNAL
+  monthlySalaryCents   Int?      // Sueldo bruto mensual (S/ 1500 = 150000 cents)
+  hourlyRateCents      Int?      // Si es por hora
+  expectedHoursPerWeek Int?      @default(48)
+  hiredAt              DateTime?
+  terminatedAt         DateTime?
+  dni                  String?
+  phone                String?
+  notes                String?
+
   active        Boolean    @default(true)
   createdAt     DateTime   @default(now())
 

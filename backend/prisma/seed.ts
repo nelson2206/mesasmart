@@ -59,15 +59,24 @@ async function main() {
   // ─────────── USERS ───────────
   const pwd = await bcrypt.hash("demo1234", 10);
   const [admin, mariaWaiter, juanWaiter, carlosWaiter, kitchenChef, cashier] = await Promise.all([
-    prisma.user.create({ data: { restaurantId: restaurant.id, email: "admin@labrasa.pe", passwordHash: pwd, role: "ADMIN", name: "Marcos Vidal", avatarColor: "#C8941F" } }),
-    prisma.user.create({ data: { restaurantId: restaurant.id, email: "maria@labrasa.pe", passwordHash: pwd, role: "WAITER", name: "María Quispe", avatarColor: "#A0322B" } }),
-    prisma.user.create({ data: { restaurantId: restaurant.id, email: "juan@labrasa.pe", passwordHash: pwd, role: "WAITER", name: "Juan Cárdenas", avatarColor: "#C8941F" } }),
-    prisma.user.create({ data: { restaurantId: restaurant.id, email: "carlos@labrasa.pe", passwordHash: pwd, role: "WAITER", name: "Carlos Mendoza", avatarColor: "#2D7D5A" } }),
-    prisma.user.create({ data: { restaurantId: restaurant.id, email: "cocina@labrasa.pe", passwordHash: pwd, role: "KITCHEN", name: "Enrique Ruiz (Chef)", avatarColor: "#1F1A17" } }),
-    prisma.user.create({ data: { restaurantId: restaurant.id, email: "caja@labrasa.pe", passwordHash: pwd, role: "CASHIER", name: "Lucía Vargas", avatarColor: "#3B82F6" } }),
+    prisma.user.create({ data: { restaurantId: restaurant.id, email: "admin@labrasa.pe", passwordHash: pwd, role: "ADMIN", name: "Marcos Vidal", avatarColor: "#C8941F", position: "Administrador", contractType: "FULL_TIME", monthlySalaryCents: 450000, expectedHoursPerWeek: 48, hiredAt: new Date("2022-03-01"), dni: "44567890" } }),
+    prisma.user.create({ data: { restaurantId: restaurant.id, email: "maria@labrasa.pe", passwordHash: pwd, role: "WAITER", name: "María Quispe", avatarColor: "#A0322B", position: "Mozo/a", contractType: "FULL_TIME", monthlySalaryCents: 165000, expectedHoursPerWeek: 48, hiredAt: new Date("2023-06-15"), dni: "12345678" } }),
+    prisma.user.create({ data: { restaurantId: restaurant.id, email: "juan@labrasa.pe", passwordHash: pwd, role: "WAITER", name: "Juan Cárdenas", avatarColor: "#C8941F", position: "Mozo/a", contractType: "FULL_TIME", monthlySalaryCents: 165000, expectedHoursPerWeek: 48, hiredAt: new Date("2023-09-01"), dni: "23456789" } }),
+    prisma.user.create({ data: { restaurantId: restaurant.id, email: "carlos@labrasa.pe", passwordHash: pwd, role: "WAITER", name: "Carlos Mendoza", avatarColor: "#2D7D5A", position: "Mozo/a", contractType: "PART_TIME", monthlySalaryCents: 110000, expectedHoursPerWeek: 30, hiredAt: new Date("2024-01-10"), dni: "34567890" } }),
+    prisma.user.create({ data: { restaurantId: restaurant.id, email: "cocina@labrasa.pe", passwordHash: pwd, role: "KITCHEN", name: "Enrique Ruiz", avatarColor: "#1F1A17", position: "Chef ejecutivo", contractType: "FULL_TIME", monthlySalaryCents: 380000, expectedHoursPerWeek: 54, hiredAt: new Date("2022-05-15"), dni: "45678901" } }),
+    prisma.user.create({ data: { restaurantId: restaurant.id, email: "caja@labrasa.pe", passwordHash: pwd, role: "CASHIER", name: "Lucía Vargas", avatarColor: "#3B82F6", position: "Cajero/a", contractType: "FULL_TIME", monthlySalaryCents: 175000, expectedHoursPerWeek: 48, hiredAt: new Date("2023-11-20"), dni: "56789012" } }),
   ]);
 
-  console.log(`✓ Created restaurant + 6 users`);
+  // Personal adicional sin login activo (solo nómina)
+  const noLoginPwd = "$2b$10$NoLoginHash";
+  await Promise.all([
+    prisma.user.create({ data: { restaurantId: restaurant.id, email: "pedro-staff@labrasa.local", passwordHash: noLoginPwd, role: "KITCHEN", name: "Pedro Aguilar", avatarColor: "#7E2820", position: "Cocinero/a · Brasa", contractType: "FULL_TIME", monthlySalaryCents: 195000, expectedHoursPerWeek: 54, hiredAt: new Date("2023-04-20"), dni: "67890123" } }),
+    prisma.user.create({ data: { restaurantId: restaurant.id, email: "rosa-staff@labrasa.local", passwordHash: noLoginPwd, role: "KITCHEN", name: "Rosa Mendoza", avatarColor: "#C4493A", position: "Ayudante de cocina", contractType: "FULL_TIME", monthlySalaryCents: 140000, expectedHoursPerWeek: 48, hiredAt: new Date("2024-02-01"), dni: "78901234" } }),
+    prisma.user.create({ data: { restaurantId: restaurant.id, email: "sergio-staff@labrasa.local", passwordHash: noLoginPwd, role: "KITCHEN", name: "Sergio Pérez", avatarColor: "#2D7D5A", position: "Bartender", contractType: "PART_TIME", monthlySalaryCents: 130000, expectedHoursPerWeek: 36, hiredAt: new Date("2024-05-15"), dni: "89012345" } }),
+    prisma.user.create({ data: { restaurantId: restaurant.id, email: "ana-staff@labrasa.local", passwordHash: noLoginPwd, role: "WAITER", name: "Ana Torres", avatarColor: "#3B82F6", position: "Limpieza", contractType: "PART_TIME", monthlySalaryCents: 105000, expectedHoursPerWeek: 30, hiredAt: new Date("2024-07-01"), dni: "90123456" } })
+  ]);
+
+  console.log(`✓ Created restaurant + 6 logging users + 4 staff (10 total para nómina)`);
 
   // ─────────── RESTAURANT PLAN ───────────
   await prisma.restaurantPlan.create({

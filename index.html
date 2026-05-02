@@ -413,6 +413,427 @@
       line-height: 1.6;
       color: var(--muted);
     }
+
+    /* Consultant Section */
+    .consultant-section {
+      padding: 80px 0;
+      background: var(--cream);
+    }
+
+    .consultant-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .wizard-container {
+      display: flex;
+      justify-content: center;
+    }
+
+    .wizard-card {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px;
+      max-width: 720px;
+      width: 100%;
+      box-shadow: 0 8px 24px rgba(31,26,23,0.08);
+    }
+
+    .progress-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 40px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+    }
+
+    .dot.active {
+      background: var(--clay);
+      width: 24px;
+      border-radius: 100px;
+    }
+
+    .wizard-step {
+      animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .wizard-step.hidden {
+      display: none;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .option-grid, .pain-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .option-card, .pain-card {
+      position: relative;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .option-card input[type="radio"],
+    .pain-card input[type="checkbox"] {
+      display: none;
+    }
+
+    .option-card span, .pain-card span {
+      display: block;
+    }
+
+    .option-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 16px;
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      background: var(--paper);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      text-align: center;
+    }
+
+    .option-card:hover {
+      border-color: var(--clay);
+      background: rgba(160,50,43,0.02);
+    }
+
+    .option-card input[type="radio"]:checked + .option-content {
+      color: var(--clay);
+    }
+
+    .option-card input[type="radio"]:checked ~ span,
+    .option-card input:checked ~ span {
+      color: var(--clay);
+    }
+
+    .option-card input[type="radio"]:checked + .option-content,
+    .option-card input[type="radio"]:checked + .option-content ~ span {
+      color: var(--clay);
+    }
+
+    .option-card:has(input:checked) {
+      border-color: var(--clay);
+      background: rgba(160,50,43,0.05);
+    }
+
+    .option-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .option-number {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: inherit;
+    }
+
+    .option-emoji {
+      font-size: 28px;
+    }
+
+    .option-label {
+      font-size: 13px;
+      color: inherit;
+      line-height: 1.3;
+    }
+
+    .pain-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      background: var(--paper);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      text-align: center;
+    }
+
+    .pain-card:hover {
+      border-color: var(--clay);
+      background: rgba(160,50,43,0.02);
+    }
+
+    .pain-card:has(input:checked) {
+      border-color: var(--clay);
+      background: rgba(160,50,43,0.08);
+    }
+
+    .pain-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    .pain-label {
+      font-size: 13px;
+      color: var(--ink);
+      line-height: 1.4;
+    }
+
+    .recommendation-result {
+      text-align: center;
+    }
+
+    .plan-badge {
+      display: inline-block;
+      padding: 12px 24px;
+      border-radius: 100px;
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: rgba(160,50,43,0.10);
+      color: var(--clay);
+      margin-bottom: 20px;
+    }
+
+    .plan-details {
+      text-align: left;
+      background: var(--cream);
+      border-radius: 16px;
+      padding: 24px;
+      margin: 24px 0;
+    }
+
+    .price-section {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .features-list {
+      list-style: none;
+      font-size: 13px;
+      color: var(--ink);
+      line-height: 1.8;
+    }
+
+    .features-list li {
+      padding: 6px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .features-list li::before {
+      content: '✓';
+      color: var(--olive);
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .features-list.optional li::before {
+      content: '◦';
+      color: var(--muted);
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-block;
+    }
+
+    .btn-primary {
+      background: var(--clay);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--clay-dark);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: var(--cream);
+      color: var(--ink);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--clay);
+      background: rgba(160,50,43,0.02);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .wizard-controls {
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .wizard-controls .btn {
+      flex: 1;
+    }
+
+    #btn-back {
+      display: none;
+    }
+
+    .comparison-table {
+      overflow-x: auto;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+    }
+
+    .comparison-table table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .comparison-table th {
+      background: var(--cream);
+      padding: 16px 12px;
+      text-align: center;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+      color: var(--ink);
+    }
+
+    .comparison-table th:first-child {
+      text-align: left;
+    }
+
+    .comparison-table td {
+      padding: 12px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .comparison-table td:first-child {
+      text-align: left;
+      font-weight: 500;
+      color: var(--ink);
+    }
+
+    .comparison-table .check {
+      color: var(--olive);
+      font-weight: 700;
+    }
+
+    .comparison-table .empty {
+      color: var(--muted);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 768px) {
+      .wizard-card {
+        padding: 28px;
+      }
+
+      .option-grid, .pain-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .pain-grid {
+        gap: 10px;
+      }
+
+      .pain-card {
+        padding: 16px 12px;
+      }
+
+      .pain-icon {
+        font-size: 24px;
+      }
+
+      .pain-label {
+        font-size: 12px;
+      }
+
+      .wizard-controls {
+        flex-direction: column;
+      }
+
+      .wizard-controls .btn {
+        width: 100%;
+      }
+
+      .comparison-table {
+        font-size: 11px;
+      }
+
+      .comparison-table th, .comparison-table td {
+        padding: 8px 6px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .consultant-section {
+        padding: 60px 0;
+      }
+
+      .wizard-card {
+        padding: 20px;
+        border-radius: 16px;
+      }
+
+      .option-grid, .pain-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .progress-dots {
+        gap: 6px;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+      }
+
+      .dot.active {
+        width: 20px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -448,6 +869,245 @@
         <div>
           <div class="stat-num">1 a 50</div>
           <div class="stat-label">locales sin migrar</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="consultant-section">
+    <div class="container">
+      <div class="consultant-header">
+        <h2 class="display" style="font-size: 32px; font-weight: 600; margin-bottom: 12px;">¿Qué plan necesita tu restaurante?</h2>
+        <p style="font-size: 16px; color: var(--muted); margin-bottom: 40px;">Responde 5 preguntas y descubre tu plan ideal recomendado por IA</p>
+      </div>
+
+      <div class="wizard-container">
+        <div class="wizard-card">
+          <div class="progress-dots">
+            <span class="dot active" data-step="1"></span>
+            <span class="dot" data-step="2"></span>
+            <span class="dot" data-step="3"></span>
+            <span class="dot" data-step="4"></span>
+            <span class="dot" data-step="5"></span>
+          </div>
+
+          <div class="wizard-step" id="step-1">
+            <h3 style="font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 600; margin-bottom: 8px;">Paso 1 · ¿Cuántos locales tienes?</h3>
+            <p style="font-size: 14px; color: var(--muted); margin-bottom: 24px;">Esto define la complejidad de tu operación</p>
+            <div class="option-grid">
+              <label class="option-card">
+                <input type="radio" name="locations" value="1" required />
+                <span class="option-content">
+                  <span class="option-number">1</span>
+                  <span class="option-label">Un local</span>
+                </span>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="locations" value="2-5" required />
+                <span class="option-content">
+                  <span class="option-number">2-5</span>
+                  <span class="option-label">Pequeña cadena</span>
+                </span>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="locations" value="6-15" required />
+                <span class="option-content">
+                  <span class="option-number">6-15</span>
+                  <span class="option-label">Mediana cadena</span>
+                </span>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="locations" value="16+" required />
+                <span class="option-content">
+                  <span class="option-number">16+</span>
+                  <span class="option-label">Gran operación</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="wizard-step hidden" id="step-2">
+            <h3 style="font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 600; margin-bottom: 8px;">Paso 2 · ¿Cuántos comensales por día (promedio)?</h3>
+            <p style="font-size: 14px; color: var(--muted); margin-bottom: 24px;">Esto define volumen y carga de operación</p>
+            <div class="option-grid">
+              <label class="option-card">
+                <input type="radio" name="daily" value="<50" required />
+                <span class="option-content">
+                  <span class="option-emoji">👤</span>
+                  <span class="option-label">&lt;50 comensales</span>
+                </span>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="daily" value="50-200" required />
+                <span class="option-content">
+                  <span class="option-emoji">👥</span>
+                  <span class="option-label">50-200 comensales</span>
+                </span>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="daily" value="200-500" required />
+                <span class="option-content">
+                  <span class="option-emoji">👨‍👩‍👧‍👦</span>
+                  <span class="option-label">200-500 comensales</span>
+                </span>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="daily" value="500+" required />
+                <span class="option-content">
+                  <span class="option-emoji">🏢</span>
+                  <span class="option-label">500+ comensales</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="wizard-step hidden" id="step-3">
+            <h3 style="font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 600; margin-bottom: 8px;">Paso 3 · ¿Cuántos platos en tu carta?</h3>
+            <p style="font-size: 14px; color: var(--muted); margin-bottom: 24px;">Importante porque define complejidad de inventario</p>
+            <div class="option-grid">
+              <label class="option-card">
+                <input type="radio" name="menuSize" value="<15" required />
+                <span class="option-content">
+                  <span class="option-number">&lt;15</span>
+                  <span class="option-label">Menú reducido</span>
+                </span>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="menuSize" value="15-50" required />
+                <span class="option-content">
+                  <span class="option-number">15-50</span>
+                  <span class="option-label">Menú estándar</span>
+                </span>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="menuSize" value="50-100" required />
+                <span class="option-content">
+                  <span class="option-number">50-100</span>
+                  <span class="option-label">Menú completo</span>
+                </span>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="menuSize" value="100+" required />
+                <span class="option-content">
+                  <span class="option-number">100+</span>
+                  <span class="option-label">Menú muy amplio</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="wizard-step hidden" id="step-4">
+            <h3 style="font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 600; margin-bottom: 8px;">Paso 4 · ¿Qué te duele más HOY?</h3>
+            <p style="font-size: 14px; color: var(--muted); margin-bottom: 24px;">Selecciona todos los que apliquen</p>
+            <div class="pain-grid">
+              <label class="pain-card">
+                <input type="checkbox" name="painPoints" value="costs" />
+                <span class="pain-icon">💸</span>
+                <span class="pain-label">No sé mi costo real por plato</span>
+              </label>
+              <label class="pain-card">
+                <input type="checkbox" name="painPoints" value="inventory" />
+                <span class="pain-icon">📦</span>
+                <span class="pain-label">Pierdo plata en mermas e inventario</span>
+              </label>
+              <label class="pain-card">
+                <input type="checkbox" name="painPoints" value="staff" />
+                <span class="pain-icon">👥</span>
+                <span class="pain-label">No tengo control de mi personal y nómina</span>
+              </label>
+              <label class="pain-card">
+                <input type="checkbox" name="painPoints" value="orders" />
+                <span class="pain-icon">🍽️</span>
+                <span class="pain-label">Mis pedidos se demoran y los clientes se quejan</span>
+              </label>
+              <label class="pain-card">
+                <input type="checkbox" name="painPoints" value="growth" />
+                <span class="pain-icon">📈</span>
+                <span class="pain-label">Quiero crecer a más locales</span>
+              </label>
+              <label class="pain-card">
+                <input type="checkbox" name="painPoints" value="payments" />
+                <span class="pain-icon">💳</span>
+                <span class="pain-label">Quiero recibir Yape/Plin/tarjeta sin trampas</span>
+              </label>
+              <label class="pain-card">
+                <input type="checkbox" name="painPoints" value="digital" />
+                <span class="pain-icon">📱</span>
+                <span class="pain-label">Quiero ofrecer pedidos desde la mesa</span>
+              </label>
+              <label class="pain-card">
+                <input type="checkbox" name="painPoints" value="ai" />
+                <span class="pain-icon">🤖</span>
+                <span class="pain-label">Quiero usar IA para analizar mi negocio</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="wizard-step hidden" id="step-5">
+            <div class="recommendation-result">
+              <div class="plan-badge" id="recommended-badge"></div>
+              <h3 style="font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 600; margin-top: 20px; margin-bottom: 8px;" id="plan-title"></h3>
+              <p style="font-size: 14px; color: var(--muted); margin-bottom: 20px;" id="plan-subtitle"></p>
+
+              <div class="plan-details">
+                <div class="price-section">
+                  <div style="font-size: 32px; font-weight: 700; color: var(--clay);" id="plan-price"></div>
+                  <div style="font-size: 12px; color: var(--muted);" id="plan-period"></div>
+                </div>
+
+                <div style="margin-top: 24px;">
+                  <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 12px;">Incluye en este plan</p>
+                  <ul class="features-list" id="plan-features"></ul>
+                </div>
+
+                <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);">
+                  <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 12px;">Upgrading en el siguiente plan</p>
+                  <ul class="features-list optional" id="plan-optional"></ul>
+                </div>
+              </div>
+
+              <div class="action-buttons">
+                <button class="btn btn-primary" onclick="document.querySelector('#compare-plans-container').classList.toggle('hidden')">Ver todos los planes comparados</button>
+              </div>
+            </div>
+
+            <div id="compare-plans-container" class="hidden" style="margin-top: 32px;">
+              <div class="comparison-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Feature</th>
+                      <th class="solo-pos">Solo POS<br><span style="font-size: 11px; font-weight: 400;">Gratis</span></th>
+                      <th class="operacion">Operación<br><span style="font-size: 11px; font-weight: 400;">S/ 199/mes</span></th>
+                      <th class="profesional">Profesional<br><span style="font-size: 11px; font-weight: 400;">S/ 399/mes</span></th>
+                      <th class="enterprise">Enterprise<br><span style="font-size: 11px; font-weight: 400;">S/ 799/mes</span></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>POS · Carta y pedidos</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+                    <tr><td>Inventario y recetas</td><td class="empty">—</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+                    <tr><td>Costos y conversiones de insumos</td><td class="empty">—</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+                    <tr><td>Recepción de guías con foto IA</td><td class="empty">—</td><td class="empty">—</td><td class="check">✓</td><td class="check">✓</td></tr>
+                    <tr><td>P&L y reportes financieros</td><td class="empty">—</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+                    <tr><td>Personal y nómina</td><td class="empty">—</td><td class="empty">—</td><td class="check">✓</td><td class="check">✓</td></tr>
+                    <tr><td>Cliente-tablet en mesa (add-on)</td><td class="empty">—</td><td class="empty">—</td><td class="check">✓</td><td class="check">✓</td></tr>
+                    <tr><td>Llamado al mozo y cocina KDS</td><td class="empty">—</td><td class="empty">—</td><td class="check">✓</td><td class="check">✓</td></tr>
+                    <tr><td>Multi-local consolidado</td><td class="empty">—</td><td class="empty">—</td><td class="check">✓</td><td class="check">✓</td></tr>
+                    <tr><td>Campañas IA</td><td class="empty">—</td><td class="empty">—</td><td class="check">✓</td><td class="check">✓</td></tr>
+                    <tr><td>Cliente recurrente y rewards</td><td class="empty">—</td><td class="empty">—</td><td class="check">✓</td><td class="check">✓</td></tr>
+                    <tr><td>IA completa (Claude Vision)</td><td class="empty">—</td><td class="empty">—</td><td class="check">✓</td><td class="check">✓</td></tr>
+                    <tr><td>Soporte priority</td><td class="empty">—</td><td class="empty">—</td><td class="empty">—</td><td class="check">✓</td></tr>
+                    <tr><td>Integración SUNAT/OSE</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="wizard-controls">
+            <button class="btn btn-secondary" id="btn-back" onclick="prevStep()">← Atrás</button>
+            <button class="btn btn-primary" id="btn-next" onclick="nextStep()">Siguiente →</button>
+          </div>
         </div>
       </div>
     </div>
@@ -665,6 +1325,244 @@
       </div>
     </div>
   </footer>
+
+  <script>
+    // Wizard state
+    let currentStep = 1;
+    const totalSteps = 5;
+    let wizardData = {
+      locations: '',
+      daily: '',
+      menuSize: '',
+      painPoints: []
+    };
+
+    // Plan definitions
+    const plans = {
+      'POS_SOLO': {
+        name: 'Solo POS',
+        badge: 'Plan Gratuito',
+        price: 'Gratis',
+        period: 'Lead generator',
+        description: 'Para empezar con lo esencial',
+        features: [
+          'Carta digital',
+          'Pedidos básico',
+          'Pagos (Yape, tarjeta)',
+          'Boletas SUNAT'
+        ],
+        optional: [
+          'Inventario y recetas',
+          'Conversiones de insumos',
+          'Recepción de guías con IA'
+        ]
+      },
+      'OPERACION': {
+        name: 'Operación',
+        badge: 'Plan Operacional',
+        price: 'S/ 199',
+        period: 'por mes (1 local)',
+        description: 'Para restaurante con control de inventario',
+        features: [
+          'Todo POS',
+          'Inventario + recetas',
+          'Conversiones de insumos',
+          'P&L por producto',
+          'Integración SUNAT/OSE'
+        ],
+        optional: [
+          'Recepción de guías con IA',
+          'Multi-local consolidado',
+          'Campañas IA'
+        ]
+      },
+      'PROFESIONAL': {
+        name: 'Profesional',
+        badge: 'Plan Profesional',
+        price: 'S/ 399',
+        period: 'por mes (multi-local)',
+        description: 'Para cadenas con operación avanzada',
+        features: [
+          'Todo Operación',
+          'Multi-local + consolidado',
+          'Recepción de guías con IA',
+          'Personal y nómina',
+          'Cliente-tablet en mesa',
+          'Llamado al mozo y cocina KDS',
+          'Campañas IA',
+          'Cliente recurrente y rewards'
+        ],
+        optional: [
+          'Soporte priority',
+          'Consultoría dedicada'
+        ]
+      },
+      'ENTERPRISE': {
+        name: 'Enterprise',
+        badge: 'Plan Enterprise',
+        price: 'S/ 799',
+        period: 'por mes (custom)',
+        description: 'Para grandes operaciones con todo incluido',
+        features: [
+          'Todo Profesional',
+          'Soporte priority',
+          'Onboarding dedicado',
+          'IA completa (Claude Vision)',
+          'Features custom',
+          'Integración SUNAT/OSE'
+        ],
+        optional: [
+          'Consultoría estratégica'
+        ]
+      }
+    };
+
+    // Recommendation algorithm
+    function recommendPlan() {
+      let score = 0;
+
+      // Scoring por número de locales
+      if (wizardData.locations === '1') score += 10;
+      else if (wizardData.locations === '2-5') score += 30;
+      else if (wizardData.locations === '6-15') score += 60;
+      else score += 90;
+
+      // Scoring por comensales diarios
+      if (wizardData.daily === '<50') score += 5;
+      else if (wizardData.daily === '50-200') score += 20;
+      else if (wizardData.daily === '200-500') score += 40;
+      else score += 70;
+
+      // Scoring por tamaño de menú
+      if (wizardData.menuSize === '<15') score += 5;
+      else if (wizardData.menuSize === '15-50') score += 15;
+      else if (wizardData.menuSize === '50-100') score += 30;
+      else score += 50;
+
+      // Scoring por pain points (cada uno suma 10 puntos)
+      score += wizardData.painPoints.length * 10;
+
+      // Determinar plan basado en score
+      if (score < 30) return 'POS_SOLO';
+      if (score < 60) return 'OPERACION';
+      if (score < 100) return 'PROFESIONAL';
+      return 'ENTERPRISE';
+    }
+
+    // Step control
+    function goToStep(step) {
+      if (step < 1 || step > totalSteps) return;
+
+      // Hide all steps
+      document.querySelectorAll('.wizard-step').forEach(s => s.classList.add('hidden'));
+
+      // Show current step
+      document.getElementById(`step-${step}`).classList.remove('hidden');
+
+      // Update progress dots
+      document.querySelectorAll('.dot').forEach((dot, index) => {
+        if (index + 1 <= step) {
+          dot.classList.add('active');
+        } else {
+          dot.classList.remove('active');
+        }
+      });
+
+      // Update buttons
+      document.getElementById('btn-back').style.display = step === 1 ? 'none' : 'block';
+      document.getElementById('btn-next').textContent = step === totalSteps ? 'Ver recomendación' : 'Siguiente →';
+
+      // If on final step, show result
+      if (step === totalSteps) {
+        showRecommendation();
+      }
+
+      currentStep = step;
+    }
+
+    function nextStep() {
+      // Validate current step
+      if (!validateStep(currentStep)) {
+        alert('Por favor completa esta pregunta antes de continuar');
+        return;
+      }
+
+      if (currentStep < totalSteps) {
+        goToStep(currentStep + 1);
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 1) {
+        goToStep(currentStep - 1);
+      }
+    }
+
+    function validateStep(step) {
+      if (step === 1) return wizardData.locations !== '';
+      if (step === 2) return wizardData.daily !== '';
+      if (step === 3) return wizardData.menuSize !== '';
+      if (step === 4) return wizardData.painPoints.length > 0;
+      return true;
+    }
+
+    function showRecommendation() {
+      const recommendedPlan = recommendPlan();
+      const plan = plans[recommendedPlan];
+
+      document.getElementById('recommended-badge').textContent = plan.badge;
+      document.getElementById('plan-title').textContent = plan.name;
+      document.getElementById('plan-subtitle').textContent = plan.description;
+      document.getElementById('plan-price').textContent = plan.price;
+      document.getElementById('plan-period').textContent = plan.period;
+
+      // Build features list
+      const featuresList = document.getElementById('plan-features');
+      featuresList.innerHTML = plan.features.map(f => `<li>${f}</li>`).join('');
+
+      // Build optional features list
+      const optionalList = document.getElementById('plan-optional');
+      optionalList.innerHTML = plan.optional.map(f => `<li>${f}</li>`).join('');
+    }
+
+    // Form event listeners
+    document.querySelectorAll('input[name="locations"]').forEach(input => {
+      input.addEventListener('change', (e) => {
+        wizardData.locations = e.target.value;
+      });
+    });
+
+    document.querySelectorAll('input[name="daily"]').forEach(input => {
+      input.addEventListener('change', (e) => {
+        wizardData.daily = e.target.value;
+      });
+    });
+
+    document.querySelectorAll('input[name="menuSize"]').forEach(input => {
+      input.addEventListener('change', (e) => {
+        wizardData.menuSize = e.target.value;
+      });
+    });
+
+    document.querySelectorAll('input[name="painPoints"]').forEach(input => {
+      input.addEventListener('change', () => {
+        wizardData.painPoints = Array.from(document.querySelectorAll('input[name="painPoints"]:checked')).map(i => i.value);
+      });
+    });
+
+    // Progress dot click listeners
+    document.querySelectorAll('.dot').forEach(dot => {
+      dot.addEventListener('click', () => {
+        const step = parseInt(dot.dataset.step);
+        if (step <= currentStep || validateStep(currentStep)) {
+          goToStep(step);
+        }
+      });
+    });
+
+    // Initialize
+    goToStep(1);
+  </script>
 
 </body>
 </html>

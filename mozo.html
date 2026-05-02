@@ -232,7 +232,7 @@
                 <p className="text-[11px] text-cream/60">{ME.role}</p>
               </div>
             </div>
-            <button className="relative w-11 h-11 rounded-full bg-cream/10 backdrop-blur flex items-center justify-center hover:bg-cream/20 transition" style={{ border: "1px solid rgba(250,247,242,0.15)" }}>
+            <button className="relative w-11 h-11 rounded-full bg-cream/10 backdrop-blur flex items-center justify-center hover:bg-cream/20 transition" style={{ border: "1px solid rgba(250,247,242,0.15)" }} onClick={() => window._mesasmartUnhandled && window._mesasmartUnhandled() || alert("Función disponible próximamente · estamos completando esta acción")}>
               <Icon name="bell" size={18} />
               {CALLS.length > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-clay rounded-full text-[10px] font-bold flex items-center justify-center" style={{ animation: "pulseDot 1.4s infinite" }}>{CALLS.length}</span>}
             </button>
@@ -730,7 +730,7 @@
             </div>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2">
-            <button className="py-2.5 bg-cream border border-border rounded-lg text-xs font-semibold">
+            <button className="py-2.5 bg-cream border border-border rounded-lg text-xs font-semibold" onClick={() => window._mesasmartUnhandled && window._mesasmartUnhandled() || alert("Función disponible próximamente · estamos completando esta acción")}>
               Ver mesa
             </button>
             <button onClick={() => onResolve(call.id)} className="py-2.5 bg-olive text-white rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1">
@@ -787,7 +787,7 @@
                       <div>
                         <p className="text-sm font-semibold">{it.qty}× {it.name}</p>
                       </div>
-                      <button className="px-3 py-1.5 bg-olive text-white text-xs font-semibold rounded-lg">
+                      <button className="px-3 py-1.5 bg-olive text-white text-xs font-semibold rounded-lg" onClick={() => window._mesasmartUnhandled && window._mesasmartUnhandled() || alert("Función disponible próximamente · estamos completando esta acción")}>
                         Servido
                       </button>
                     </div>
@@ -838,15 +838,15 @@
             )}
 
             <div className="sticky bottom-0 bg-paper border-t border-border p-4 grid grid-cols-3 gap-2">
-              <button className="py-3 bg-cream border border-border rounded-xl text-xs font-semibold inline-flex flex-col items-center gap-1">
+              <button className="py-3 bg-cream border border-border rounded-xl text-xs font-semibold inline-flex flex-col items-center gap-1" onClick={() => window._mesasmartUnhandled && window._mesasmartUnhandled() || alert("Función disponible próximamente · estamos completando esta acción")}>
                 <Icon name="plus" size={16} />
                 Agregar
               </button>
-              <button className="py-3 bg-cream border border-border rounded-xl text-xs font-semibold inline-flex flex-col items-center gap-1">
+              <button className="py-3 bg-cream border border-border rounded-xl text-xs font-semibold inline-flex flex-col items-center gap-1" onClick={() => window._mesasmartUnhandled && window._mesasmartUnhandled() || alert("Función disponible próximamente · estamos completando esta acción")}>
                 <Icon name="receipt" size={16} />
                 Ver pedido
               </button>
-              <button className="py-3 bg-clay text-white rounded-xl text-xs font-semibold inline-flex flex-col items-center gap-1">
+              <button className="py-3 bg-clay text-white rounded-xl text-xs font-semibold inline-flex flex-col items-center gap-1" onClick={() => window._mesasmartUnhandled && window._mesasmartUnhandled() || alert("Función disponible próximamente · estamos completando esta acción")}>
                 <Icon name="cash" size={16} />
                 Cobrar
               </button>

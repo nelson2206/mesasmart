@@ -344,11 +344,11 @@
               <span className="font-mono font-bold text-ink">{timeStr}</span>
             </div>
             <span className="text-sm text-muted">Hoy · 1 May 2026</span>
-            <button className="inline-flex items-center gap-1.5 px-3 py-2 border border-border rounded-lg text-sm font-medium hover:bg-cream">
+            <button className="inline-flex items-center gap-1.5 px-3 py-2 border border-border rounded-lg text-sm font-medium hover:bg-cream" onClick={() => window._mesasmartUnhandled && window._mesasmartUnhandled() || alert("Función disponible próximamente · estamos completando esta acción")}>
               <Icon name="download" size={14} />
               Exportar
             </button>
-            <button className="relative w-10 h-10 rounded-full bg-cream border border-border flex items-center justify-center text-ink hover:bg-clay/5">
+            <button className="relative w-10 h-10 rounded-full bg-cream border border-border flex items-center justify-center text-ink hover:bg-clay/5" onClick={() => window._mesasmartUnhandled && window._mesasmartUnhandled() || alert("Función disponible próximamente · estamos completando esta acción")}>
               <Icon name="bell" size={18} />
               {alerts > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-clay text-white rounded-full text-[10px] font-bold flex items-center justify-center">
@@ -523,7 +523,7 @@
         <div className="bg-paper border border-border rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-display text-xl font-semibold">Más vendidos hoy</h3>
-            <button className="text-xs text-clay font-medium">Ver todo</button>
+            <button className="text-xs text-clay font-medium" onClick={() => window._mesasmartUnhandled && window._mesasmartUnhandled() || alert("Función disponible próximamente · estamos completando esta acción")}>Ver todo</button>
           </div>
           <div className="space-y-3">
             {items.map((item, i) => (
@@ -568,7 +568,7 @@
               <h3 className="font-display text-xl font-semibold">Pedidos recientes</h3>
               <p className="text-xs text-muted mt-0.5">Últimas 2 horas</p>
             </div>
-            <button className="text-xs text-clay font-medium">Ver todos</button>
+            <button className="text-xs text-clay font-medium" onClick={() => window._mesasmartUnhandled && window._mesasmartUnhandled() || alert("Función disponible próximamente · estamos completando esta acción")}>Ver todos</button>
           </div>
           <div className="overflow-x-auto -mx-2">
             <table className="w-full">
@@ -782,8 +782,8 @@
                 </div>
 
                 <div className="flex gap-2 pt-2">
-                  <button className="flex-1 py-2.5 bg-cream border border-border rounded-lg text-sm font-medium">Ver pedido</button>
-                  <button className="flex-1 py-2.5 bg-clay text-white rounded-lg text-sm font-medium">Cobrar</button>
+                  <button className="flex-1 py-2.5 bg-cream border border-border rounded-lg text-sm font-medium" onClick={() => window._mesasmartUnhandled && window._mesasmartUnhandled() || alert("Función disponible próximamente · estamos completando esta acción")}>Ver pedido</button>
+                  <button className="flex-1 py-2.5 bg-clay text-white rounded-lg text-sm font-medium" onClick={() => window._mesasmartUnhandled && window._mesasmartUnhandled() || alert("Función disponible próximamente · estamos completando esta acción")}>Cobrar</button>
                 </div>
               </div>
             ) : (
@@ -874,7 +874,7 @@
               <h1 className="font-display text-3xl font-semibold">Carta</h1>
               <p className="text-muted mt-1">Gestiona categorías, platos, precios y disponibilidad.</p>
             </div>
-            <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-clay text-white rounded-lg font-semibold text-sm">
+            <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-clay text-white rounded-lg font-semibold text-sm" onClick={() => window._mesasmartUnhandled && window._mesasmartUnhandled() || alert("Función disponible próximamente · estamos completando esta acción")}>
               <Icon name="plus" size={16} /> Nuevo plato
             </button>
           </div>
@@ -883,7 +883,7 @@
               <div key={c} className="bg-paper border border-border rounded-2xl p-5 hover:shadow-card cursor-pointer transition">
                 <div className="flex items-center justify-between">
                   <h3 className="font-display text-lg font-semibold">{c}</h3>
-                  <button className="text-muted"><Icon name="moreH" size={16} /></button>
+                  <button className="text-muted" onClick={() => window._mesasmartUnhandled && window._mesasmartUnhandled() || alert("Función disponible próximamente · estamos completando esta acción")}><Icon name="moreH" size={16} /></button>
                 </div>
                 <p className="text-sm text-muted mt-1">{Math.floor(3 + Math.random() * 8)} platos · {Math.floor(70 + Math.random() * 30)}% disponibles</p>
                 <div className="mt-3 flex items-center gap-2">
