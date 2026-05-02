@@ -78,6 +78,7 @@
 <body>
   <div id="root"></div>
 
+  <script src="./assets/features.js"></script>
   <script type="text/babel" data-presets="env,react">
     const { useState, useEffect, useMemo, useRef } = React;
 
@@ -2144,14 +2145,14 @@
               {view === "alertas" && <Alertas ingredients={ingredients} />}
               {view === "inventario" && <Inventario ingredients={ingredients} setIngredients={setIngredients} />}
               {view === "conteo" && <ConteoFisico ingredients={ingredients} />}
-              {view === "conversiones" && <Conversiones />}
+              {view === "conversiones" && <div data-feature="transformations"><Conversiones /></div>}
               {view === "recetas" && <Recetas />}
               {view === "proveedores" && <Proveedores />}
-              {view === "recepcion" && <RecepcionGuias />}
+              {view === "recepcion" && <div data-feature="goods_receipt_ai"><RecepcionGuias /></div>}
               {view === "compras" && <Compras ingredients={ingredients} />}
               {view === "caducidad" && <Caducidad ingredients={ingredients} />}
-              {view === "pnl" && <Pnl />}
-              {view === "campanas" && <Campanas />}
+              {view === "pnl" && <div data-feature="pnl"><Pnl /></div>}
+              {view === "campanas" && <div data-feature="campaigns_ai"><Campanas /></div>}
               {view === "plan" && <PlanRestaurante />}
             </main>
           </div>

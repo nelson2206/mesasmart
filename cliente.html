@@ -436,6 +436,7 @@
 <body>
   <div id="root"></div>
 
+  <script src="./assets/features.js"></script>
   <script type="text/babel" data-presets="env,react">
     const { useState, useEffect, useMemo, useRef } = React;
 
@@ -804,26 +805,28 @@
                 <Icon name="chevronRight" size={20} />
               </button>
 
-              {/* Cliente recurrente · identificación */}
-              {customerTier && customerTier.tier !== "NEW" ? (
-                <div className="mt-6 inline-flex items-center gap-3 px-5 py-3 rounded-full" style={{ background: "rgba(255,255,255,0.10)", backdropFilter: "blur(20px)", border: "1px solid rgba(229,180,88,0.30)" }}>
-                  <span className="text-2xl">{customerTier.icon}</span>
-                  <div className="text-left">
-                    <p className="text-[10px] uppercase tracking-widest text-gold-light font-bold">{customerTier.label}</p>
-                    <p className="text-sm text-white">¡Hola{customer?.name ? ' ' + customer.name.split(" ")[0] : ''}! · Visita #{customer?.totalVisits}</p>
-                    {customerTier.reward && <p className="text-xs text-white/85 mt-0.5">🎁 {customerTier.reward.label}</p>}
+              {/* Cliente recurrente · identificación · gated por plan */}
+              <div data-feature="customer_id">
+                {customerTier && customerTier.tier !== "NEW" ? (
+                  <div className="mt-6 inline-flex items-center gap-3 px-5 py-3 rounded-full" style={{ background: "rgba(255,255,255,0.10)", backdropFilter: "blur(20px)", border: "1px solid rgba(229,180,88,0.30)" }}>
+                    <span className="text-2xl">{customerTier.icon}</span>
+                    <div className="text-left">
+                      <p className="text-[10px] uppercase tracking-widest text-gold-light font-bold">{customerTier.label}</p>
+                      <p className="text-sm text-white">¡Hola{customer?.name ? ' ' + customer.name.split(" ")[0] : ''}! · Visita #{customer?.totalVisits}</p>
+                      {customerTier.reward && <p className="text-xs text-white/85 mt-0.5">🎁 {customerTier.reward.label}</p>}
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <button
-                  onClick={onIdentify}
-                  className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition hover:bg-white/15"
-                  style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(14px)", border: "1px solid rgba(255,255,255,0.18)", color: "rgba(255,255,255,0.85)" }}
-                >
-                  <span>⭐</span>
-                  <span>¿Eres cliente recurrente? · Identifícate</span>
-                </button>
-              )}
+                ) : (
+                  <button
+                    onClick={onIdentify}
+                    className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition hover:bg-white/15"
+                    style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(14px)", border: "1px solid rgba(255,255,255,0.18)", color: "rgba(255,255,255,0.85)" }}
+                  >
+                    <span>⭐</span>
+                    <span>¿Eres cliente recurrente? · Identifícate</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

@@ -133,6 +133,7 @@
 <body>
   <div id="root"></div>
 
+  <script src="./assets/features.js"></script>
   <script type="text/babel" data-presets="env,react">
     const { useState, useEffect, useMemo } = React;
 
@@ -1323,10 +1324,10 @@
               {view === "menu" && <MenuView />}
               {view === "pedidos" && <PedidosView />}
               {view === "reportes" && <ReportsView />}
-              {view === "personal" && <PersonalView />}
+              {view === "personal" && <div data-feature="labor_cost"><PersonalView /></div>}
               {view === "ajustes" && <AjustesView />}
-              {view === "cola" && <ColaView tables={tables} setTables={setTables} queue={queue} setQueue={setQueue} />}
-              {view === "asistente_config" && <AsistenteConfigView />}
+              {view === "cola" && <div data-feature="queue_ai"><ColaView tables={tables} setTables={setTables} queue={queue} setQueue={setQueue} /></div>}
+              {view === "asistente_config" && <div data-feature="ai_assistant_waiter"><AsistenteConfigView /></div>}
             </main>
           </div>
         </div>

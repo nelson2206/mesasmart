@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#A0322B" />
+  <title>MesaSmart · Programa de implementadores certificados</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --cream: #FAF7F2;
+      --paper: #FFFFFF;
+      --charcoal: #1F1A17;
+      --ink: #2A1F1A;
+      --muted: #6B5D52;
+      --clay: #A0322B;
+      --clay-dark: #7E2820;
+      --gold: #C8941F;
+      --olive: #2D7D5A;
+      --border: #E8DFD3;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { height: 100%; scroll-behavior: smooth; }
+    body {
+      height: 100%;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+    }
+    .display { font-family: 'Playfair Display', serif; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 32px; }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, #1F1A17 0%, #2A1F1A 60%, #3A2C20 100%);
+      color: white;
+      padding: 80px 0 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -100px; right: -80px;
+      width: 480px; height: 480px;
+      background: radial-gradient(circle, rgba(200,148,31,0.20) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    .hero-content { position: relative; z-index: 1; }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 14px;
+      background: rgba(200,148,31,0.15);
+      border: 1px solid rgba(200,148,31,0.30);
+      color: var(--gold);
+      border-radius: 100px;
+      font-size: 12px; font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    .hero-eyebrow::before { content: ''; width: 6px; height: 6px; background: var(--gold); border-radius: 50%; }
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(36px, 5vw, 52px);
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+      max-width: 760px;
+    }
+    .hero h1 em { font-style: italic; color: var(--gold); }
+    .hero p {
+      font-size: 17px;
+      color: rgba(255,255,255,0.82);
+      max-width: 620px;
+      line-height: 1.5;
+      margin-bottom: 28px;
+    }
+    .hero-cta-row {
+      display: flex; gap: 12px; flex-wrap: wrap;
+    }
+    .hero-cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 26px;
+      border-radius: 100px;
+      font-size: 14px; font-weight: 700;
+      text-decoration: none;
+      transition: transform 0.2s ease;
+    }
+    .hero-cta-primary { background: var(--gold); color: #1F1A17; }
+    .hero-cta-primary:hover { transform: translateY(-2px); }
+    .hero-cta-ghost {
+      background: transparent;
+      border: 1.5px solid rgba(255,255,255,0.30);
+      color: white;
+    }
+    .hero-cta-ghost:hover { border-color: white; }
+    .back-link {
+      position: absolute; top: 32px; left: 32px;
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      font-size: 13px;
+      z-index: 2;
+    }
+    .back-link:hover { color: white; }
+
+    /* Why partner section */
+    .section { padding: 80px 0; }
+    .section.bg-cream { background: var(--cream); }
+    .section.bg-paper { background: var(--paper); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .section-eyebrow {
+      display: inline-block;
+      padding: 6px 14px;
+      background: rgba(160,50,43,0.08);
+      border: 1px solid rgba(160,50,43,0.20);
+      color: var(--clay);
+      border-radius: 100px;
+      font-size: 12px; font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      max-width: 760px;
+      line-height: 1.1;
+      margin-bottom: 12px;
+    }
+    .section-title em { font-style: italic; color: var(--clay); }
+    .section-sub {
+      font-size: 16px;
+      color: var(--muted);
+      max-width: 620px;
+      margin-bottom: 40px;
+    }
+
+    /* Numeric stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 28px;
+    }
+    @media (max-width: 720px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .stat-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px 18px;
+      text-align: center;
+    }
+    .stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--clay);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+
+    /* Why cards */
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 900px) { .why-grid { grid-template-columns: 1fr; } }
+    .why-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 26px;
+    }
+    .why-card-icon {
+      width: 48px; height: 48px;
+      background: rgba(160,50,43,0.08);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      margin-bottom: 16px;
+    }
+    .why-card h4 {
+      font-family: 'Playfair Display', serif;
+      font-size: 19px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .why-card p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* Commission table */
+    .commission-card {
+      background: linear-gradient(180deg, var(--charcoal) 0%, var(--ink) 100%);
+      color: white;
+      border-radius: 24px;
+      padding: 36px;
+      position: relative;
+      overflow: hidden;
+    }
+    .commission-card::before {
+      content: '';
+      position: absolute;
+      top: -80px; right: -80px;
+      width: 320px; height: 320px;
+      background: radial-gradient(circle, rgba(200,148,31,0.15) 0%, transparent 70%);
+    }
+    .commission-content { position: relative; z-index: 1; }
+    .commission-card h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .commission-card p { color: rgba(255,255,255,0.75); font-size: 14px; margin-bottom: 28px; }
+
+    .commission-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 720px) { .commission-grid { grid-template-columns: 1fr; } }
+
+    .commission-tier {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 16px;
+      padding: 22px 20px;
+      transition: all 0.3s ease;
+    }
+    .commission-tier:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: var(--gold);
+    }
+    .commission-tier.featured {
+      background: rgba(200,148,31,0.12);
+      border-color: var(--gold);
+      box-shadow: 0 8px 24px rgba(200,148,31,0.15);
+    }
+    .tier-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--gold);
+      margin-bottom: 4px;
+    }
+    .tier-criteria {
+      font-size: 11px;
+      color: rgba(255,255,255,0.60);
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .tier-comm-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-size: 13px;
+    }
+    .tier-comm-row:last-child { border-bottom: none; }
+    .tier-comm-row span:last-child { font-weight: 700; color: var(--gold); }
+
+    /* Process flow */
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-top: 32px;
+    }
+    @media (max-width: 900px) { .flow { grid-template-columns: 1fr; } }
+
+    .flow-step {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px 20px;
+      position: relative;
+    }
+    .flow-step-num {
+      position: absolute;
+      top: -14px; left: 20px;
+      width: 30px; height: 30px;
+      background: var(--clay);
+      color: white;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .flow-step h4 {
+      font-family: 'Playfair Display', serif;
+      font-size: 16px;
+      margin: 12px 0 6px;
+    }
+    .flow-step p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* Requirements */
+    .req-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+    @media (max-width: 720px) { .req-grid { grid-template-columns: 1fr; } }
+    .req-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 18px;
+    }
+    .req-icon {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      background: rgba(45,125,90,0.12);
+      color: var(--olive);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .req-text { font-size: 14px; line-height: 1.45; }
+    .req-text strong { color: var(--ink); }
+    .req-text span { color: var(--muted); }
+
+    /* Final CTA */
+    .final-cta {
+      background: linear-gradient(135deg, var(--clay) 0%, var(--clay-dark) 100%);
+      color: white;
+      border-radius: 24px;
+      padding: 44px 36px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .final-cta::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at top, rgba(200,148,31,0.20) 0%, transparent 60%);
+    }
+    .final-cta-content { position: relative; z-index: 1; }
+    .final-cta h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .final-cta p {
+      color: rgba(255,255,255,0.85);
+      font-size: 16px;
+      margin-bottom: 28px;
+      max-width: 540px;
+      margin-left: auto; margin-right: auto;
+    }
+    .final-cta .hero-cta-primary { font-size: 15px; padding: 14px 30px; }
+
+    /* Footer */
+    footer {
+      padding: 30px 0;
+      background: var(--ink);
+      color: rgba(255,255,255,0.55);
+      font-size: 13px;
+    }
+    footer .container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+    footer a { color: rgba(255,255,255,0.75); text-decoration: none; }
+    footer a:hover { color: white; }
+  </style>
+</head>
+<body>
+
+  <section class="hero">
+    <a href="./index.html" class="back-link">← Volver al inicio</a>
+    <div class="container hero-content">
+      <span class="hero-eyebrow">Programa de implementadores certificados</span>
+      <h1>Crece <em>haciendo crecer</em> a restaurantes peruanos.</h1>
+      <p>Conviértete en partner certificado de MesaSmart. Tú pones la consultoría y el rollout local; nosotros ponemos el ERP, el soporte técnico y la red de leads.</p>
+      <div class="hero-cta-row">
+        <a href="#aplicar" class="hero-cta hero-cta-primary">Postular como partner →</a>
+        <a href="#comisiones" class="hero-cta hero-cta-ghost">Ver comisiones</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <span class="section-eyebrow">Por qué con MesaSmart</span>
+      <h2 class="section-title">Producto cumplido <em>SUNAT</em>, ticket promedio S/ 500/mes y mercado de <em>40,000+ restaurantes</em> en Lima.</h2>
+      <p class="section-sub">Te damos un producto técnico estable, un modelo comercial claro y autonomía para construir tu cartera de clientes.</p>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-num">40k+</div>
+          <div class="stat-label">restaurantes en Lima Metropolitana</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">S/ 500</div>
+          <div class="stat-label">ticket promedio mensual</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">25%</div>
+          <div class="stat-label">comisión recurrente del MRR</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">30%</div>
+          <div class="stat-label">del setup inicial para partner</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section bg-paper">
+    <div class="container">
+      <span class="section-eyebrow">Beneficios</span>
+      <h2 class="section-title">3 razones por las que un consultor elige <em>ser partner</em>.</h2>
+      <div class="why-grid" style="margin-top: 40px;">
+        <div class="why-card">
+          <div class="why-card-icon">💰</div>
+          <h4>Comisiones recurrentes</h4>
+          <p>30% del setup + 25% del MRR del cliente que tú implementaste, mientras el cliente siga activo. Cobras todos los meses por algo que vendiste una vez.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-card-icon">🛠️</div>
+          <h4>Producto y soporte cubiertos</h4>
+          <p>Nosotros mantenemos la plataforma, los updates, los servidores y el soporte técnico. Tú te enfocas en consultoría, capacitación y relación con el cliente.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-card-icon">🎯</div>
+          <h4>Pipeline asistido</h4>
+          <p>Te derivamos leads de tu zona o categoría que llegan a nuestro sitio web. Si lo cierras, queda en tu cartera de por vida.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="comisiones">
+    <div class="container">
+      <span class="section-eyebrow">Modelo de comisiones</span>
+      <h2 class="section-title">Tres niveles según volumen <em>y certificación</em>.</h2>
+      <p class="section-sub">A más restaurantes activos en tu cartera, mejores comisiones. La certificación se renueva cada 12 meses con un examen práctico.</p>
+
+      <div class="commission-card" style="margin-top: 32px;">
+        <div class="commission-content">
+          <h3>Estructura de comisiones</h3>
+          <p>Aplica a partir del primer cliente activado. Pagos mensuales por transferencia o Yape Empresa.</p>
+
+          <div class="commission-grid">
+            <div class="commission-tier">
+              <div class="tier-name">Partner Bronze</div>
+              <div class="tier-criteria">1 a 5 restaurantes activos</div>
+              <div class="tier-comm-row"><span>Setup inicial</span><span>20%</span></div>
+              <div class="tier-comm-row"><span>MRR recurrente</span><span>20%</span></div>
+              <div class="tier-comm-row"><span>Soporte 1ra línea</span><span>—</span></div>
+            </div>
+            <div class="commission-tier featured">
+              <div class="tier-name">Partner Silver</div>
+              <div class="tier-criteria">6 a 15 restaurantes activos</div>
+              <div class="tier-comm-row"><span>Setup inicial</span><span>30%</span></div>
+              <div class="tier-comm-row"><span>MRR recurrente</span><span>25%</span></div>
+              <div class="tier-comm-row"><span>Soporte 1ra línea</span><span>+5% MRR</span></div>
+            </div>
+            <div class="commission-tier">
+              <div class="tier-name">Partner Gold</div>
+              <div class="tier-criteria">16+ restaurantes · cuentas Enterprise</div>
+              <div class="tier-comm-row"><span>Setup inicial</span><span>35%</span></div>
+              <div class="tier-comm-row"><span>MRR recurrente</span><span>30%</span></div>
+              <div class="tier-comm-row"><span>Soporte 1ra línea</span><span>+8% MRR</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section bg-paper">
+    <div class="container">
+      <span class="section-eyebrow">Proceso</span>
+      <h2 class="section-title">De la postulación al primer cliente <em>en 30 días</em>.</h2>
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-step-num">1</div>
+          <h4>Postulas</h4>
+          <p>Envías el formulario con tu experiencia en restaurantes o consultoría. Revisamos en 5 días hábiles.</p>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-num">2</div>
+          <h4>Capacitación</h4>
+          <p>2 semanas de onboarding online + 1 día presencial en nuestras oficinas en Lima. Te enseñamos producto, comercial y operaciones.</p>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-num">3</div>
+          <h4>Certificación</h4>
+          <p>Examen práctico: implementas un demo end-to-end. Si pasas, recibes tu credencial y acceso al portal de partners.</p>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-num">4</div>
+          <h4>Primer cliente</h4>
+          <p>Te asignamos uno de los leads de tu zona o tú traes el primero. Te acompañamos en la implementación y empiezas a facturar.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <span class="section-eyebrow">Requisitos</span>
+      <h2 class="section-title">Buscamos consultores con <em>track record real</em> en restaurantes.</h2>
+      <p class="section-sub">No necesitas ser ingeniero ni vendedor full-time, pero sí entender la operación de un restaurante peruano de adentro.</p>
+
+      <div class="req-grid" style="margin-top: 32px;">
+        <div class="req-item">
+          <div class="req-icon">✓</div>
+          <div class="req-text"><strong>Experiencia mínima.</strong> <span>2+ años trabajando con restaurantes (consultor, ex-operador, contador especializado, proveedor F&B).</span></div>
+        </div>
+        <div class="req-item">
+          <div class="req-icon">✓</div>
+          <div class="req-text"><strong>RUC activo en Perú.</strong> <span>Persona natural con negocio o jurídica que pueda emitir factura electrónica.</span></div>
+        </div>
+        <div class="req-item">
+          <div class="req-icon">✓</div>
+          <div class="req-text"><strong>Disponibilidad de medio tiempo.</strong> <span>Mínimo 20 horas semanales para atender clientes activos en tu cartera.</span></div>
+        </div>
+        <div class="req-item">
+          <div class="req-icon">✓</div>
+          <div class="req-text"><strong>Compromiso de no-compete.</strong> <span>Mientras seas partner, no representas otros ERPs de restaurantes en el Perú.</span></div>
+        </div>
+        <div class="req-item">
+          <div class="req-icon">✓</div>
+          <div class="req-text"><strong>Acepta el código de conducta.</strong> <span>Trato profesional, transparencia con cliente y MesaSmart, sin venta agresiva.</span></div>
+        </div>
+        <div class="req-item">
+          <div class="req-icon">✓</div>
+          <div class="req-text"><strong>Pasa la certificación inicial.</strong> <span>Examen práctico al final del onboarding. Recertificación anual obligatoria.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section bg-cream" id="aplicar">
+    <div class="container">
+      <div class="final-cta">
+        <div class="final-cta-content">
+          <h2>¿Cumples los requisitos?</h2>
+          <p>Postula al programa y te respondemos en 5 días hábiles. Próxima cohorte de capacitación: <strong>junio 2026</strong>.</p>
+          <a href="mailto:partners@mesasmart.pe?subject=Postulación%20Partner%20MesaSmart" class="hero-cta hero-cta-primary">Postular ahora · partners@mesasmart.pe →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <span>© 2026 MesaSmart · Hecho en Lima</span>
+      <div style="display:flex;gap:18px;">
+        <a href="./index.html">Inicio</a>
+        <a href="./PITCH.html">Pitch</a>
+        <a href="mailto:partners@mesasmart.pe">partners@mesasmart.pe</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

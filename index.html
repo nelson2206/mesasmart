@@ -819,6 +819,256 @@
     }
     .catalog-cta a:hover { transform: translateY(-2px); }
 
+    /* ═══════════════════════════════════════════════════════
+       PASO 5 · RESULTADO DEL CONSULTOR (hero card premium)
+       ═══════════════════════════════════════════════════════ */
+    .reco-hero {
+      position: relative;
+      border-radius: 24px;
+      padding: 36px 32px 32px;
+      margin-bottom: 24px;
+      overflow: hidden;
+      color: var(--ink);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .reco-hero[data-plan="OPERACION"] {
+      background: linear-gradient(135deg, #F4F9F2 0%, #FFFFFF 60%, #E8F1E5 100%);
+      border: 1.5px solid rgba(45,125,90,0.20);
+    }
+    .reco-hero[data-plan="OPERACION"] .reco-spark { color: var(--olive); }
+    .reco-hero[data-plan="OPERACION"] .reco-price { background: linear-gradient(135deg, var(--olive) 0%, #4A9B72 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .reco-hero[data-plan="OPERACION"] .reco-fit-fill { background: linear-gradient(90deg, var(--olive), #4A9B72); }
+    .reco-hero[data-plan="OPERACION"] .reco-cta-primary { background: var(--olive); }
+
+    .reco-hero[data-plan="PROFESIONAL"] {
+      background: linear-gradient(135deg, #FFF5EE 0%, #FFFFFF 60%, #FFEAE0 100%);
+      border: 1.5px solid rgba(160,50,43,0.25);
+    }
+    .reco-hero[data-plan="PROFESIONAL"] .reco-spark { color: var(--clay); }
+    .reco-hero[data-plan="PROFESIONAL"] .reco-price { background: linear-gradient(135deg, var(--clay) 0%, #C4493A 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .reco-hero[data-plan="PROFESIONAL"] .reco-fit-fill { background: linear-gradient(90deg, var(--clay), #C4493A); }
+    .reco-hero[data-plan="PROFESIONAL"] .reco-cta-primary { background: var(--clay); }
+
+    .reco-hero[data-plan="ENTERPRISE"] {
+      background: linear-gradient(135deg, #1F1A17 0%, #2A1F1A 50%, #3A2C20 100%);
+      border: 1.5px solid var(--gold);
+      color: white;
+    }
+    .reco-hero[data-plan="ENTERPRISE"] .reco-name,
+    .reco-hero[data-plan="ENTERPRISE"] .reco-sub,
+    .reco-hero[data-plan="ENTERPRISE"] .reco-period,
+    .reco-hero[data-plan="ENTERPRISE"] .reco-setup,
+    .reco-hero[data-plan="ENTERPRISE"] .reco-fit-label { color: white; }
+    .reco-hero[data-plan="ENTERPRISE"] .reco-spark { color: var(--gold); }
+    .reco-hero[data-plan="ENTERPRISE"] .reco-price { background: linear-gradient(135deg, var(--gold) 0%, #E0AF3F 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .reco-hero[data-plan="ENTERPRISE"] .reco-fit-fill { background: linear-gradient(90deg, var(--gold), #E0AF3F); }
+    .reco-hero[data-plan="ENTERPRISE"] .reco-fit-bar { background: rgba(255,255,255,0.10); }
+    .reco-hero[data-plan="ENTERPRISE"] .reco-cta-primary { background: var(--gold); color: #1F1A17; }
+    .reco-hero[data-plan="ENTERPRISE"] .reco-cta-ghost { color: rgba(255,255,255,0.85); border-color: rgba(255,255,255,0.30); }
+    .reco-hero[data-plan="ENTERPRISE"] .reco-eyebrow { color: rgba(255,255,255,0.85); }
+    .reco-hero[data-plan="ENTERPRISE"] .reco-sub { color: rgba(255,255,255,0.75); }
+
+    .reco-hero-bg {
+      position: absolute;
+      top: -50%; right: -20%;
+      width: 60%; height: 200%;
+      background: radial-gradient(ellipse at center, rgba(255,255,255,0.40) 0%, transparent 60%);
+      pointer-events: none;
+      transform: rotate(-15deg);
+    }
+    .reco-hero[data-plan="ENTERPRISE"] .reco-hero-bg {
+      background: radial-gradient(ellipse at center, rgba(200,148,31,0.20) 0%, transparent 60%);
+    }
+    .reco-hero-content { position: relative; z-index: 1; }
+
+    .reco-eyebrow {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .reco-spark { font-size: 14px; }
+
+    .reco-name {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(32px, 5vw, 44px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+      margin-bottom: 8px;
+    }
+    .reco-sub {
+      font-size: 15px;
+      color: var(--muted);
+      max-width: 560px;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+
+    .reco-price-row {
+      display: flex; align-items: baseline; gap: 8px;
+      margin-top: 8px;
+    }
+    .reco-price {
+      font-family: 'Playfair Display', serif;
+      font-size: 56px; font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+    .reco-period {
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .reco-setup {
+      font-size: 12px;
+      color: var(--muted);
+      font-style: italic;
+      margin-top: 4px;
+    }
+
+    .reco-fit {
+      margin-top: 22px;
+      max-width: 420px;
+    }
+    .reco-fit-bar {
+      height: 6px;
+      background: rgba(31,26,23,0.06);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    .reco-fit-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 100px;
+      transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .reco-fit-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+    }
+
+    .reco-cta-row {
+      margin-top: 28px;
+      display: flex; gap: 12px;
+      flex-wrap: wrap;
+    }
+    .reco-cta {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 13px 26px;
+      border-radius: 100px;
+      font-size: 14px; font-weight: 700;
+      text-decoration: none;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+    .reco-cta-primary {
+      color: white;
+      box-shadow: 0 8px 20px rgba(31,26,23,0.18);
+    }
+    .reco-cta-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(31,26,23,0.22); }
+    .reco-cta-ghost {
+      background: transparent;
+      border: 1.5px solid var(--border);
+      color: var(--ink);
+    }
+    .reco-cta-ghost:hover { border-color: var(--ink); }
+
+    /* Two-column meta grid */
+    .reco-meta-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 720px) {
+      .reco-meta-grid { grid-template-columns: 1fr; }
+      .reco-cta-row { flex-direction: column; }
+      .reco-cta { width: 100%; justify-content: center; }
+    }
+
+    .reco-block {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px 22px 18px;
+    }
+    .reco-block-incl { border-color: rgba(45,125,90,0.20); background: linear-gradient(180deg, #F8FBF7 0%, #FFFFFF 100%); }
+    .reco-block-next { border-color: rgba(200,148,31,0.20); background: linear-gradient(180deg, #FFFAF0 0%, #FFFFFF 100%); }
+
+    .reco-block-head {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--ink);
+      margin-bottom: 14px;
+    }
+    .reco-block-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .reco-block-incl .reco-block-icon { background: var(--olive); color: white; }
+    .reco-block-next .reco-block-icon { background: var(--gold); color: #1F1A17; }
+
+    .reco-list {
+      list-style: none;
+      padding: 0; margin: 0;
+    }
+    .reco-list li {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 6px 0;
+      font-size: 13px;
+      color: var(--ink);
+      line-height: 1.4;
+    }
+    .reco-list li::before {
+      content: '✓';
+      flex-shrink: 0;
+      width: 16px;
+      color: var(--olive);
+      font-weight: 700;
+    }
+    .reco-list-next li { color: var(--muted); }
+    .reco-list-next li::before { content: '↗'; color: var(--gold); }
+
+    .reco-context {
+      background: rgba(31,26,23,0.03);
+      border: 1px dashed rgba(31,26,23,0.10);
+      border-radius: 14px;
+      padding: 14px 18px;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .reco-context strong { color: var(--ink); font-weight: 600; }
+    .reco-context:empty { display: none; }
+
+    .reco-back-link {
+      text-align: center;
+      font-size: 13px;
+    }
+    .reco-back-link a {
+      color: var(--clay);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .reco-back-link a:hover { text-decoration: underline; }
+
+    /* Hide legacy .recommendation-result / .plan-details / .features-list / .action-buttons */
+    .recommendation-result, .plan-details, .price-section, .action-buttons { display: none !important; }
+
     /* Consultant Section */
     .consultant-section {
       padding: 80px 0;
@@ -1341,7 +1591,7 @@
           <span class="plan-card-ribbon">Corporate</span>
           <div class="plan-card-icon">🏛️</div>
           <div class="plan-card-name">Enterprise</div>
-          <div class="plan-card-tagline">Gobierno corporativo, SSO y forecasting IA</div>
+          <div class="plan-card-tagline">Cadenas grandes con multi-RUC y partners</div>
           <div class="plan-card-price-row">
             <span class="plan-card-price-num">S/ 1499</span>
             <span class="plan-card-price-period">/mes</span>
@@ -1350,14 +1600,12 @@
           <div class="plan-card-divider"></div>
           <ul class="plan-card-list">
             <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Todo Profesional</li>
-            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Forecast demanda IA · staffing IA</li>
-            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>SSO SAML/OIDC · roles granulares</li>
-            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Integración Concar/SAP · Power BI</li>
-            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Conciliación bancaria automática</li>
-            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Cocina central · transferencias</li>
-            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>SLA 99.9% · backup 7 años</li>
-            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Customer Success Manager dedicado</li>
-            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Reportes ejecutivos al directorio</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Multi-RUC / holding consolidado</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Transferencias entre locales</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Compras centralizadas</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Implementadores certificados (partners)</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Soporte priority &lt; 4h</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Personalización del producto</li>
           </ul>
           <div class="plan-card-foot">Ideal para <strong>16+ locales o multi-RUC</strong></div>
         </div>
@@ -1570,33 +1818,55 @@
           </div>
 
           <div class="wizard-step hidden" id="step-5">
-            <div class="recommendation-result">
-              <div class="plan-badge" id="recommended-badge"></div>
-              <h3 style="font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 600; margin-top: 20px; margin-bottom: 8px;" id="plan-title"></h3>
-              <p style="font-size: 14px; color: var(--muted); margin-bottom: 20px;" id="plan-subtitle"></p>
+            <div class="reco-hero" id="reco-hero">
+              <div class="reco-hero-bg"></div>
+              <div class="reco-hero-content">
+                <div class="reco-eyebrow"><span class="reco-spark">✨</span> Tu plan recomendado</div>
+                <h3 class="reco-name" id="plan-title"></h3>
+                <p class="reco-sub" id="plan-subtitle"></p>
 
-              <div class="plan-details">
-                <div class="price-section">
-                  <div style="font-size: 32px; font-weight: 700; color: var(--clay);" id="plan-price"></div>
-                  <div style="font-size: 12px; color: var(--muted);" id="plan-period"></div>
+                <div class="reco-price-row">
+                  <span class="reco-price" id="plan-price"></span>
+                  <span class="reco-period" id="plan-period"></span>
+                </div>
+                <div class="reco-setup" id="plan-setup"></div>
+
+                <div class="reco-fit">
+                  <div class="reco-fit-bar">
+                    <div class="reco-fit-fill" id="reco-fit-fill"></div>
+                  </div>
+                  <div class="reco-fit-label" id="reco-fit-label"></div>
                 </div>
 
-                <div style="margin-top: 24px;">
-                  <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 12px;">Incluye en este plan</p>
-                  <ul class="features-list" id="plan-features"></ul>
+                <div class="reco-cta-row">
+                  <a href="#" id="reco-activate" class="reco-cta reco-cta-primary">Activar este plan</a>
+                  <a href="https://wa.me/51999999999" target="_blank" rel="noopener" class="reco-cta reco-cta-ghost">Hablar con ventas</a>
                 </div>
-
-                <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);">
-                  <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 12px;">Upgrading en el siguiente plan</p>
-                  <ul class="features-list optional" id="plan-optional"></ul>
-                </div>
-              </div>
-
-              <div class="action-buttons">
-                <a href="#catalogo" class="btn btn-primary" style="text-decoration:none;display:inline-block;text-align:center;">Ver todos los planes comparados ↑</a>
               </div>
             </div>
 
+            <div class="reco-meta-grid">
+              <div class="reco-block reco-block-incl">
+                <div class="reco-block-head">
+                  <span class="reco-block-icon">✓</span>
+                  <span>Incluido en tu plan</span>
+                </div>
+                <ul class="reco-list" id="plan-features"></ul>
+              </div>
+              <div class="reco-block reco-block-next">
+                <div class="reco-block-head">
+                  <span class="reco-block-icon">↗</span>
+                  <span>Si subes al siguiente</span>
+                </div>
+                <ul class="reco-list reco-list-next" id="plan-optional"></ul>
+              </div>
+            </div>
+
+            <div class="reco-context" id="reco-context"></div>
+
+            <div class="reco-back-link">
+              <a href="#catalogo">↑ Ver el catálogo completo y comparar planes</a>
+            </div>
           </div>
 
           <div class="wizard-controls">
@@ -1794,7 +2064,7 @@
       <p style="font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 600; color: var(--ink); margin-bottom: 16px;">
         Sé partner certificado de MesaSmart
       </p>
-      <a href="#" style="display: inline-flex; align-items: center; gap: 6px; color: var(--clay); text-decoration: none; font-weight: 600; font-size: 14px; transition: color 0.2s;" onmouseover="this.style.color='var(--clay-dark)'" onmouseout="this.style.color='var(--clay)'">
+      <a href="./partners.html" style="display: inline-flex; align-items: center; gap: 6px; color: var(--clay); text-decoration: none; font-weight: 600; font-size: 14px; transition: color 0.2s;" onmouseover="this.style.color='var(--clay-dark)'" onmouseout="this.style.color='var(--clay)'">
         Conoce el programa →
       </a>
     </div>
@@ -1811,6 +2081,7 @@
           </div>
         </div>
         <div class="footer-links">
+          <a href="./partners.html">Programa de partners</a>
           <a href="DESIGN_SYSTEM.md">Design System</a>
           <a href="BENCHMARK.md">Benchmark</a>
           <a href="README.md">Documentación</a>
@@ -1961,21 +2232,19 @@
         badge: 'Plan Enterprise',
         price: 'S/ 1499',
         period: 'por mes (16+ locales)',
-        description: 'Gobierno corporativo, forecasting IA, integraciones contables y CSM dedicado',
+        description: 'Multi-RUC, transferencias entre locales y red de implementadores certificados',
         features: [
           'Todo Profesional',
-          'Forecast de demanda IA · staffing IA',
-          'SSO SAML/OIDC · roles granulares',
-          'Integración Concar / SAP / Power BI',
-          'Conciliación bancaria automática',
-          'Cocina central · transferencias',
-          'SLA 99.9% · backup 7 años',
-          'Customer Success Manager dedicado',
-          'Reportes ejecutivos al directorio'
+          'Multi-RUC / holding consolidado',
+          'Transferencias entre locales',
+          'Compras centralizadas',
+          'Implementadores certificados (partners)',
+          'Soporte priority < 4h hábiles',
+          'Personalización del producto'
         ],
         optional: [
-          'Ambiente dedicado · white-label',
-          'Horas de desarrollo custom'
+          'Capacitación recurrente para staff',
+          'Onboarding presencial multi-local'
         ]
       }
     };
@@ -2072,21 +2341,72 @@
       const recommendedPlan = recommendPlan();
       const plan = plans[recommendedPlan];
 
-      document.getElementById('recommended-badge').textContent = plan.badge;
+      // Hero theming via data-plan
+      const hero = document.getElementById('reco-hero');
+      hero.dataset.plan = recommendedPlan;
+
       document.getElementById('plan-title').textContent = plan.name;
       document.getElementById('plan-subtitle').textContent = plan.description;
       document.getElementById('plan-price').textContent = plan.price;
       document.getElementById('plan-period').textContent = plan.period;
 
+      // Setup line
+      const setup = {
+        OPERACION: '+ S/ 500 setup única · 1 local incluido',
+        PROFESIONAL: '+ S/ 800 setup única · hasta 15 locales',
+        ENTERPRISE: '+ S/ 2500 setup · onboarding por implementador certificado'
+      }[recommendedPlan];
+      document.getElementById('plan-setup').textContent = setup || '';
+
+      // Fit bar (calidad de match)
+      const score = recommendPlanScore();
+      const maxScore = recommendedPlan === 'OPERACION' ? 60 : recommendedPlan === 'PROFESIONAL' ? 110 : 200;
+      const minScore = recommendedPlan === 'OPERACION' ? 0 : recommendedPlan === 'PROFESIONAL' ? 60 : 110;
+      const pct = Math.min(100, Math.max(40, Math.round(((score - minScore) / Math.max(maxScore - minScore, 1)) * 100)));
+      setTimeout(() => {
+        document.getElementById('reco-fit-fill').style.width = pct + '%';
+      }, 80);
+      document.getElementById('reco-fit-label').textContent = `Match · ${pct}% para tu operación`;
+
       // Build features list
       const featuresList = document.getElementById('plan-features');
       featuresList.innerHTML = plan.features.map(f => `<li>${f}</li>`).join('');
 
-      // Build optional features list
+      // Build "next plan" list
       const optionalList = document.getElementById('plan-optional');
-      optionalList.innerHTML = plan.optional.map(f => `<li>${f}</li>`).join('');
+      const nextPlanFeatures = {
+        OPERACION: plans.PROFESIONAL.features.filter(f => !plan.features.includes(f) && f !== 'Todo Operación'),
+        PROFESIONAL: plans.ENTERPRISE.features.filter(f => !plan.features.includes(f) && f !== 'Todo Profesional'),
+        ENTERPRISE: ['Capacitación recurrente', 'Onboarding presencial multi-local', 'Personalización profunda']
+      }[recommendedPlan];
+      optionalList.innerHTML = (nextPlanFeatures || plan.optional || []).slice(0, 5).map(f => `<li>${f}</li>`).join('');
 
-      // Persist plan via features.js so el resto de vistas filtre por plan
+      // Razón contextual basada en respuestas
+      const reasons = [];
+      if (wizardData.locations === '1') reasons.push('1 local');
+      else if (wizardData.locations === '2-5') reasons.push('cadena pequeña (2-5 locales)');
+      else if (wizardData.locations === '6-15') reasons.push('cadena mediana (6-15 locales)');
+      else reasons.push('gran operación (16+ locales)');
+      if (wizardData.painPoints.includes('costs')) reasons.push('te interesa controlar costos');
+      if (wizardData.painPoints.includes('inventory')) reasons.push('bajar mermas');
+      if (wizardData.painPoints.includes('staff')) reasons.push('controlar nómina');
+      if (wizardData.painPoints.includes('growth')) reasons.push('crecer multi-local');
+      if (wizardData.painPoints.includes('ai')) reasons.push('aprovechar IA');
+      const ctx = document.getElementById('reco-context');
+      ctx.innerHTML = `<strong>Por qué este plan:</strong> Tienes ${reasons.join(' · ')}. ${recommendedPlan === 'ENTERPRISE' ? 'A esa escala, multi-RUC y partners certificados son indispensables.' : recommendedPlan === 'PROFESIONAL' ? 'Te conviene la IA operativa y el multi-local de Profesional.' : 'Operación es el sweet spot para arrancar con costos reales y P&L.'}`;
+
+      // CTA "Activar este plan"
+      const activateBtn = document.getElementById('reco-activate');
+      activateBtn.onclick = (e) => {
+        e.preventDefault();
+        if (window.MesaSmartFeatures) {
+          window.MesaSmartFeatures.setActivePlan(recommendedPlan);
+        }
+        activateBtn.textContent = '✓ Plan activado en demo';
+        setTimeout(() => activateBtn.textContent = 'Activar este plan', 2500);
+      };
+
+      // Persist plan via features.js para que cada vista filtre features
       if (window.MesaSmartFeatures) {
         window.MesaSmartFeatures.setActivePlan(recommendedPlan, {
           locations: wizardData.locations,
@@ -2096,6 +2416,25 @@
           recommendedAt: new Date().toISOString()
         });
       }
+    }
+
+    // Recompute score for fit bar
+    function recommendPlanScore() {
+      let score = 0;
+      if (wizardData.locations === '1') score += 10;
+      else if (wizardData.locations === '2-5') score += 30;
+      else if (wizardData.locations === '6-15') score += 60;
+      else score += 90;
+      if (wizardData.daily === '<50') score += 5;
+      else if (wizardData.daily === '50-200') score += 20;
+      else if (wizardData.daily === '200-500') score += 40;
+      else score += 70;
+      if (wizardData.menuSize === '<15') score += 5;
+      else if (wizardData.menuSize === '15-50') score += 15;
+      else if (wizardData.menuSize === '50-100') score += 30;
+      else score += 50;
+      score += wizardData.painPoints.length * 10;
+      return score;
     }
 
     // Form event listeners

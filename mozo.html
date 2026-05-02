@@ -85,6 +85,7 @@
 <body>
   <div id="root"></div>
 
+  <script src="./assets/features.js"></script>
   <script type="text/babel" data-presets="env,react">
     const { useState, useEffect, useMemo, useRef } = React;
 
@@ -1729,7 +1730,7 @@
           <Header />
           <Tabs active={tab} setActive={setTab} callCount={calls.length} aiCount={tables.filter(t => t.complaint || (t.items && t.items.some(i => i.status === "ready"))).length + calls.length} />
 
-          {tab === "asistente" && <AsistenteView tables={tables} calls={calls} onAction={(rec, action) => {
+          {tab === "asistente" && <div data-feature="ai_assistant_waiter"><AsistenteView tables={tables} calls={calls} onAction={(rec, action) => {
             if (action === "resolved" && rec.type === "callPending") {
               setCalls(prev => prev.filter(c => `call-${c.id}` !== rec.id));
             }
@@ -1737,7 +1738,7 @@
               setTables(prev => prev.map(t => t.id === rec.mesa ? { ...t, complaint: null } : t));
             }
             showToast(`✓ ${rec.title}`);
-          }} />}
+          }} /></div>}
           {tab === "mesas" && <MesasView tables={myTables} onTable={setSelectedTable} />}
           {tab === "tomar" && <TomarPedidoView tables={tables} setTables={setTables} onSent={() => showToast("✓ Pedido enviado a cocina")} />}
           {tab === "plano" && <PlanoView tables={tables} onTap={handlePlanoTap} joinMode={!!joinFirst} joinFirst={joinFirst} />}
