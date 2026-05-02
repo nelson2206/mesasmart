@@ -330,6 +330,7 @@ model Supplier {
   restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   ingredients     Ingredient[]
   purchaseOrders  PurchaseOrder[]
+  goodsReceipts   GoodsReceipt[]
 
   @@index([restaurantId])
 }
@@ -371,7 +372,7 @@ model Ingredient {
   expirationLots      ExpirationLot[]
   transformationsFrom IngredientTransformation[] @relation("FromIngredient")
   transformationsTo   IngredientTransformation[] @relation("ToIngredient")
-  goodsReceiptLines   GoodsReceiptLine[]
+  goodsReceiptLines   GoodsReceiptLine[] @relation("GoodsReceiptLines")
 
   @@index([restaurantId, active])
 }
@@ -488,6 +489,7 @@ model PurchaseOrder {
   restaurant        Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   supplier          Supplier   @relation(fields: [supplierId], references: [id])
   lines             PurchaseOrderLine[]
+  goodsReceipts     GoodsReceipt[]
 
   @@index([restaurantId, status])
 }
