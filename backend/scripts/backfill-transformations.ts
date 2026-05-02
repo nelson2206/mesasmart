@@ -43,7 +43,7 @@ async function main() {
     });
     if (!cat) {
       cat = await prisma.ingredientCategory.create({
-        data: { restaurantId: r.id, name: "Proteínas", color: "#A0322B" }
+        data: { restaurantId: r.id, name: "Proteínas", displayOrder: 1 }
       });
       console.log("  ✓ Creada categoría Proteínas");
     }
@@ -51,7 +51,7 @@ async function main() {
     let sup = await prisma.supplier.findFirst({ where: { restaurantId: r.id } });
     if (!sup) {
       sup = await prisma.supplier.create({
-        data: { restaurantId: r.id, name: "Proveedor Base", contact: "—", phone: "—" }
+        data: { restaurantId: r.id, name: "Proveedor Base", contactName: "—", phone: "—" }
       });
       console.log("  ✓ Creado proveedor base");
     }
@@ -69,12 +69,12 @@ async function main() {
             supplierId: sup.id,
             name: ing.name,
             unit: ing.unit,
-            current: 0,
-            min: 0,
-            critical: 0,
-            optimal: 5,
-            costCents: 0,
-            perishable: true,
+            currentStock: 0,
+            minStock: 0,
+            criticalStock: 0,
+            optimalStock: 5,
+            costPerUnitCents: 0,
+            trackExpiration: true,
             level: ing.level
           }
         });

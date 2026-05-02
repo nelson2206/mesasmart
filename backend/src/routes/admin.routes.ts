@@ -16,7 +16,7 @@ export const adminRoutes = Router();
 // POST /api/admin/backfill/transformations
 // Crea las 6 IngredientTransformation de demo si no existen.
 // Si faltan ingredientes intermedios/preparados, los crea también.
-// Idempotente: si ya existe la transformación o el ingrediente, salta.
+// Idempotente.
 // ═══════════════════════════════════════════════════════════════
 const TRANSFORMATIONS = [
   { fromName: "Pescado bonito entero", toName: "Pescado sin vísceras", inputQty: 1.0, outputQty: 0.80, laborMinutes: 5, station: "frio" },
@@ -45,26 +45,27 @@ adminRoutes.post(
     const log: string[] = [];
     const summary = { ingredientsCreated: 0, transformationsCreated: 0, skipped: 0 };
 
-    // 1. Asegurar categoría "Proteínas" y proveedor base
+    // 1. Asegurar categoría "Proteínas"
     let cat = await prisma.ingredientCategory.findFirst({
       where: { restaurantId, name: "Proteínas" }
     });
     if (!cat) {
       cat = await prisma.ingredientCategory.create({
-        data: { restaurantId, name: "Proteínas", color: "#A0322B" }
+        data: { restaurantId, name: "Proteínas", displayOrder: 1 }
       });
       log.push("✓ Creada categoría Proteínas");
     }
 
+    // 2. Asegurar proveedor base
     let sup = await prisma.supplier.findFirst({ where: { restaurantId } });
     if (!sup) {
       sup = await prisma.supplier.create({
-        data: { restaurantId, name: "Proveedor Base", contact: "—", phone: "—" }
+        data: { restaurantId, name: "Proveedor Base", contactName: "—", phone: "—" }
       });
       log.push("✓ Creado proveedor base");
     }
 
-    // 2. Asegurar ingredientes intermedios/preparados
+    // 3. Asegurar ingredientes intermedios/preparados
     for (const ing of INTERMEDIATE_INGS) {
       const exists = await prisma.ingredient.findFirst({
         where: { restaurantId, name: ing.name }
@@ -77,12 +78,12 @@ adminRoutes.post(
             supplierId: sup.id,
             name: ing.name,
             unit: ing.unit,
-            current: 0,
-            min: 0,
-            critical: 0,
-            optimal: 5,
-            costCents: 0,
-            perishable: true,
+            currentStock: 0,
+            minStock: 0,
+            criticalStock: 0,
+            optimalStock: 5,
+            costPerUnitCents: 0,
+            trackExpiration: true,
             level: ing.level
           }
         });
@@ -91,7 +92,7 @@ adminRoutes.post(
       }
     }
 
-    // 3. Crear transformaciones (skip si ya existen)
+    // 4. Crear transformaciones (skip si ya existen)
     for (const t of TRANSFORMATIONS) {
       const fromIng = await prisma.ingredient.findFirst({
         where: { restaurantId, name: t.fromName }
@@ -150,27 +151,37 @@ adminRoutes.get(
   requireRole("ADMIN"),
   asyncHandler(async (req, res) => {
     const restaurantId = req.user!.restaurantId;
+
+    // MenuItems no tienen restaurantId directo — se cuentan via category
+    const menuItemIds = (await prisma.menuItem.findMany({
+      where: { category: { restaurantId } },
+      select: { id: true }
+    })).map(m => m.id);
+
     const [
       ingredients, transformations, suppliers,
-      menuItems, recipes, orders,
-      employees, customers
+      orders, employees, customers, recipes
     ] = await Promise.all([
       prisma.ingredient.count({ where: { restaurantId } }),
       prisma.ingredientTransformation.count({ where: { restaurantId } }),
       prisma.supplier.count({ where: { restaurantId } }),
-      prisma.menuItem.count({ where: { restaurantId } }),
-      prisma.recipeIngredient.count({ where: { menuItem: { restaurantId } } }),
       prisma.order.count({ where: { restaurantId } }),
       prisma.user.count({ where: { restaurantId } }),
-      prisma.customer.count({ where: { restaurantId } })
+      prisma.customer.count({ where: { restaurantId } }),
+      prisma.recipeIngredient.count({ where: { menuItemId: { in: menuItemIds } } })
     ]);
 
     res.json({
       restaurantId,
       counts: {
-        ingredients, transformations, suppliers,
-        menuItems, recipes, orders,
-        employees, customers
+        ingredients,
+        transformations,
+        suppliers,
+        menuItems: menuItemIds.length,
+        recipes,
+        orders,
+        employees,
+        customers
       },
       flags: {
         needsTransformationsBackfill: transformations === 0 && ingredients > 0
