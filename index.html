@@ -1566,7 +1566,7 @@
           <span class="plan-card-ribbon">Más elegido</span>
           <div class="plan-card-icon">🤖</div>
           <div class="plan-card-name">Profesional</div>
-          <div class="plan-card-tagline">Multi-local + IA operativa para crecer</div>
+          <div class="plan-card-tagline">Multi-local + IA operativa + Loss Prevention</div>
           <div class="plan-card-price-row">
             <span class="plan-card-price-num">S/ 399</span>
             <span class="plan-card-price-period">/mes</span>
@@ -1577,6 +1577,7 @@
             <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Todo Operación</li>
             <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Conversiones de insumos (yields)</li>
             <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Recepción de guías con foto IA</li>
+            <li class="plan-card-li" style="font-weight:600;"><span class="plan-card-li-icon">🛡️</span>Loss Prevention · IA en cámaras</li>
             <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Smart Priority cocina + asistente mozo</li>
             <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Cliente recurrente · rewards · tablet</li>
             <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Campañas IA · cola de espera IA</li>
@@ -1603,6 +1604,7 @@
             <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Multi-RUC / holding consolidado</li>
             <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Transferencias entre locales</li>
             <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Compras centralizadas</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">🎥</span>Cámaras ilimitadas multi-local</li>
             <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Implementadores certificados (partners)</li>
             <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Soporte priority &lt; 4h</li>
             <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Personalización del producto</li>
@@ -1839,7 +1841,7 @@
                 </div>
 
                 <div class="reco-cta-row">
-                  <a href="#" id="reco-activate" class="reco-cta reco-cta-primary">Activar este plan</a>
+                  <button type="button" id="reco-activate" class="reco-cta reco-cta-primary" style="border:none;cursor:pointer;font-family:inherit;">Activar este plan</button>
                   <a href="https://wa.me/51999999999" target="_blank" rel="noopener" class="reco-cta reco-cta-ghost">Hablar con ventas</a>
                 </div>
               </div>
@@ -2402,8 +2404,13 @@
         if (window.MesaSmartFeatures) {
           window.MesaSmartFeatures.setActivePlan(recommendedPlan);
         }
-        activateBtn.textContent = '✓ Plan activado en demo';
-        setTimeout(() => activateBtn.textContent = 'Activar este plan', 2500);
+        activateBtn.textContent = '✓ Plan activado · explora las vistas';
+        activateBtn.style.background = 'var(--olive)';
+        // Después de 2.5s da link al ERP
+        setTimeout(() => {
+          activateBtn.textContent = 'Ir al ERP →';
+          activateBtn.onclick = () => window.location.href = './erp.html';
+        }, 2500);
       };
 
       // Persist plan via features.js para que cada vista filtre features

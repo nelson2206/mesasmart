@@ -64,6 +64,9 @@ model Restaurant {
   goodsReceipts  GoodsReceipt[]
   auditLogs      AuditLog[]
   partnerCommissions PartnerCommission[]
+  cameras        Camera[]
+  securityAlerts SecurityAlert[]
+  securityRules  SecurityRule[]
 }
 
 model User {
@@ -694,6 +697,79 @@ model Customer {
 
   @@unique([restaurantId, dni])
   @@index([restaurantId, lastVisitAt])
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//                  LOSS PREVENTION (Seguridad con IA en cámaras)
+// ═══════════════════════════════════════════════════════════════════
+
+// Cámaras del local (cada una vinculada a una zona)
+model Camera {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  name          String   // "Cámara Caja 1", "Cámara Cocina"
+  location      String   // CAJA | COCINA | SALON | BARRA | PUERTA_TRASERA | ALMACEN | OTRO
+  rtspUrl       String?  // URL para integración real (vacío en demo)
+  thumbnailUrl  String?  // imagen de preview
+  status        String   @default("ONLINE") // ONLINE | OFFLINE | MAINTENANCE
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  restaurant    Restaurant      @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  alerts        SecurityAlert[]
+
+  @@index([restaurantId, active])
+}
+
+// Alertas detectadas por IA en cámaras
+model SecurityAlert {
+  id              String   @id @default(cuid())
+  restaurantId    String
+  cameraId        String
+  involvedUserId  String?  // empleado identificado (si AI lo reconoce)
+  type            String   // FAKE_RECEIPT | THEFT_INVENTORY | OPEN_REGISTER_NO_TX | UNUSUAL_AREA | UNRECORDED_CONSUMPTION | TAMPERING | MANUAL_FLAG
+  severity        String   @default("MEDIUM")  // LOW | MEDIUM | HIGH | CRITICAL
+  title           String   // "Posible papel en blanco entregado al cliente"
+  description     String   // texto largo explicativo
+  aiRationale     String?  // razón concreta que dio Claude Vision
+  aiConfidence    Float?   // 0..1
+  snapshotUrl     String?  // frame capturado al momento del evento
+  videoSegmentUrl String?  // clip 30s antes/después
+  detectedAt      DateTime @default(now())
+  // Workflow de revisión
+  status          String   @default("PENDING") // PENDING | REVIEWING | CONFIRMED | DISMISSED | ESCALATED
+  reviewedById    String?  // userId del que revisó
+  reviewedAt      DateTime?
+  actionTaken     String?  // VERBAL_WARNING | WRITTEN_WARNING | TERMINATION | NO_ACTION | INVESTIGATING | LEGAL_ACTION
+  estimatedLossCents Int   @default(0) // valor estimado de la pérdida
+  notes           String?
+
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  camera        Camera     @relation(fields: [cameraId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, status, detectedAt])
+  @@index([cameraId])
+  @@index([severity, status])
+}
+
+// Reglas de detección configurables por restaurante
+model SecurityRule {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  type          String   // mismo enum que SecurityAlert.type
+  enabled       Boolean  @default(true)
+  sensitivity   String   @default("MEDIUM") // LOW | MEDIUM | HIGH
+  schedule      String   @default("[]")     // JSON: array de rangos horarios a monitorear
+  notifyEmail   String?  // email para alertas críticas
+  notifyWhatsApp String? // teléfono para alertas críticas
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([restaurantId, type])
+  @@index([restaurantId, enabled])
 }
 
 model CampaignSuggestion {

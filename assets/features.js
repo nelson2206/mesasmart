@@ -145,6 +145,20 @@
       ]
     },
     {
+      id: "seguridad",
+      name: "Seguridad · Loss Prevention",
+      desc: "Cámaras + IA detectan robos y comportamientos sospechosos",
+      icon: "🛡️",
+      color: "#7E2820",
+      features: [
+        { id: "security_ai", name: "IA en cámaras · alertas en vivo", desc: "Claude Vision detecta papel en blanco, robo de insumos, caja abierta sin tx", icon: "📹", plans: ["PROFESIONAL", "ENTERPRISE"] },
+        { id: "security_evidence", name: "Bitácora con evidencia visual", desc: "Cada alerta tiene snapshot + clip 30s + razón IA documentada", icon: "📸", plans: ["PROFESIONAL", "ENTERPRISE"] },
+        { id: "security_review_workflow", name: "Workflow de revisión", desc: "Confirmar · Descartar · Escalar con notas y seguimiento", icon: "🔍", plans: ["PROFESIONAL", "ENTERPRISE"] },
+        { id: "security_reports", name: "Reportes de mermas", desc: "Cuantifica pérdidas por tipo de incidente y por empleado", icon: "📊", plans: ["PROFESIONAL", "ENTERPRISE"] },
+        { id: "security_multi_camera", name: "Cámaras ilimitadas + multi-local", desc: "Profesional: 4 cámaras por local · Enterprise: ilimitadas", icon: "🎥", plans: ["ENTERPRISE"] }
+      ]
+    },
+    {
       id: "escalamiento",
       name: "Multi-local y operación",
       desc: "Crece sin migrar de sistema",
@@ -166,6 +180,108 @@
   // ─── PUBLIC API ──────────────────────────────────────────
   const STORAGE_KEY = "mesasmart_active_plan";
   const STORAGE_CTX = "mesasmart_consultant_context";
+  const STORAGE_RESTAURANT = "mesasmart_active_restaurant";
+
+  // Demo: lista de restaurantes para clientes Profesional/Enterprise multi-local
+  // En producción esto se carga desde el backend (/api/multi/restaurants)
+  const DEMO_RESTAURANTS = [
+    {
+      id: "labrasa-miraflores",
+      name: "La Brasa Dorada · Miraflores",
+      shortName: "Miraflores",
+      address: "Av. Larco 845, Miraflores",
+      ruc: "20512345678",
+      phone: "+51 1 445 6789",
+      manager: "Marcos Vidal",
+      status: "OPEN",
+      tables: 28,
+      occupancyPct: 71,
+      openOrders: 14,
+      salesTodayCents: 482600,
+      pendingAlerts: 3,
+      criticalAlerts: 1,
+      monthRevenue: 14820000,
+      monthMargin: 0.236,
+      avgTicketCents: 8550,
+      coverImg: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=70",
+      isFlagship: true
+    },
+    {
+      id: "labrasa-sanisidro",
+      name: "La Brasa Dorada · San Isidro",
+      shortName: "San Isidro",
+      address: "Av. Pardo y Aliaga 695, San Isidro",
+      ruc: "20512345678",
+      phone: "+51 1 422 1100",
+      manager: "Patricia Lozano",
+      status: "OPEN",
+      tables: 22,
+      occupancyPct: 55,
+      openOrders: 9,
+      salesTodayCents: 312800,
+      pendingAlerts: 2,
+      criticalAlerts: 0,
+      monthRevenue: 9650000,
+      monthMargin: 0.218,
+      avgTicketCents: 7900,
+      coverImg: "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=800&q=70",
+      isFlagship: false
+    },
+    {
+      id: "labrasa-surco",
+      name: "La Brasa Dorada · Surco",
+      shortName: "Surco",
+      address: "Av. Caminos del Inca 2510, Surco",
+      ruc: "20512345678",
+      phone: "+51 1 372 4500",
+      manager: "Diego Camacho",
+      status: "OPEN",
+      tables: 18,
+      occupancyPct: 44,
+      openOrders: 6,
+      salesTodayCents: 245100,
+      pendingAlerts: 4,
+      criticalAlerts: 2,
+      monthRevenue: 7820000,
+      monthMargin: 0.194,
+      avgTicketCents: 7200,
+      coverImg: "https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=800&q=70",
+      isFlagship: false
+    },
+    {
+      id: "labrasa-callao",
+      name: "La Brasa Dorada · Callao Express",
+      shortName: "Callao Express",
+      address: "Aeropuerto Jorge Chávez · Salida T1",
+      ruc: "20512345678",
+      phone: "+51 1 517 3300",
+      manager: "Lucía Rivas",
+      status: "OPEN",
+      tables: 12,
+      occupancyPct: 83,
+      openOrders: 11,
+      salesTodayCents: 198400,
+      pendingAlerts: 1,
+      criticalAlerts: 0,
+      monthRevenue: 5430000,
+      monthMargin: 0.282,
+      avgTicketCents: 5400,
+      coverImg: "https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?auto=format&fit=crop&w=800&q=70",
+      isFlagship: false
+    }
+  ];
+
+  // Demo: matriz de permisos usuario × restaurante
+  const DEMO_TEAM_ACCESS = [
+    { user: "Marcos Vidal", email: "marcos@labrasa.pe", roles: { "labrasa-miraflores": "ADMIN", "labrasa-sanisidro": "ADMIN", "labrasa-surco": "ADMIN", "labrasa-callao": "ADMIN" }, isOwner: true },
+    { user: "Patricia Lozano", email: "patricia@labrasa.pe", roles: { "labrasa-sanisidro": "ADMIN", "labrasa-miraflores": "READ_ONLY" } },
+    { user: "Diego Camacho", email: "diego@labrasa.pe", roles: { "labrasa-surco": "ADMIN" } },
+    { user: "Lucía Rivas", email: "lucia@labrasa.pe", roles: { "labrasa-callao": "ADMIN" } },
+    { user: "María Quispe", email: "maria@labrasa.pe", roles: { "labrasa-miraflores": "WAITER" } },
+    { user: "Juan Cárdenas", email: "juan@labrasa.pe", roles: { "labrasa-miraflores": "WAITER", "labrasa-sanisidro": "WAITER" } },
+    { user: "Enrique Ruiz", email: "cocina@labrasa.pe", roles: { "labrasa-miraflores": "KITCHEN" } },
+    { user: "Lucía Vargas", email: "caja@labrasa.pe", roles: { "labrasa-miraflores": "CASHIER", "labrasa-sanisidro": "CASHIER" } }
+  ];
 
   function activePlanId() {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -361,6 +477,68 @@
     target.appendChild(banner);
   }
 
+  // ─── Multi-restaurante (Profesional/Enterprise) ───────────
+  function listRestaurants() {
+    // En producción: fetch /api/multi/restaurants
+    return DEMO_RESTAURANTS.slice();
+  }
+
+  function activeRestaurantId() {
+    return localStorage.getItem(STORAGE_RESTAURANT) || DEMO_RESTAURANTS[0].id;
+  }
+
+  function activeRestaurant() {
+    const id = activeRestaurantId();
+    return DEMO_RESTAURANTS.find(r => r.id === id) || DEMO_RESTAURANTS[0];
+  }
+
+  function setActiveRestaurant(restaurantId) {
+    if (!DEMO_RESTAURANTS.find(r => r.id === restaurantId)) return false;
+    localStorage.setItem(STORAGE_RESTAURANT, restaurantId);
+    window.dispatchEvent(new CustomEvent("mesasmart:restaurant-changed", {
+      detail: { restaurantId, restaurant: activeRestaurant() }
+    }));
+    return true;
+  }
+
+  function teamAccess() {
+    return DEMO_TEAM_ACCESS.slice();
+  }
+
+  /**
+   * Renderiza una píldora compacta arriba que muestra el restaurante activo
+   * y un botón para volver al multi-view. Se inserta automáticamente en la vista
+   * cuando el plan incluye multi_location.
+   */
+  function renderRestaurantSwitcher() {
+    if (!isEnabled("multi_location")) return; // solo Profesional+
+    if (document.getElementById("mesasmart-rest-switcher")) return;
+    const r = activeRestaurant();
+    const wrap = document.createElement("div");
+    wrap.id = "mesasmart-rest-switcher";
+    wrap.style.cssText = `
+      position: fixed; top: 14px; right: 14px; z-index: 9997;
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.96);
+      border: 1px solid #E8DFD3;
+      border-left: 4px solid #A0322B;
+      border-radius: 12px;
+      padding: 8px 12px 8px 14px;
+      font-family: Inter, sans-serif;
+      font-size: 12px;
+      box-shadow: 0 6px 18px rgba(31,26,23,0.10);
+      backdrop-filter: blur(12px);
+    `;
+    wrap.innerHTML = `
+      <div style="display:flex;flex-direction:column;line-height:1.2;">
+        <span style="font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:#6B5D52;font-weight:700;">Local activo</span>
+        <span style="font-size:13px;font-weight:600;color:#2A1F1A;">${r.shortName}</span>
+      </div>
+      <a href="./multi.html" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:#A0322B;color:white;text-decoration:none;border-radius:50%;font-size:14px;font-weight:700;" title="Cambiar de local · ver multi-vista">⇄</a>
+    `;
+    document.body.appendChild(wrap);
+  }
+
   window.MesaSmartFeatures = {
     PLANS,
     FEATURE_GROUPS,
@@ -373,6 +551,30 @@
     planIncludes,
     applyFeatureGates,
     openUpgrade,
-    renderPlanBanner
+    renderPlanBanner,
+    // Multi-restaurante
+    listRestaurants,
+    activeRestaurantId,
+    activeRestaurant,
+    setActiveRestaurant,
+    teamAccess,
+    renderRestaurantSwitcher
   };
+
+  // Auto-render del switcher en cada vista (excepto multi.html y index.html)
+  if (typeof document !== "undefined") {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", () => {
+        const path = window.location.pathname;
+        if (!path.match(/\/(multi|index|partners|PITCH)\.html$/) && !path.match(/\/$/)) {
+          renderRestaurantSwitcher();
+        }
+      });
+    } else {
+      const path = window.location.pathname;
+      if (!path.match(/\/(multi|index|partners|PITCH)\.html$/) && !path.match(/\/$/)) {
+        renderRestaurantSwitcher();
+      }
+    }
+  }
 })();

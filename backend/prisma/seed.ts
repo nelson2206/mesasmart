@@ -532,6 +532,152 @@ async function main() {
   ]);
   console.log(`✓ Created 4 demo customers`);
 
+  // ═══════════════════════════════════════════════════════════
+  //          Loss Prevention · Cámaras + Reglas + Alertas
+  // ═══════════════════════════════════════════════════════════
+  const cameras = await Promise.all([
+    prisma.camera.create({ data: { restaurantId: restaurant.id, name: "Cámara Caja Principal", location: "CAJA", status: "ONLINE", thumbnailUrl: "https://images.unsplash.com/photo-1556742393-d75f468bfcb0?auto=format&fit=crop&w=400&q=70" } }),
+    prisma.camera.create({ data: { restaurantId: restaurant.id, name: "Cámara Cocina Brasa", location: "COCINA", status: "ONLINE", thumbnailUrl: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=400&q=70" } }),
+    prisma.camera.create({ data: { restaurantId: restaurant.id, name: "Cámara Almacén", location: "ALMACEN", status: "ONLINE", thumbnailUrl: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=400&q=70" } }),
+    prisma.camera.create({ data: { restaurantId: restaurant.id, name: "Cámara Puerta Trasera", location: "PUERTA_TRASERA", status: "ONLINE", thumbnailUrl: "https://images.unsplash.com/photo-1568998270908-fe1f57c8f6e0?auto=format&fit=crop&w=400&q=70" } }),
+    prisma.camera.create({ data: { restaurantId: restaurant.id, name: "Cámara Salón Principal", location: "SALON", status: "ONLINE", thumbnailUrl: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=400&q=70" } }),
+    prisma.camera.create({ data: { restaurantId: restaurant.id, name: "Cámara Barra", location: "BARRA", status: "ONLINE", thumbnailUrl: "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?auto=format&fit=crop&w=400&q=70" } })
+  ]);
+  console.log(`✓ Created ${cameras.length} security cameras`);
+
+  // Reglas de detección por defecto (todas habilitadas)
+  const ruleTypes = ["FAKE_RECEIPT", "THEFT_INVENTORY", "OPEN_REGISTER_NO_TX", "UNUSUAL_AREA", "UNRECORDED_CONSUMPTION", "TAMPERING"];
+  for (const type of ruleTypes) {
+    await prisma.securityRule.create({
+      data: { restaurantId: restaurant.id, type, enabled: true, sensitivity: "MEDIUM" }
+    });
+  }
+  console.log(`✓ Created ${ruleTypes.length} security rules`);
+
+  // Alertas demo (mix de severidades, estados y tipos)
+  const camCaja = cameras.find(c => c.location === "CAJA")!;
+  const camCocina = cameras.find(c => c.location === "COCINA")!;
+  const camAlmacen = cameras.find(c => c.location === "ALMACEN")!;
+  const camPuerta = cameras.find(c => c.location === "PUERTA_TRASERA")!;
+  const camBarra = cameras.find(c => c.location === "BARRA")!;
+  const camSalon = cameras.find(c => c.location === "SALON")!;
+
+  const now = Date.now();
+  const ago = (mins: number) => new Date(now - mins * 60 * 1000);
+
+  const demoAlerts = [
+    {
+      cameraId: camCaja.id,
+      type: "FAKE_RECEIPT",
+      severity: "HIGH",
+      title: "Posible papel en blanco entregado al cliente",
+      description: "El cajero entregó al cliente de la mesa 12 un papel sin elementos típicos de boleta SUNAT (sin QR, series ni logo oficial). Validar si la transacción fue registrada en POS.",
+      aiRationale: "El frame muestra un papel de tamaño boleta sin marcas de impresión visibles en el área del logotipo y sin QR en la esquina inferior. POS no registró ticket para mesa 12 a esa hora.",
+      aiConfidence: 0.87,
+      detectedAt: ago(8),
+      status: "PENDING",
+      estimatedLossCents: 8950
+    },
+    {
+      cameraId: camAlmacen.id,
+      type: "THEFT_INVENTORY",
+      severity: "CRITICAL",
+      title: "Insumo retirado en mochila personal",
+      description: "Empleado tomó botella de vino del estante de licores y la guardó en su mochila personal antes de retirarse al cambio de turno.",
+      aiRationale: "Se observa al empleado tomando un objeto cilíndrico del estante 3 (zona vinos) y depositándolo en mochila roja a 21:34. No hay registro de mermas autorizadas en sistema.",
+      aiConfidence: 0.91,
+      detectedAt: ago(45),
+      status: "PENDING",
+      estimatedLossCents: 18500
+    },
+    {
+      cameraId: camPuerta.id,
+      type: "THEFT_INVENTORY",
+      severity: "HIGH",
+      title: "Salida sospechosa por puerta trasera 21:48",
+      description: "Empleado salió por puerta de servicio cargando bolsa de tamaño inusual fuera del horario de despacho de proveedores.",
+      aiRationale: "Salida registrada a 21:48. Bolsa visible de aprox. 60cm. No hay despacho programado para ese horario según calendario operativo.",
+      aiConfidence: 0.78,
+      detectedAt: ago(120),
+      status: "REVIEWING",
+      estimatedLossCents: 24000
+    },
+    {
+      cameraId: camCaja.id,
+      type: "OPEN_REGISTER_NO_TX",
+      severity: "MEDIUM",
+      title: "Caja abierta 14 segundos sin transacción",
+      description: "Cajón de caja registradora abierto durante 14 segundos sin transacción asociada en POS. Última operación 6 minutos antes.",
+      aiRationale: "Apertura del cajón detectada de 13:21 a 13:35. POS sin actividad en ventana ±2min. Cajero permaneció solo en zona durante ese intervalo.",
+      aiConfidence: 0.74,
+      detectedAt: ago(180),
+      status: "PENDING",
+      estimatedLossCents: 4200
+    },
+    {
+      cameraId: camBarra.id,
+      type: "UNRECORDED_CONSUMPTION",
+      severity: "MEDIUM",
+      title: "Bartender sirvió 2 tragos sin comanda",
+      description: "Bartender sirvió 2 cocteles a personas en la barra sin que aparezca comanda en POS para esas posiciones.",
+      aiRationale: "Preparación visible de 2 tragos a las 19:42. Posiciones B3 y B4 sin comanda activa. Personas en B3-B4 son nuevas (no estaban antes).",
+      aiConfidence: 0.69,
+      detectedAt: ago(360),
+      status: "PENDING",
+      estimatedLossCents: 5600
+    },
+    {
+      cameraId: camCocina.id,
+      type: "UNRECORDED_CONSUMPTION",
+      severity: "LOW",
+      title: "Consumo de bebida sin registro",
+      description: "Empleado de cocina consumió bebida del refrigerador sin registrarla como consumo personal o merma.",
+      aiRationale: "Apertura de refrigerador y consumo directo de botella. Sin registro en sistema de consumos personales (que sí está habilitado).",
+      aiConfidence: 0.62,
+      detectedAt: ago(540),
+      status: "DISMISSED",
+      reviewedAt: ago(420),
+      actionTaken: "NO_ACTION",
+      notes: "Verificado · era agua mineral cortesía staff. Política autorizada.",
+      estimatedLossCents: 0
+    },
+    {
+      cameraId: camSalon.id,
+      type: "UNUSUAL_AREA",
+      severity: "LOW",
+      title: "Empleado de cocina en área de mesas vacías 5 min",
+      description: "Empleado de cocina permaneció 5+ minutos en zona de mesas vacías sin tarea aparente durante turno de servicio.",
+      aiRationale: "Empleado identificado como cocina (uniforme distintivo) en mesa 8 vacía. No hay solicitud de servicio activa en esa mesa.",
+      aiConfidence: 0.55,
+      detectedAt: ago(900),
+      status: "DISMISSED",
+      reviewedAt: ago(840),
+      actionTaken: "NO_ACTION",
+      notes: "Pausa autorizada · falsa alerta",
+      estimatedLossCents: 0
+    },
+    {
+      cameraId: camCaja.id,
+      type: "FAKE_RECEIPT",
+      severity: "HIGH",
+      title: "Boleta entregada sin emisión registrada",
+      description: "Cliente recibió papel tipo boleta pero sistema POS no registró emisión de comprobante en esa ventana de tiempo.",
+      aiRationale: "Entrega de papel a cliente a las 12:48. POS sin emisión de boleta entre 12:46 y 12:50. Mesa 5 cerró cuenta sin ticket asociado en sistema.",
+      aiConfidence: 0.83,
+      detectedAt: ago(1380),
+      status: "CONFIRMED",
+      reviewedAt: ago(1200),
+      actionTaken: "WRITTEN_WARNING",
+      notes: "Confirmado en revisión. Cajero argumentó error técnico pero ya hay 2 incidentes similares en el mes. Memorando emitido.",
+      estimatedLossCents: 12400
+    }
+  ];
+
+  for (const a of demoAlerts) {
+    await prisma.securityAlert.create({ data: { restaurantId: restaurant.id, ...a } });
+  }
+  console.log(`✓ Created ${demoAlerts.length} security alerts (demo mix)`);
+
   console.log("\n✅ Seed completed.");
   console.log("\nLogin demo:");
   console.log("  Admin    → admin@labrasa.pe / demo1234");

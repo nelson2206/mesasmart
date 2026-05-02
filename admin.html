@@ -262,7 +262,8 @@
           items: [
             { id: "mesas", label: "Mesas y plano", icon: "table" },
             { id: "menu", label: "Carta", icon: "menu" },
-            { id: "pedidos", label: "Pedidos", icon: "receipt" }
+            { id: "pedidos", label: "Pedidos", icon: "receipt" },
+            { id: "seguridad", label: "Seguridad IA", icon: "settings", badge: "NEW" }
           ]
         },
         {
@@ -300,7 +301,8 @@
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${active === it.id ? 'bg-clay text-white' : 'text-cream/70 hover:bg-cream/5 hover:text-cream'}`}
                     >
                       <Icon name={it.icon} size={18} />
-                      {it.label}
+                      <span className="flex-1 text-left">{it.label}</span>
+                      {it.badge && <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-gold text-charcoal tracking-wider">{it.badge}</span>}
                     </button>
                   ))}
                 </div>
@@ -1307,6 +1309,412 @@
       );
     }
 
+    // ─────────────────────── SEGURIDAD · LOSS PREVENTION ───────────────────────
+    const SECURITY_DEMO_DATA = {
+      stats: { pendingReview: 4, weeklyAlerts: 23, weeklyLossCents: 84600, activeCameras: 6 },
+      cameras: [
+        { id: "c1", name: "Cámara Caja Principal", location: "CAJA", status: "ONLINE", thumbnailUrl: "https://images.unsplash.com/photo-1556742393-d75f468bfcb0?auto=format&fit=crop&w=400&q=70" },
+        { id: "c2", name: "Cámara Cocina Brasa", location: "COCINA", status: "ONLINE", thumbnailUrl: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=400&q=70" },
+        { id: "c3", name: "Cámara Almacén", location: "ALMACEN", status: "ONLINE", thumbnailUrl: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=400&q=70" },
+        { id: "c4", name: "Cámara Puerta Trasera", location: "PUERTA_TRASERA", status: "ONLINE", thumbnailUrl: "https://images.unsplash.com/photo-1568998270908-fe1f57c8f6e0?auto=format&fit=crop&w=400&q=70" },
+        { id: "c5", name: "Cámara Salón Principal", location: "SALON", status: "ONLINE", thumbnailUrl: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=400&q=70" },
+        { id: "c6", name: "Cámara Barra", location: "BARRA", status: "ONLINE", thumbnailUrl: "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?auto=format&fit=crop&w=400&q=70" }
+      ],
+      alerts: [
+        { id: "a1", cameraName: "Cámara Caja Principal", location: "CAJA", type: "FAKE_RECEIPT", severity: "HIGH", title: "Posible papel en blanco entregado al cliente", description: "El cajero entregó al cliente un papel sin elementos típicos de boleta SUNAT (sin QR, series ni logo).", aiRationale: "Frame muestra papel sin marcas de impresión visibles. POS no registró ticket para esa mesa.", aiConfidence: 0.87, detectedAt: "hace 8 min", status: "PENDING", estimatedLossCents: 8950, snapshotUrl: "https://images.unsplash.com/photo-1556742212-5b321f3c261b?auto=format&fit=crop&w=600&q=70" },
+        { id: "a2", cameraName: "Cámara Almacén", location: "ALMACEN", type: "THEFT_INVENTORY", severity: "CRITICAL", title: "Insumo retirado en mochila personal", description: "Empleado tomó botella del estante de licores y la guardó en mochila personal antes del cambio de turno.", aiRationale: "Movimiento del estante 3 (vinos) a mochila roja a 21:34. Sin merma autorizada en sistema.", aiConfidence: 0.91, detectedAt: "hace 45 min", status: "PENDING", estimatedLossCents: 18500, snapshotUrl: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=600&q=70" },
+        { id: "a3", cameraName: "Cámara Puerta Trasera", location: "PUERTA_TRASERA", type: "THEFT_INVENTORY", severity: "HIGH", title: "Salida sospechosa por puerta trasera 21:48", description: "Empleado salió por puerta de servicio cargando bolsa inusual fuera del horario de despacho.", aiRationale: "Salida 21:48. Bolsa ~60cm. No hay despacho programado para ese horario.", aiConfidence: 0.78, detectedAt: "hace 2 horas", status: "REVIEWING", estimatedLossCents: 24000, snapshotUrl: "https://images.unsplash.com/photo-1568998270908-fe1f57c8f6e0?auto=format&fit=crop&w=600&q=70" },
+        { id: "a4", cameraName: "Cámara Caja Principal", location: "CAJA", type: "OPEN_REGISTER_NO_TX", severity: "MEDIUM", title: "Caja abierta 14 segundos sin transacción", description: "Cajón de caja registradora abierto sin tx asociada en POS. Última operación 6min antes.", aiRationale: "Apertura del cajón detectada de 13:21 a 13:35. POS sin actividad ±2min. Cajero solo en zona.", aiConfidence: 0.74, detectedAt: "hace 3 horas", status: "PENDING", estimatedLossCents: 4200, snapshotUrl: "https://images.unsplash.com/photo-1556742393-d75f468bfcb0?auto=format&fit=crop&w=600&q=70" },
+        { id: "a5", cameraName: "Cámara Barra", location: "BARRA", type: "UNRECORDED_CONSUMPTION", severity: "MEDIUM", title: "Bartender sirvió 2 tragos sin comanda", description: "2 cocteles servidos a personas en barra sin que aparezca comanda en POS para esas posiciones.", aiRationale: "Preparación de 2 tragos a las 19:42. Posiciones B3 y B4 sin comanda activa.", aiConfidence: 0.69, detectedAt: "hace 6 horas", status: "PENDING", estimatedLossCents: 5600, snapshotUrl: "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?auto=format&fit=crop&w=600&q=70" },
+        { id: "a6", cameraName: "Cámara Cocina", location: "COCINA", type: "UNRECORDED_CONSUMPTION", severity: "LOW", title: "Consumo de bebida sin registro", description: "Empleado de cocina consumió bebida del refrigerador sin registrarla.", aiRationale: "Apertura de refrigerador y consumo directo. Sin registro en consumos staff.", aiConfidence: 0.62, detectedAt: "hace 9 horas", status: "DISMISSED", actionTaken: "NO_ACTION", notes: "Verificado · era agua mineral cortesía staff. Política autorizada.", estimatedLossCents: 0, snapshotUrl: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=600&q=70" },
+        { id: "a7", cameraName: "Cámara Salón", location: "SALON", type: "UNUSUAL_AREA", severity: "LOW", title: "Empleado de cocina en zona de mesas 5min", description: "Permanencia prolongada en zona no asignada durante turno de servicio.", aiRationale: "Uniforme de cocina identificado en mesa 8 vacía. No hay solicitud de servicio activa.", aiConfidence: 0.55, detectedAt: "hace 15 horas", status: "DISMISSED", actionTaken: "NO_ACTION", notes: "Pausa autorizada · falsa alerta", estimatedLossCents: 0, snapshotUrl: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=70" },
+        { id: "a8", cameraName: "Cámara Caja Principal", location: "CAJA", type: "FAKE_RECEIPT", severity: "HIGH", title: "Boleta entregada sin emisión registrada", description: "Cliente recibió papel tipo boleta pero POS no registró emisión en esa ventana de tiempo.", aiRationale: "Entrega 12:48. POS sin emisión 12:46-12:50. Mesa 5 cerró sin ticket asociado.", aiConfidence: 0.83, detectedAt: "ayer 12:48", status: "CONFIRMED", actionTaken: "WRITTEN_WARNING", notes: "Confirmado en revisión. 2do incidente del mes. Memorando emitido.", estimatedLossCents: 12400, snapshotUrl: "https://images.unsplash.com/photo-1556742212-5b321f3c261b?auto=format&fit=crop&w=600&q=70" }
+      ],
+      rules: [
+        { type: "FAKE_RECEIPT", label: "Papel en blanco / boleta falsa", desc: "Detecta cuando se entrega papel sin elementos SUNAT", icon: "🧾", enabled: true, sensitivity: "HIGH" },
+        { type: "THEFT_INVENTORY", label: "Robo de insumos", desc: "Detecta retiro de productos en bolsas personales o áreas no autorizadas", icon: "🎒", enabled: true, sensitivity: "HIGH" },
+        { type: "OPEN_REGISTER_NO_TX", label: "Caja abierta sin transacción", desc: "Cajón abierto sin operación correspondiente en POS", icon: "💰", enabled: true, sensitivity: "MEDIUM" },
+        { type: "UNRECORDED_CONSUMPTION", label: "Consumo no registrado", desc: "Personal consume insumos sin registrarlos como mermas", icon: "🍹", enabled: true, sensitivity: "MEDIUM" },
+        { type: "UNUSUAL_AREA", label: "Permanencia en área no asignada", desc: "Empleado en zona ajena a su rol durante turno", icon: "📍", enabled: true, sensitivity: "LOW" },
+        { type: "TAMPERING", label: "Manipulación de cámara/registros", desc: "Cámara obstruida o registros físicos alterados", icon: "🚫", enabled: false, sensitivity: "HIGH" }
+      ]
+    };
+
+    const SEVERITY_STYLES = {
+      LOW: { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700", dot: "bg-amber-500" },
+      MEDIUM: { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700", dot: "bg-orange-500" },
+      HIGH: { bg: "bg-red-50", border: "border-red-200", text: "text-red-700", dot: "bg-red-500" },
+      CRITICAL: { bg: "bg-red-100", border: "border-red-400", text: "text-red-800", dot: "bg-red-600" }
+    };
+
+    const STATUS_LABELS = {
+      PENDING: { label: "Pendiente", className: "bg-amber-100 text-amber-800" },
+      REVIEWING: { label: "En revisión", className: "bg-blue-100 text-blue-800" },
+      CONFIRMED: { label: "Confirmada", className: "bg-red-100 text-red-800" },
+      DISMISSED: { label: "Descartada", className: "bg-gray-100 text-gray-700" },
+      ESCALATED: { label: "Escalada", className: "bg-purple-100 text-purple-800" }
+    };
+
+    function SeguridadView() {
+      const [tab, setTab] = useState("alertas");
+      const [filter, setFilter] = useState("all");
+      const [openAlert, setOpenAlert] = useState(null);
+      const [rules, setRules] = useState(SECURITY_DEMO_DATA.rules);
+      const [alerts, setAlerts] = useState(SECURITY_DEMO_DATA.alerts);
+      const stats = SECURITY_DEMO_DATA.stats;
+
+      const filteredAlerts = alerts.filter(a => {
+        if (filter === "all") return true;
+        if (filter === "pending") return a.status === "PENDING";
+        if (filter === "reviewing") return a.status === "REVIEWING";
+        if (filter === "confirmed") return a.status === "CONFIRMED";
+        if (filter === "dismissed") return a.status === "DISMISSED";
+        return true;
+      });
+
+      const handleReview = (alertId, action) => {
+        setAlerts(prev => prev.map(a => {
+          if (a.id !== alertId) return a;
+          if (action === "confirm") return { ...a, status: "CONFIRMED", actionTaken: "INVESTIGATING" };
+          if (action === "dismiss") return { ...a, status: "DISMISSED", actionTaken: "NO_ACTION" };
+          if (action === "escalate") return { ...a, status: "ESCALATED" };
+          return a;
+        }));
+        setOpenAlert(null);
+      };
+
+      const toggleRule = (type) => {
+        setRules(prev => prev.map(r => r.type === type ? { ...r, enabled: !r.enabled } : r));
+      };
+      const setSensitivity = (type, sens) => {
+        setRules(prev => prev.map(r => r.type === type ? { ...r, sensitivity: sens } : r));
+      };
+
+      return (
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex items-end justify-between flex-wrap gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="px-3 py-1 rounded-full bg-charcoal text-cream text-[10px] font-bold tracking-widest uppercase">🛡️ Loss Prevention IA</span>
+                <span className="px-2 py-1 rounded-full bg-gold/10 text-gold text-[9px] font-extrabold tracking-widest uppercase">Profesional+</span>
+              </div>
+              <h1 className="font-display text-3xl font-semibold">Seguridad y prevención de pérdidas</h1>
+              <p className="text-sm text-muted mt-1">Tus cámaras analizadas con IA · alertas en vivo · evidencia visual documentada</p>
+            </div>
+            <button
+              onClick={() => alert("Demo · Esta acción enviaría un frame al endpoint /api/security/analyze-frame para test manual")}
+              className="px-4 py-2.5 bg-clay text-white rounded-lg text-sm font-semibold hover:bg-clay-dark flex items-center gap-2"
+            >
+              <span>🔍</span> Probar análisis con frame
+            </button>
+          </div>
+
+          {/* KPI strip */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-paper border border-border rounded-2xl p-5 hover:shadow-md transition">
+              <p className="text-[10px] uppercase tracking-widest text-muted font-bold">Pendientes review</p>
+              <p className="font-display text-3xl font-bold text-clay mt-1">{stats.pendingReview}</p>
+              <p className="text-xs text-muted mt-1">requieren acción</p>
+            </div>
+            <div className="bg-paper border border-border rounded-2xl p-5 hover:shadow-md transition">
+              <p className="text-[10px] uppercase tracking-widest text-muted font-bold">Alertas 7 días</p>
+              <p className="font-display text-3xl font-bold text-ink mt-1">{stats.weeklyAlerts}</p>
+              <p className="text-xs text-olive mt-1">+12 vs semana ant.</p>
+            </div>
+            <div className="bg-paper border border-border rounded-2xl p-5 hover:shadow-md transition">
+              <p className="text-[10px] uppercase tracking-widest text-muted font-bold">Mermas detectadas</p>
+              <p className="font-display text-3xl font-bold text-red-600 mt-1">{PEN(stats.weeklyLossCents)}</p>
+              <p className="text-xs text-muted mt-1">recuperable con acción</p>
+            </div>
+            <div className="bg-paper border border-border rounded-2xl p-5 hover:shadow-md transition">
+              <p className="text-[10px] uppercase tracking-widest text-muted font-bold">Cámaras activas</p>
+              <p className="font-display text-3xl font-bold text-olive mt-1">{stats.activeCameras}/6</p>
+              <p className="text-xs text-olive mt-1">● online 24/7</p>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-2 border-b border-border">
+            {["alertas", "camaras", "reglas", "historial"].map(t => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${tab === t ? 'border-clay text-clay' : 'border-transparent text-muted hover:text-ink'}`}
+              >
+                {t === "alertas" && "🚨 Alertas en vivo"}
+                {t === "camaras" && "📹 Cámaras"}
+                {t === "reglas" && "⚙️ Reglas IA"}
+                {t === "historial" && "📋 Historial"}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab content */}
+          {tab === "alertas" && (
+            <div>
+              {/* Filter pills */}
+              <div className="flex gap-2 flex-wrap mb-4">
+                {[
+                  { id: "all", label: "Todas", count: alerts.length },
+                  { id: "pending", label: "Pendientes", count: alerts.filter(a => a.status === "PENDING").length },
+                  { id: "reviewing", label: "En revisión", count: alerts.filter(a => a.status === "REVIEWING").length },
+                  { id: "confirmed", label: "Confirmadas", count: alerts.filter(a => a.status === "CONFIRMED").length },
+                  { id: "dismissed", label: "Descartadas", count: alerts.filter(a => a.status === "DISMISSED").length }
+                ].map(f => (
+                  <button
+                    key={f.id}
+                    onClick={() => setFilter(f.id)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition flex items-center gap-1.5 ${filter === f.id ? 'bg-ink text-cream border-ink' : 'bg-paper text-muted border-border hover:border-clay hover:text-clay'}`}
+                  >
+                    {f.label}
+                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${filter === f.id ? 'bg-cream/20' : 'bg-cream'}`}>{f.count}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Alert cards */}
+              <div className="space-y-3">
+                {filteredAlerts.length === 0 && (
+                  <div className="bg-paper border border-border rounded-2xl p-12 text-center">
+                    <p className="text-4xl mb-3">✅</p>
+                    <p className="font-display text-lg font-semibold">Sin alertas en este filtro</p>
+                    <p className="text-sm text-muted mt-1">Todo en orden por aquí.</p>
+                  </div>
+                )}
+                {filteredAlerts.map(a => {
+                  const sty = SEVERITY_STYLES[a.severity];
+                  const stat = STATUS_LABELS[a.status];
+                  return (
+                    <article
+                      key={a.id}
+                      onClick={() => setOpenAlert(a)}
+                      className={`bg-paper border ${sty.border} rounded-2xl p-4 cursor-pointer hover:shadow-lg transition flex gap-4`}
+                    >
+                      {/* Snapshot thumb */}
+                      <div className="flex-shrink-0 w-32 h-24 rounded-xl overflow-hidden bg-cream relative">
+                        <img src={a.snapshotUrl} alt={a.title} className="w-full h-full object-cover" />
+                        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 bg-black/70 backdrop-blur text-white rounded text-[9px] font-bold uppercase tracking-wider">{a.location}</div>
+                      </div>
+                      {/* Body */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${sty.bg} ${sty.text}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${sty.dot}`}></span>
+                              {a.severity}
+                            </span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${stat.className}`}>{stat.label}</span>
+                            {a.aiConfidence && <span className="text-[10px] text-muted font-bold">IA conf {Math.round(a.aiConfidence * 100)}%</span>}
+                          </div>
+                          <span className="text-[11px] text-muted whitespace-nowrap">{a.detectedAt}</span>
+                        </div>
+                        <h4 className="font-display font-semibold text-ink leading-tight">{a.title}</h4>
+                        <p className="text-xs text-muted mt-1 line-clamp-2">{a.description}</p>
+                        <div className="flex items-center gap-3 mt-2 text-[11px] text-muted">
+                          <span>📹 {a.cameraName}</span>
+                          {a.estimatedLossCents > 0 && <span className="text-red-600 font-semibold">⚠️ Pérdida estimada: {PEN(a.estimatedLossCents)}</span>}
+                        </div>
+                      </div>
+                      {/* Right CTA */}
+                      <div className="flex-shrink-0 self-center">
+                        <span className="px-3 py-1.5 bg-cream rounded-full text-[11px] font-bold text-clay">Revisar →</span>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {tab === "camaras" && (
+            <div>
+              <div className="flex items-end justify-between mb-4">
+                <div>
+                  <h3 className="font-display text-xl font-semibold">Cámaras activas</h3>
+                  <p className="text-xs text-muted">6 cámaras conectadas · todas online</p>
+                </div>
+                <button onClick={() => alert("Demo · Aquí abriría modal para conectar cámara IP/RTSP")} className="px-3 py-2 bg-charcoal text-cream rounded-lg text-sm font-semibold hover:bg-charcoal/80">+ Agregar cámara</button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {SECURITY_DEMO_DATA.cameras.map(c => (
+                  <div key={c.id} className="bg-paper border border-border rounded-2xl overflow-hidden hover:shadow-lg transition">
+                    <div className="relative aspect-video bg-charcoal">
+                      <img src={c.thumbnailUrl} alt={c.name} className="w-full h-full object-cover" />
+                      <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2 py-1 bg-red-600/90 backdrop-blur rounded-full text-white text-[10px] font-bold">
+                        <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+                        EN VIVO
+                      </div>
+                      <div className="absolute bottom-3 left-3 text-white text-xs font-mono bg-black/50 px-2 py-1 rounded">
+                        {new Date().toLocaleTimeString("es-PE", { hour12: false })}
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <p className="font-semibold text-ink">{c.name}</p>
+                      <p className="text-xs text-muted">{c.location}</p>
+                      <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border text-xs">
+                        <span className="text-olive flex items-center gap-1"><span className="w-1.5 h-1.5 bg-olive rounded-full"></span> Online</span>
+                        <span className="text-muted">·</span>
+                        <span className="text-muted">IA activa</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {tab === "reglas" && (
+            <div>
+              <div className="bg-cream/40 border border-border rounded-2xl p-4 mb-4 flex items-start gap-3">
+                <span className="text-2xl">💡</span>
+                <div>
+                  <p className="font-semibold text-sm text-ink">¿Cómo funcionan las reglas?</p>
+                  <p className="text-xs text-muted mt-1">Cada regla define un comportamiento que la IA busca activamente en los frames de tus cámaras. La sensibilidad ajusta el umbral de confianza para disparar una alerta.</p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                {rules.map(r => (
+                  <div key={r.type} className="bg-paper border border-border rounded-2xl p-5 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-cream flex items-center justify-center text-2xl flex-shrink-0">{r.icon}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-ink">{r.label}</p>
+                      <p className="text-xs text-muted mt-0.5">{r.desc}</p>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <select
+                        value={r.sensitivity}
+                        onChange={(e) => setSensitivity(r.type, e.target.value)}
+                        disabled={!r.enabled}
+                        className="px-3 py-1.5 rounded-lg border border-border text-xs font-semibold disabled:opacity-40"
+                      >
+                        <option value="LOW">Sensibilidad Baja</option>
+                        <option value="MEDIUM">Sensibilidad Media</option>
+                        <option value="HIGH">Sensibilidad Alta</option>
+                      </select>
+                      <button
+                        onClick={() => toggleRule(r.type)}
+                        className={`relative w-12 h-6 rounded-full transition ${r.enabled ? 'bg-olive' : 'bg-border'}`}
+                      >
+                        <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition ${r.enabled ? 'left-6' : 'left-0.5'}`}></span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {tab === "historial" && (
+            <div className="bg-paper border border-border rounded-2xl p-6">
+              <h3 className="font-display text-xl font-semibold mb-4">Resumen últimos 30 días</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="p-4 bg-cream rounded-xl">
+                  <p className="text-[10px] uppercase tracking-widest text-muted font-bold">Total alertas</p>
+                  <p className="font-display text-2xl font-bold mt-1">87</p>
+                </div>
+                <div className="p-4 bg-cream rounded-xl">
+                  <p className="text-[10px] uppercase tracking-widest text-muted font-bold">Confirmadas</p>
+                  <p className="font-display text-2xl font-bold text-red-600 mt-1">23</p>
+                </div>
+                <div className="p-4 bg-cream rounded-xl">
+                  <p className="text-[10px] uppercase tracking-widest text-muted font-bold">Mermas evitadas</p>
+                  <p className="font-display text-2xl font-bold text-olive mt-1">{PEN(248600)}</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="font-semibold text-ink mb-2">Top tipos de incidente · 30 días</p>
+                {[
+                  { type: "Papel en blanco / boleta falsa", count: 18, pct: 100 },
+                  { type: "Caja abierta sin transacción", count: 14, pct: 78 },
+                  { type: "Robo de insumos", count: 9, pct: 50 },
+                  { type: "Consumo no registrado", count: 7, pct: 39 }
+                ].map(t => (
+                  <div key={t.type} className="flex items-center gap-3 py-2">
+                    <span className="text-sm text-ink w-56 flex-shrink-0">{t.type}</span>
+                    <div className="flex-1 h-6 bg-cream rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-clay to-gold flex items-center px-2 text-[10px] font-bold text-white" style={{ width: `${t.pct}%` }}>{t.count}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Modal de revisión de alerta */}
+          {openAlert && (() => {
+            const sty = SEVERITY_STYLES[openAlert.severity];
+            return (
+              <div className="fixed inset-0 z-50 bg-charcoal/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setOpenAlert(null)}>
+                <div className="bg-paper rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                  {/* Image header */}
+                  <div className="relative aspect-video bg-charcoal">
+                    <img src={openAlert.snapshotUrl} alt={openAlert.title} className="w-full h-full object-cover" />
+                    <button onClick={() => setOpenAlert(null)} className="absolute top-4 right-4 w-9 h-9 bg-black/60 text-white rounded-full hover:bg-black/80 flex items-center justify-center">✕</button>
+                    <div className="absolute bottom-4 left-4 flex items-center gap-2">
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${sty.bg} ${sty.text}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${sty.dot}`}></span>
+                        {openAlert.severity}
+                      </span>
+                      <span className="text-white text-xs bg-black/50 px-2 py-1 rounded">📹 {openAlert.cameraName}</span>
+                      <span className="text-white text-xs bg-black/50 px-2 py-1 rounded">{openAlert.detectedAt}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-6 space-y-4">
+                    <div>
+                      <h2 className="font-display text-2xl font-semibold text-ink">{openAlert.title}</h2>
+                      <p className="text-sm text-muted mt-1">{openAlert.description}</p>
+                    </div>
+
+                    {openAlert.aiRationale && (
+                      <div className="bg-cream/60 rounded-xl p-4 border border-border">
+                        <p className="text-[10px] uppercase tracking-widest text-muted font-bold mb-1">Razón de la IA · confianza {Math.round((openAlert.aiConfidence || 0) * 100)}%</p>
+                        <p className="text-sm text-ink leading-relaxed">{openAlert.aiRationale}</p>
+                      </div>
+                    )}
+
+                    {openAlert.estimatedLossCents > 0 && (
+                      <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                        <span className="text-sm font-semibold text-red-800">⚠️ Pérdida estimada</span>
+                        <span className="font-display text-xl font-bold text-red-700">{PEN(openAlert.estimatedLossCents)}</span>
+                      </div>
+                    )}
+
+                    {openAlert.notes && (
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest text-muted font-bold mb-1">Notas de revisión</p>
+                        <p className="text-sm text-ink italic">"{openAlert.notes}"</p>
+                      </div>
+                    )}
+
+                    {/* Acciones */}
+                    {openAlert.status === "PENDING" || openAlert.status === "REVIEWING" ? (
+                      <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border">
+                        <button onClick={() => handleReview(openAlert.id, "dismiss")} className="px-4 py-3 bg-cream border border-border text-ink rounded-lg font-semibold hover:bg-border/40 transition">
+                          ✕ Descartar
+                        </button>
+                        <button onClick={() => handleReview(openAlert.id, "escalate")} className="px-4 py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition">
+                          ⤴ Escalar
+                        </button>
+                        <button onClick={() => handleReview(openAlert.id, "confirm")} className="px-4 py-3 bg-clay text-white rounded-lg font-semibold hover:bg-clay-dark transition">
+                          ✓ Confirmar
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="bg-cream/40 rounded-xl p-3 text-center text-sm text-muted">
+                        Alerta {STATUS_LABELS[openAlert.status].label.toLowerCase()} {openAlert.actionTaken ? `· Acción: ${openAlert.actionTaken}` : ''}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      );
+    }
+
     // ─────────────────────────── APP ───────────────────────────
     function App() {
       const [view, setView] = useState("dashboard");
@@ -1328,6 +1736,7 @@
               {view === "ajustes" && <AjustesView />}
               {view === "cola" && <div data-feature="queue_ai"><ColaView tables={tables} setTables={setTables} queue={queue} setQueue={setQueue} /></div>}
               {view === "asistente_config" && <div data-feature="ai_assistant_waiter"><AsistenteConfigView /></div>}
+              {view === "seguridad" && <div data-feature="security_ai"><SeguridadView /></div>}
             </main>
           </div>
         </div>
