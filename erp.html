@@ -183,6 +183,55 @@
       { id: "s4", name: "Backus Distribuciones", contact: "Andrés Vega", phone: "988 555 777", terms: "Crédito 30", days: ["Mié"], autoOrder: true, ingredients: 4 }
     ];
 
+    // Demo data para Conversiones de insumos
+    const TRANSFORMATIONS_SEED = [
+      { id: "t1", from: { name: "Pescado bonito entero", emoji: "🐟", level: "RAW" }, to: { name: "Pescado sin vísceras", emoji: "🐟", level: "INTERMEDIATE" },
+        inputQty: 1, outputQty: 0.8, yieldPct: 80, laborMinutes: 5, station: "frio", executions: 12 },
+      { id: "t2", from: { name: "Pescado sin vísceras", emoji: "🐟", level: "INTERMEDIATE" }, to: { name: "Pescado fileteado", emoji: "🍣", level: "PREPARED" },
+        inputQty: 1, outputQty: 0.75, yieldPct: 75, laborMinutes: 8, station: "frio", executions: 18, realYield: 71 },
+      { id: "t3", from: { name: "Pescado fileteado", emoji: "🍣", level: "PREPARED" }, to: { name: "Pescado picado", emoji: "🥢", level: "PREPARED" },
+        inputQty: 1, outputQty: 0.92, yieldPct: 92, laborMinutes: 12, station: "frio", executions: 22 },
+      { id: "t4", from: { name: "Pollo entero", emoji: "🍗", level: "RAW" }, to: { name: "Pollo trozado", emoji: "🍗", level: "INTERMEDIATE" },
+        inputQty: 1, outputQty: 0.95, yieldPct: 95, laborMinutes: 5, station: "brasa", executions: 35 },
+      { id: "t5", from: { name: "Pollo trozado", emoji: "🍗", level: "INTERMEDIATE" }, to: { name: "Pechugas deshuesadas", emoji: "🍗", level: "PREPARED" },
+        inputQty: 1, outputQty: 0.70, yieldPct: 70, laborMinutes: 4, station: "frio", executions: 14 },
+      { id: "t6", from: { name: "Lomo entero", emoji: "🥩", level: "RAW" }, to: { name: "Lomo limpio", emoji: "🥩", level: "PREPARED" },
+        inputQty: 1, outputQty: 0.88, yieldPct: 88, laborMinutes: 6, station: "parrilla", executions: 8, realYield: 85 }
+    ];
+
+    // Demo data para Recepción de guías
+    const RECEIPTS_SEED = [
+      { id: "r1", supplier: "Avícola San Fernando", guideNumber: "001-12345", receivedAt: new Date(Date.now() - 2*60*60*1000), status: "CONFIRMED",
+        totalCents: 28500, lines: 4 },
+      { id: "r2", supplier: "Distribuidora La Despensa", guideNumber: "002-08833", receivedAt: new Date(Date.now() - 1*24*60*60*1000), status: "DISCREPANCY",
+        totalCents: 45200, lines: 7, discrepancyNote: "Faltaron 2 kg de queso" },
+      { id: "r3", supplier: "Frutas y Verduras del Mercado", guideNumber: "fac-2034", receivedAt: new Date(Date.now() - 3*24*60*60*1000), status: "CONFIRMED",
+        totalCents: 12800, lines: 9 }
+    ];
+
+    // Demo data para Plan del Restaurante
+    const PLAN_SEED = {
+      current: "ENTERPRISE",
+      modules: {
+        pos: { enabled: true, locked: true, label: "POS · Carta y pedidos", desc: "Toma de pedidos básica · siempre activo", icon: "menu" },
+        inventory: { enabled: true, label: "Inventario y recetas", desc: "Insumos · recetas · descuento automático", icon: "box" },
+        transformations: { enabled: true, label: "Conversiones de insumos", desc: "Yields · niveles M.P → preparado", icon: "refresh", premium: true },
+        multiLocation: { enabled: false, label: "Multi-local", desc: "P&L consolidado y comparativos por local", icon: "users", premium: true },
+        pnl: { enabled: true, label: "P&L y reportes", desc: "Pérdidas/ganancias por mozo, día, categoría", icon: "chart" },
+        campaigns: { enabled: true, label: "CRM + Campañas IA", desc: "Sugerencias de promociones con IA", icon: "sparkle", premium: true },
+        customerTablet: { enabled: false, label: "Cliente-tablet en mesa", desc: "Auto-pedido desde tablet en cada mesa", icon: "package" },
+        totem: { enabled: false, label: "Totem fast food", desc: "Pantalla grande para autopedido y pago", icon: "package" },
+        ai: { enabled: true, label: "Features IA", desc: "Visión, sugerencias, traducción", icon: "sparkle", premium: true }
+      }
+    };
+
+    const PLANS = [
+      { id: "BASIC", name: "Solo POS", priceMonthly: 0, modules: ["pos"], for: "1 local · empezando" },
+      { id: "STANDARD", name: "Operación", priceMonthly: 19900, modules: ["pos","inventory","pnl"], for: "1-3 locales · base operativa" },
+      { id: "PRO", name: "Profesional", priceMonthly: 39900, modules: ["pos","inventory","transformations","pnl","campaigns","ai"], for: "Restaurantes en crecimiento" },
+      { id: "ENTERPRISE", name: "Enterprise", priceMonthly: 79900, modules: "ALL", for: "Cadenas multi-local · todo activo" }
+    ];
+
     // ─────────────────────── ICONS ───────────────────────
     const Icon = ({ name, size = 18, className = "" }) => {
       const ics = {
@@ -231,18 +280,22 @@
         { id: "alertas", label: "Alertas", icon: "alert", badge: 7, group: "today" },
         { id: "inventario", label: "Inventario", icon: "box", group: "operar" },
         { id: "conteo", label: "Conteo físico", icon: "camera", group: "operar" },
+        { id: "conversiones", label: "Conversiones", icon: "refresh", group: "operar" },
         { id: "recetas", label: "Recetas", icon: "chef", group: "operar" },
         { id: "proveedores", label: "Proveedores", icon: "truck", group: "comprar" },
+        { id: "recepcion", label: "Recepción guías", icon: "package", group: "comprar" },
         { id: "compras", label: "Pedidos", icon: "package", group: "comprar" },
         { id: "caducidad", label: "Caducidad", icon: "clock", group: "comprar" },
         { id: "pnl", label: "P&L", icon: "chart", group: "analizar" },
-        { id: "campanas", label: "Campañas IA", icon: "sparkle", group: "analizar" }
+        { id: "campanas", label: "Campañas IA", icon: "sparkle", group: "analizar" },
+        { id: "plan", label: "Plan", icon: "edit", group: "ajustes" }
       ];
       const groups = {
         today: "HOY",
         operar: "OPERAR",
         comprar: "COMPRAR",
-        analizar: "ANALIZAR"
+        analizar: "ANALIZAR",
+        ajustes: "AJUSTES"
       };
       const grouped = {};
       for (const s of sections) {
@@ -1715,6 +1768,301 @@
       );
     }
 
+    // ─────────────────────── CONVERSIONES DE INSUMOS ───────────────────────
+    function Conversiones() {
+      const [transformations, setTransformations] = useState(TRANSFORMATIONS_SEED);
+      const [showModal, setShowModal] = useState(false);
+
+      const totalTransfWeek = transformations.reduce((s, t) => s + t.executions, 0);
+      const avgYield = transformations.reduce((s, t) => s + (t.realYield || t.yieldPct), 0) / transformations.length;
+      const estimatedLoss = transformations.reduce((s, t) => {
+        const expected = t.yieldPct;
+        const real = t.realYield || expected;
+        const diff = expected - real;
+        return s + (diff > 0 ? diff * 2.5 : 0);
+      }, 0) * 100;
+
+      return (
+        <div className="space-y-5">
+          <div>
+            <p className="text-[11px] uppercase tracking-wider text-muted font-bold">El costo real de tu cocina</p>
+            <h1 className="font-display text-3xl font-semibold">Conversiones de insumos</h1>
+            <p className="text-muted mt-1">Transforma M.P. en productos preparados. Cada nivel tiene yield, costo de labor y margen diferente.</p>
+          </div>
+
+          <div className="grid grid-cols-4 gap-4">
+            <HeroKpi label="Conversiones esta semana" value={totalTransfWeek} accent="gold" animate={false} />
+            <HeroKpi label="Yield promedio real" value={`${avgYield.toFixed(1)}%`} accent="olive" animate={false} />
+            <HeroKpi label="Merma estimada" value={PEN(Math.round(estimatedLoss * 100))} accent="warn" animate={false} />
+            <HeroKpi label="Transformaciones activas" value={transformations.length} accent="clay" animate={false} />
+          </div>
+
+          <div className="bg-paper border border-border rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="font-display text-xl font-semibold">Flujos de conversión</h2>
+              <button onClick={() => setShowModal(true)} className="inline-flex items-center gap-2 px-4 py-2.5 bg-clay text-white rounded-xl font-semibold text-sm">
+                <Icon name="plus" size={16} /> Nueva conversión
+              </button>
+            </div>
+            <div className="space-y-3">
+              {transformations.map(t => {
+                const hasHighWaste = (t.realYield || t.yieldPct) < t.yieldPct - 5;
+                return (
+                  <div key={t.id} className={`border rounded-xl p-4 lift-on-hover ${hasHighWaste ? 'bg-danger/5 border-danger/30' : 'bg-cream border-border'}`}>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-4 flex-1">
+                        <div className="text-3xl">{t.from.emoji}</div>
+                        <div>
+                          <p className="text-sm font-semibold">{t.from.name}</p>
+                          <p className="text-[10px] text-muted">{t.from.level}</p>
+                        </div>
+                        <Icon name="chevronRight" size={18} className="text-muted" />
+                        <div className="text-3xl">{t.to.emoji}</div>
+                        <div>
+                          <p className="text-sm font-semibold">{t.to.name}</p>
+                          <p className="text-[10px] text-muted">{t.to.level}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="text-[10px] text-muted">Yield</p>
+                          <p className="font-mono font-bold text-sm">{t.realYield || t.yieldPct}%</p>
+                          {t.realYield && t.realYield < t.yieldPct - 5 && <p className="text-[10px] text-danger">vs {t.yieldPct}% esperado</p>}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] text-muted">Labor</p>
+                          <p className="font-mono font-bold text-sm">{t.laborMinutes} min</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] text-muted">Ejecuciones</p>
+                          <p className="font-mono font-bold text-sm">{t.executions}</p>
+                        </div>
+                        {hasHighWaste && <span className="px-2 py-1 bg-danger/10 text-danger text-[10px] font-bold rounded">Merma alta</span>}
+                        <button className="px-3 py-2 bg-clay text-white rounded-lg text-xs font-semibold">Ejecutar</button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {showModal && (
+            <div className="fixed inset-0 bg-charcoal/40 z-50 flex items-end anim-slide-up">
+              <div className="w-full bg-paper rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="font-display text-2xl font-semibold">Nueva conversión</h2>
+                  <button onClick={() => setShowModal(false)} className="p-2 rounded-full hover:bg-cream"><Icon name="x" size={20} /></button>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Desde (insumo origen)</label>
+                    <select className="w-full px-4 py-3 bg-cream border border-border rounded-xl text-sm">
+                      {transformations.map(t => <option key={t.id}>{t.from.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Hacia (producto final)</label>
+                    <select className="w-full px-4 py-3 bg-cream border border-border rounded-xl text-sm">
+                      {transformations.map(t => <option key={t.id}>{t.to.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">Qty input</label>
+                      <input type="number" defaultValue="10" step="0.1" className="w-full px-4 py-3 bg-cream border border-border rounded-xl text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">Yield esperado %</label>
+                      <input type="number" defaultValue="75" step="1" min="0" max="100" className="w-full px-4 py-3 bg-cream border border-border rounded-xl text-sm" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Labor (minutos)</label>
+                    <input type="number" defaultValue="8" step="1" className="w-full px-4 py-3 bg-cream border border-border rounded-xl text-sm" />
+                  </div>
+                  <button className="w-full py-3 bg-clay text-white rounded-xl font-semibold">Guardar conversión</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ─────────────────────── RECEPCIÓN DE MERCADERÍA ───────────────────────
+    function RecepcionGuias() {
+      const [receipts, setReceipts] = useState(RECEIPTS_SEED);
+      const [showUpload, setShowUpload] = useState(false);
+
+      const today = new Date();
+      const receiptsToday = receipts.filter(r => r.receivedAt.toDateString() === today.toDateString()).length;
+      const discrepancies = receipts.filter(r => r.status === "DISCREPANCY").length;
+
+      return (
+        <div className="space-y-5">
+          <div>
+            <p className="text-[11px] uppercase tracking-wider text-muted font-bold">Llegó tu proveedor · ingrésalo en 30 segundos</p>
+            <h1 className="font-display text-3xl font-semibold">Recepción de guías</h1>
+            <p className="text-muted mt-1">Foto de guía → IA extrae items → confirma cantidades y vencimientos. Todo en el inventario automáticamente.</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <HeroKpi label="Recepciones hoy" value={receiptsToday} accent="clay" animate={false} />
+            <HeroKpi label="Discrepancias 7 días" value={discrepancies} accent="warn" animate={false} />
+          </div>
+
+          <button onClick={() => setShowUpload(true)} className="w-full bg-gradient-to-r from-clay to-clay-dark text-white rounded-2xl p-8 flex items-center justify-center gap-4 text-center hover:shadow-card transition">
+            <Icon name="camera" size={32} />
+            <div className="text-left">
+              <p className="font-display text-xl font-semibold">📷 Recibir mercadería ahora</p>
+              <p className="text-sm text-white/80">Toma foto de la guía y confirma en segundos</p>
+            </div>
+          </button>
+
+          {showUpload && (
+            <div className="fixed inset-0 bg-charcoal/40 z-50 flex items-end anim-slide-up">
+              <div className="w-full bg-paper rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="font-display text-2xl font-semibold">Nueva recepción</h2>
+                  <button onClick={() => setShowUpload(false)} className="p-2 rounded-full hover:bg-cream"><Icon name="x" size={20} /></button>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Proveedor</label>
+                    <select className="w-full px-4 py-3 bg-cream border border-border rounded-xl text-sm">
+                      {ALL_SUPPLIERS.map(s => <option key={s.id}>{s.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Número de guía</label>
+                    <input type="text" placeholder="GR-2024-001234" className="w-full px-4 py-3 bg-cream border border-border rounded-xl text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Foto de guía</label>
+                    <div className="border-2 border-dashed border-border rounded-xl p-6 text-center cursor-pointer hover:bg-cream">
+                      <Icon name="camera" size={24} className="text-muted mx-auto mb-2" />
+                      <p className="text-xs text-muted">Clic para tomar o subir foto</p>
+                    </div>
+                  </div>
+                  <button className="w-full py-3 bg-clay text-white rounded-xl font-semibold">Analizar con IA (2.5s)</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-paper border border-border rounded-2xl p-6">
+            <h2 className="font-display text-xl font-semibold mb-4">Recepciones recientes</h2>
+            <div className="space-y-3">
+              {receipts.map(r => {
+                const hours = Math.floor((Date.now() - r.receivedAt) / (1000 * 60 * 60));
+                const daysAgo = Math.floor(hours / 24);
+                const timeStr = daysAgo > 0 ? `hace ${daysAgo}d` : `hace ${hours}h`;
+                return (
+                  <div key={r.id} className={`border rounded-xl p-4 lift-on-hover ${r.status === 'DISCREPANCY' ? 'bg-warn/5 border-warn/30' : 'bg-cream border-border'}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm">{r.supplier}</p>
+                        <p className="text-[11px] text-muted">{timeStr} · Guía {r.guideNumber} · {r.lines} items</p>
+                      </div>
+                      <span className={`px-3 py-1 rounded text-[10px] font-bold ${r.status === 'CONFIRMED' ? 'bg-olive/10 text-olive' : 'bg-warn/10 text-warn'}`}>
+                        {r.status === 'CONFIRMED' ? '✓ Confirmada' : '⚠️ Discrepancia'}
+                      </span>
+                      <p className="font-mono font-bold text-sm ml-4">{PEN(r.totalCents)}</p>
+                      {r.status === 'DISCREPANCY' && <button className="px-3 py-2 bg-warn text-white rounded-lg text-xs font-semibold ml-2">Ver nota</button>}
+                    </div>
+                    {r.discrepancyNote && <p className="text-xs text-warn mt-2 px-3 py-2 bg-warn/10 rounded-lg">💬 {r.discrepancyNote}</p>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─────────────────────── PLAN DEL RESTAURANTE ───────────────────────
+    function PlanRestaurante() {
+      const [plan, setPlan] = useState(PLAN_SEED);
+
+      const currentPlanDef = PLANS.find(p => p.id === plan.current);
+      const activeModuleKeys = currentPlanDef.modules === "ALL" ? Object.keys(plan.modules) : currentPlanDef.modules;
+
+      return (
+        <div className="space-y-5">
+          <div>
+            <p className="text-[11px] uppercase tracking-wider text-muted font-bold">Activa solo lo que necesitas</p>
+            <h1 className="font-display text-3xl font-semibold">Plan del restaurante</h1>
+            <p className="text-muted mt-1">Tu plan crece con el negocio. Empieza simple, sube de tier cuando lo necesites.</p>
+          </div>
+
+          <div className="bg-gradient-to-r from-gold/10 to-transparent border border-gold/30 rounded-2xl p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted">Tu plan actual</p>
+                <p className="font-display text-2xl font-semibold">{currentPlanDef.name}</p>
+                <p className="text-xs text-muted mt-1">{currentPlanDef.for}</p>
+              </div>
+              <div className="text-right">
+                <p className="font-display text-3xl font-bold">{PEN(currentPlanDef.priceMonthly)}</p>
+                <p className="text-sm text-muted">/mes</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-4 gap-3">
+            {PLANS.map(p => (
+              <button
+                key={p.id}
+                onClick={() => setPlan({ ...plan, current: p.id })}
+                className={`p-4 rounded-2xl border-2 text-left transition lift-on-hover ${plan.current === p.id ? 'border-clay bg-clay/5' : 'border-border bg-paper hover:border-gold/40'}`}
+              >
+                {plan.current === p.id && <span className="inline-block px-2 py-1 bg-clay text-white text-[10px] font-bold rounded-full mb-2">ACTUAL</span>}
+                <p className="font-display text-lg font-semibold">{p.name}</p>
+                <p className="text-xs text-muted mt-0.5">{p.for}</p>
+                <p className="font-display text-2xl font-bold mt-3">{PEN(p.priceMonthly)}</p>
+                <button className={`mt-3 w-full py-2 rounded-lg text-xs font-semibold transition ${plan.current === p.id ? 'bg-clay text-white' : 'bg-cream border border-border hover:bg-clay hover:text-white'}`}>
+                  {plan.current === p.id ? 'Tu plan' : 'Cambiar'}
+                </button>
+              </button>
+            ))}
+          </div>
+
+          <div className="bg-paper border border-border rounded-2xl p-6">
+            <h2 className="font-display text-xl font-semibold mb-4">Módulos activos ({activeModuleKeys.length}/{Object.keys(plan.modules).length})</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {Object.entries(plan.modules).map(([key, mod]) => {
+                const isActive = activeModuleKeys.includes(key);
+                return (
+                  <div key={key} className={`border rounded-xl p-4 transition lift-on-hover ${isActive ? 'bg-cream border-border' : 'bg-cream/30 border-border/30 opacity-60'}`}>
+                    <div className="flex items-start gap-3">
+                      <input type="checkbox" checked={isActive} disabled={mod.locked} className="w-5 h-5 mt-0.5" />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-sm">{mod.label}</p>
+                          {mod.premium && <span className="bg-gold/20 text-gold text-[10px] font-bold px-2 py-0.5 rounded-full">Premium</span>}
+                          {mod.locked && <span className="text-[10px] text-muted">Siempre activo</span>}
+                        </div>
+                        <p className="text-[11px] text-muted mt-1">{mod.desc}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="bg-gold/5 border border-gold/20 rounded-xl p-4 inline-flex items-start gap-3">
+            <Icon name="sparkle" size={18} className="text-gold shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-bold text-gold">💡 Consejo</p>
+              <p className="text-muted mt-1">Arranca con Standard si tienes 1 local, sube a Pro cuando tu cocina necesite tracking de mermas, ve a Enterprise si abres más locales.</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     // ─────────────────────── ALERTAS (consolidado) ───────────────────────
     function Alertas({ ingredients }) {
       const critical = ingredients.filter(i => stockStatus(i).code === "critical");
@@ -1796,12 +2144,15 @@
               {view === "alertas" && <Alertas ingredients={ingredients} />}
               {view === "inventario" && <Inventario ingredients={ingredients} setIngredients={setIngredients} />}
               {view === "conteo" && <ConteoFisico ingredients={ingredients} />}
+              {view === "conversiones" && <Conversiones />}
               {view === "recetas" && <Recetas />}
               {view === "proveedores" && <Proveedores />}
+              {view === "recepcion" && <RecepcionGuias />}
               {view === "compras" && <Compras ingredients={ingredients} />}
               {view === "caducidad" && <Caducidad ingredients={ingredients} />}
               {view === "pnl" && <Pnl />}
               {view === "campanas" && <Campanas />}
+              {view === "plan" && <PlanRestaurante />}
             </main>
           </div>
         </div>

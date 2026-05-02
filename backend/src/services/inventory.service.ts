@@ -184,6 +184,7 @@ class InventoryService {
 
   /**
    * Manual adjustment (e.g., chef wastes ingredient).
+   * Registra automáticamente en AuditLog.
    */
   async adjustStock(input: {
     ingredientId: string;
@@ -194,6 +195,8 @@ class InventoryService {
     const ing = await prisma.ingredient.findUnique({ where: { id: input.ingredientId } });
     if (!ing) throw new Error("ingredient_not_found");
     const delta = input.newQty - ing.currentStock;
+
+    const before = { currentStock: ing.currentStock };
 
     await prisma.ingredient.update({
       where: { id: ing.id },
@@ -210,6 +213,20 @@ class InventoryService {
         refType: "MANUAL",
         userId: input.userId,
         notes: input.reason
+      }
+    });
+
+    // Audit log
+    await prisma.auditLog.create({
+      data: {
+        restaurantId: ing.restaurantId,
+        userId: input.userId,
+        action: "ADJUST_STOCK",
+        entityType: "Ingredient",
+        entityId: ing.id,
+        before: JSON.stringify(before),
+        after: JSON.stringify({ currentStock: input.newQty }),
+        reason: input.reason
       }
     });
   }

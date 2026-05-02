@@ -56,6 +56,12 @@ model Restaurant {
   purchaseOrders PurchaseOrder[]
   customers      Customer[]
   campaigns      CampaignSuggestion[]
+  transformations IngredientTransformation[]
+  transformationExecutions TransformationExecution[]
+  plan           RestaurantPlan?
+  goodsReceipts  GoodsReceipt[]
+  auditLogs      AuditLog[]
+  partnerCommissions PartnerCommission[]
 }
 
 model User {
@@ -332,17 +338,25 @@ model Ingredient {
   trackExpiration     Boolean  @default(false) // perishable items use lots
   active              Boolean  @default(true)
   notes               String?
+  // Pivot: ingredient level (RAW | INTERMEDIATE | PREPARED)
+  level               String   @default("RAW")
+  parentIngredientId  String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
   restaurant          Restaurant            @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   category            IngredientCategory?   @relation(fields: [categoryId], references: [id])
   supplier            Supplier?             @relation(fields: [supplierId], references: [id])
+  parentIngredient    Ingredient?           @relation("IngredientHierarchy", fields: [parentIngredientId], references: [id])
+  childIngredients    Ingredient[]          @relation("IngredientHierarchy")
   recipeUses          RecipeIngredient[]
   movements           InventoryMovement[]
   countLines          InventoryCountLine[]
   poLines             PurchaseOrderLine[]
   expirationLots      ExpirationLot[]
+  transformationsFrom IngredientTransformation[] @relation("FromIngredient")
+  transformationsTo   IngredientTransformation[] @relation("ToIngredient")
+  goodsReceiptLines   GoodsReceiptLine[]
 
   @@index([restaurantId, active])
 }
@@ -477,6 +491,165 @@ model PurchaseOrderLine {
   ingredient      Ingredient    @relation(fields: [ingredientId], references: [id])
 
   @@index([purchaseOrderId])
+}
+
+// ─── Ingredient Transformations ───────────────────────────────────
+// Modela conversiones: M.P. → producto preparado (ej: pescado entero → filete)
+model IngredientTransformation {
+  id                  String   @id @default(cuid())
+  restaurantId        String
+  fromIngredientId    String   // M.P. (Pescado entero, Pollo entero)
+  toIngredientId      String   // Producto transformado (Filete, Pollo trozado)
+  inputQty            Float    // ej: 1.0 kg de pescado entero
+  outputQty           Float    // ej: 0.6 kg de filete
+  yieldPct            Float    // 60% (calculado automáticamente)
+  laborMinutes        Int      @default(0) // tiempo de labor
+  laborCostCents      Int      @default(0) // costo de mano de obra
+  station             String?  // frio | brasa | prep | etc
+  notes               String?
+  active              Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  restaurant          Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  fromIngredient      Ingredient @relation("FromIngredient", fields: [fromIngredientId], references: [id], onDelete: Cascade)
+  toIngredient        Ingredient @relation("ToIngredient", fields: [toIngredientId], references: [id], onDelete: Cascade)
+  executions          TransformationExecution[]
+
+  @@index([restaurantId, active])
+}
+
+// Registra cada ejecución de transformación
+model TransformationExecution {
+  id                    String   @id @default(cuid())
+  transformationId      String
+  restaurantId          String
+  userId                String?
+  inputQty              Float
+  outputQty             Float
+  actualYieldPct        Float    // para detectar desviaciones
+  executedAt            DateTime @default(now())
+
+  transformation        IngredientTransformation @relation(fields: [transformationId], references: [id], onDelete: Cascade)
+  restaurant            Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, executedAt])
+  @@index([transformationId])
+}
+
+// ─── Restaurant Plans (Modularidad) ───────────────────────────────
+// Qué módulos están activos para cada restaurante
+model RestaurantPlan {
+  id                  String   @id @default(cuid())
+  restaurantId        String   @unique
+  // Módulos
+  pos                 Boolean  @default(true)  // POS básico (siempre on)
+  inventory           Boolean  @default(false) // Gestión de inventario
+  transformations     Boolean  @default(false) // Conversiones de insumos
+  multiLocation       Boolean  @default(false) // Multi-sede
+  pnl                 Boolean  @default(false) // P&L y reportes
+  campaigns           Boolean  @default(false) // CRM + campañas IA
+  customerTablet      Boolean  @default(false) // Cliente-tablet en mesa
+  totem               Boolean  @default(false) // Totem fast food
+  ai                  Boolean  @default(false) // Features IA
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  restaurant          Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+}
+
+// ─── Goods Receipts (Recepción de mercadería) ─────────────────────
+// Flujo de recepción: guía física → AI extrae items → usuario verifica
+model GoodsReceipt {
+  id                  String   @id @default(cuid())
+  restaurantId        String
+  supplierId          String
+  purchaseOrderId     String?
+  guideNumber         String   // Número de guía del proveedor
+  guideUrl            String?  // URL de foto/PDF de la guía
+  receivedAt          DateTime @default(now())
+  receivedBy          String?  // userId
+  status              String   @default("PENDING_REVIEW") // PENDING_REVIEW | CONFIRMED | DISCREPANCY
+  totalCents          Int      @default(0)
+  notes               String?
+  createdAt           DateTime @default(now())
+
+  restaurant          Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  supplier            Supplier   @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  purchaseOrder       PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id], onDelete: SetNull)
+  lines               GoodsReceiptLine[]
+
+  @@index([restaurantId, status])
+  @@index([supplierId])
+}
+
+model GoodsReceiptLine {
+  id                  String   @id @default(cuid())
+  receiptId           String
+  ingredientId        String
+  qtyOrdered          Float?   // Cantidad de PO (si existe)
+  qtyReceived         Float    // Cantidad recibida
+  qtyAccepted         Float    // Cantidad aceptada (puede ser menor por daños)
+  unitCostCents       Int
+  expirationDate      DateTime?
+  lotNumber           String?
+  notes               String?
+
+  receipt             GoodsReceipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  ingredient          Ingredient   @relation("GoodsReceiptLines", fields: [ingredientId], references: [id], onDelete: Restrict)
+
+  @@index([receiptId])
+}
+
+// ─── Audit Log (Trazabilidad) ─────────────────────────────────────
+// Registro de todos los cambios críticos en el sistema
+model AuditLog {
+  id                  String   @id @default(cuid())
+  restaurantId        String
+  userId              String?
+  action              String   // ADJUSTMENT | DELETE | TRANSFORM | RECEIPT_CONFIRM | etc
+  entityType          String   // Ingredient | Order | GoodsReceipt | etc
+  entityId            String
+  before              String?  // JSON snapshot
+  after               String?  // JSON snapshot
+  reason              String?  // Razón del cambio (auditoría)
+  createdAt           DateTime @default(now())
+
+  restaurant          Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, createdAt])
+  @@index([entityType, entityId])
+}
+
+// ─── Partner & Commissions (FUTURE) ───────────────────────────────
+// Modelo de partners/implementadores (diseño futuro)
+model Partner {
+  id                  String   @id @default(cuid())
+  name                String
+  contactName         String?
+  email               String?
+  phone               String?
+  ruc                 String?
+  certifiedAt         DateTime?
+  active              Boolean  @default(true)
+  createdAt           DateTime @default(now())
+
+  commissions         PartnerCommission[]
+}
+
+model PartnerCommission {
+  id                  String   @id @default(cuid())
+  partnerId           String
+  restaurantId        String
+  monthlyPct          Float    // % de comisión mensual
+  setupPct            Float    @default(0) // % de comisión setup
+  status              String   @default("ACTIVE") // ACTIVE | INACTIVE | SUSPENDED
+  createdAt           DateTime @default(now())
+
+  partner             Partner    @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  restaurant          Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([partnerId, restaurantId])
 }
 
 // ═══════════════════════════════════════════════════════════════════

@@ -23,6 +23,10 @@ async function main() {
   await prisma.recipeIngredient.deleteMany();
   await prisma.inventoryCountLine.deleteMany();
   await prisma.inventoryCount.deleteMany();
+  await prisma.goodsReceiptLine.deleteMany();
+  await prisma.goodsReceipt.deleteMany();
+  await prisma.transformationExecution.deleteMany();
+  await prisma.ingredientTransformation.deleteMany();
   await prisma.purchaseOrderLine.deleteMany();
   await prisma.purchaseOrder.deleteMany();
   await prisma.expirationLot.deleteMany();
@@ -35,6 +39,8 @@ async function main() {
   await prisma.menuItem.deleteMany();
   await prisma.menuCategory.deleteMany();
   await prisma.table.deleteMany();
+  await prisma.auditLog.deleteMany();
+  await prisma.restaurantPlan.deleteMany();
   await prisma.user.deleteMany();
   await prisma.restaurant.deleteMany();
 
@@ -62,6 +68,23 @@ async function main() {
   ]);
 
   console.log(`✓ Created restaurant + 6 users`);
+
+  // ─────────── RESTAURANT PLAN ───────────
+  await prisma.restaurantPlan.create({
+    data: {
+      restaurantId: restaurant.id,
+      pos: true,
+      inventory: true,
+      transformations: true,
+      multiLocation: false,
+      pnl: true,
+      campaigns: true,
+      customerTablet: true,
+      totem: false,
+      ai: true
+    }
+  });
+  console.log(`✓ Created RestaurantPlan (all modules enabled for demo)`);
 
   // ─────────── TABLES (16 in floor plan) ───────────
   const tableSeed = [
@@ -197,43 +220,51 @@ async function main() {
 
   // Ingredients (insumos)
   const ingDefs = [
-    // Proteínas
-    { name: "Pollo entero", unit: "unidad", current: 28, min: 15, critical: 10, optimal: 60, costCents: 1850, cat: catProteinas, sup: proveedorAves, perish: true },
-    { name: "Carne de res (lomo)", unit: "kg", current: 6.5, min: 5, critical: 3, optimal: 15, costCents: 4200, cat: catProteinas, sup: proveedorAbarrotes, perish: true },
-    { name: "Corazón de res", unit: "kg", current: 3.2, min: 4, critical: 2, optimal: 10, costCents: 2800, cat: catProteinas, sup: proveedorAbarrotes, perish: true },
-    { name: "Chorizo parrillero", unit: "unidad", current: 45, min: 20, critical: 10, optimal: 80, costCents: 350, cat: catProteinas, sup: proveedorAbarrotes, perish: true },
-    { name: "Mollejitas", unit: "kg", current: 1.8, min: 2, critical: 1, optimal: 5, costCents: 1800, cat: catProteinas, sup: proveedorAves, perish: true },
+    // Proteínas · Raw materials
+    { name: "Pollo entero", unit: "unidad", current: 28, min: 15, critical: 10, optimal: 60, costCents: 1850, cat: catProteinas, sup: proveedorAves, perish: true, level: "RAW" },
+    { name: "Pescado bonito entero", unit: "kg", current: 12, min: 8, critical: 5, optimal: 25, costCents: 1800, cat: catProteinas, sup: proveedorAbarrotes, perish: true, level: "RAW" },
+    { name: "Carne de res (lomo)", unit: "kg", current: 6.5, min: 5, critical: 3, optimal: 15, costCents: 4200, cat: catProteinas, sup: proveedorAbarrotes, perish: true, level: "RAW" },
+    { name: "Corazón de res", unit: "kg", current: 3.2, min: 4, critical: 2, optimal: 10, costCents: 2800, cat: catProteinas, sup: proveedorAbarrotes, perish: true, level: "PREPARED" },
+    { name: "Chorizo parrillero", unit: "unidad", current: 45, min: 20, critical: 10, optimal: 80, costCents: 350, cat: catProteinas, sup: proveedorAbarrotes, perish: true, level: "PREPARED" },
+    { name: "Mollejitas", unit: "kg", current: 1.8, min: 2, critical: 1, optimal: 5, costCents: 1800, cat: catProteinas, sup: proveedorAves, perish: true, level: "PREPARED" },
+    // Intermediate products from transformations
+    { name: "Pollo trozado", unit: "kg", current: 0, min: 0, critical: 0, optimal: 5, costCents: 0, cat: catProteinas, sup: proveedorAves, perish: true, level: "INTERMEDIATE" },
+    { name: "Pechugas deshuesadas", unit: "kg", current: 0, min: 0, critical: 0, optimal: 8, costCents: 0, cat: catProteinas, sup: proveedorAves, perish: true, level: "PREPARED" },
+    { name: "Pescado sin vísceras", unit: "kg", current: 0, min: 0, critical: 0, optimal: 10, costCents: 0, cat: catProteinas, sup: proveedorAbarrotes, perish: true, level: "INTERMEDIATE" },
+    { name: "Pescado fileteado", unit: "kg", current: 0, min: 0, critical: 0, optimal: 8, costCents: 0, cat: catProteinas, sup: proveedorAbarrotes, perish: true, level: "PREPARED" },
+    { name: "Pescado picado", unit: "kg", current: 0, min: 0, critical: 0, optimal: 6, costCents: 0, cat: catProteinas, sup: proveedorAbarrotes, perish: true, level: "PREPARED" },
+    { name: "Lomo limpio", unit: "kg", current: 0, min: 0, critical: 0, optimal: 5, costCents: 0, cat: catProteinas, sup: proveedorAbarrotes, perish: true, level: "PREPARED" },
     // Carbos
-    { name: "Papas amarillas", unit: "kg", current: 38, min: 20, critical: 10, optimal: 80, costCents: 280, cat: catCarbos, sup: proveedorVerduras, perish: false },
-    { name: "Yuca", unit: "kg", current: 12, min: 8, critical: 4, optimal: 25, costCents: 320, cat: catCarbos, sup: proveedorVerduras, perish: false },
-    { name: "Pan francés", unit: "unidad", current: 80, min: 50, critical: 20, optimal: 200, costCents: 50, cat: catCarbos, sup: proveedorAbarrotes, perish: true },
-    { name: "Arroz", unit: "kg", current: 22, min: 10, critical: 5, optimal: 40, costCents: 420, cat: catCarbos, sup: proveedorAbarrotes, perish: false },
+    { name: "Papas amarillas", unit: "kg", current: 38, min: 20, critical: 10, optimal: 80, costCents: 280, cat: catCarbos, sup: proveedorVerduras, perish: false, level: "RAW" },
+    { name: "Yuca", unit: "kg", current: 12, min: 8, critical: 4, optimal: 25, costCents: 320, cat: catCarbos, sup: proveedorVerduras, perish: false, level: "RAW" },
+    { name: "Pan francés", unit: "unidad", current: 80, min: 50, critical: 20, optimal: 200, costCents: 50, cat: catCarbos, sup: proveedorAbarrotes, perish: true, level: "PREPARED" },
+    { name: "Arroz", unit: "kg", current: 22, min: 10, critical: 5, optimal: 40, costCents: 420, cat: catCarbos, sup: proveedorAbarrotes, perish: false, level: "RAW" },
     // Verduras
-    { name: "Lechuga romana", unit: "unidad", current: 14, min: 10, critical: 5, optimal: 30, costCents: 250, cat: catVerduras, sup: proveedorVerduras, perish: true },
-    { name: "Tomate", unit: "kg", current: 8, min: 6, critical: 3, optimal: 18, costCents: 380, cat: catVerduras, sup: proveedorVerduras, perish: true },
-    { name: "Cebolla roja", unit: "kg", current: 11, min: 5, critical: 2, optimal: 20, costCents: 250, cat: catVerduras, sup: proveedorVerduras, perish: false },
-    { name: "Limón", unit: "kg", current: 4.2, min: 5, critical: 2, optimal: 12, costCents: 380, cat: catVerduras, sup: proveedorVerduras, perish: true },
-    { name: "Maíz morado", unit: "kg", current: 6, min: 4, critical: 2, optimal: 12, costCents: 580, cat: catVerduras, sup: proveedorAbarrotes, perish: false },
-    { name: "Choclo", unit: "unidad", current: 22, min: 15, critical: 8, optimal: 40, costCents: 220, cat: catVerduras, sup: proveedorVerduras, perish: true },
-    { name: "Palta", unit: "unidad", current: 18, min: 10, critical: 5, optimal: 30, costCents: 280, cat: catVerduras, sup: proveedorVerduras, perish: true },
+    { name: "Lechuga romana", unit: "unidad", current: 14, min: 10, critical: 5, optimal: 30, costCents: 250, cat: catVerduras, sup: proveedorVerduras, perish: true, level: "RAW" },
+    { name: "Tomate", unit: "kg", current: 8, min: 6, critical: 3, optimal: 18, costCents: 380, cat: catVerduras, sup: proveedorVerduras, perish: true, level: "RAW" },
+    { name: "Cebolla roja", unit: "kg", current: 11, min: 5, critical: 2, optimal: 20, costCents: 250, cat: catVerduras, sup: proveedorVerduras, perish: false, level: "RAW" },
+    { name: "Limón", unit: "kg", current: 4.2, min: 5, critical: 2, optimal: 12, costCents: 380, cat: catVerduras, sup: proveedorVerduras, perish: true, level: "RAW" },
+    { name: "Maíz morado", unit: "kg", current: 6, min: 4, critical: 2, optimal: 12, costCents: 580, cat: catVerduras, sup: proveedorAbarrotes, perish: false, level: "RAW" },
+    { name: "Choclo", unit: "unidad", current: 22, min: 15, critical: 8, optimal: 40, costCents: 220, cat: catVerduras, sup: proveedorVerduras, perish: true, level: "RAW" },
+    { name: "Palta", unit: "unidad", current: 18, min: 10, critical: 5, optimal: 30, costCents: 280, cat: catVerduras, sup: proveedorVerduras, perish: true, level: "RAW" },
     // Lácteos
-    { name: "Queso fresco", unit: "kg", current: 1.5, min: 2, critical: 1, optimal: 5, costCents: 2200, cat: catLacteos, sup: proveedorAbarrotes, perish: true },
-    { name: "Mantequilla", unit: "kg", current: 2.2, min: 1, critical: 0.5, optimal: 4, costCents: 3200, cat: catLacteos, sup: proveedorAbarrotes, perish: true },
-    { name: "Leche", unit: "l", current: 8, min: 4, critical: 2, optimal: 15, costCents: 480, cat: catLacteos, sup: proveedorAbarrotes, perish: true },
-    { name: "Crema de leche", unit: "l", current: 3, min: 2, critical: 1, optimal: 6, costCents: 850, cat: catLacteos, sup: proveedorAbarrotes, perish: true },
+    { name: "Queso fresco", unit: "kg", current: 1.5, min: 2, critical: 1, optimal: 5, costCents: 2200, cat: catLacteos, sup: proveedorAbarrotes, perish: true, level: "RAW" },
+    { name: "Mantequilla", unit: "kg", current: 2.2, min: 1, critical: 0.5, optimal: 4, costCents: 3200, cat: catLacteos, sup: proveedorAbarrotes, perish: true, level: "RAW" },
+    { name: "Leche", unit: "l", current: 8, min: 4, critical: 2, optimal: 15, costCents: 480, cat: catLacteos, sup: proveedorAbarrotes, perish: true, level: "RAW" },
+    { name: "Crema de leche", unit: "l", current: 3, min: 2, critical: 1, optimal: 6, costCents: 850, cat: catLacteos, sup: proveedorAbarrotes, perish: true, level: "RAW" },
     // Bebidas
-    { name: "Inca Kola 1.5L", unit: "unidad", current: 65, min: 40, critical: 20, optimal: 120, costCents: 750, cat: catBebidas, sup: proveedorBebidas, perish: false },
-    { name: "Coca Cola personal", unit: "unidad", current: 95, min: 50, critical: 25, optimal: 150, costCents: 380, cat: catBebidas, sup: proveedorBebidas, perish: false },
-    { name: "Cerveza Cusqueña 620ml", unit: "unidad", current: 85, min: 50, critical: 25, optimal: 150, costCents: 720, cat: catBebidas, sup: proveedorBebidas, perish: false },
-    { name: "Agua mineral 625ml", unit: "unidad", current: 55, min: 40, critical: 20, optimal: 100, costCents: 220, cat: catBebidas, sup: proveedorBebidas, perish: false },
+    { name: "Inca Kola 1.5L", unit: "unidad", current: 65, min: 40, critical: 20, optimal: 120, costCents: 750, cat: catBebidas, sup: proveedorBebidas, perish: false, level: "PREPARED" },
+    { name: "Coca Cola personal", unit: "unidad", current: 95, min: 50, critical: 25, optimal: 150, costCents: 380, cat: catBebidas, sup: proveedorBebidas, perish: false, level: "PREPARED" },
+    { name: "Cerveza Cusqueña 620ml", unit: "unidad", current: 85, min: 50, critical: 25, optimal: 150, costCents: 720, cat: catBebidas, sup: proveedorBebidas, perish: false, level: "PREPARED" },
+    { name: "Agua mineral 625ml", unit: "unidad", current: 55, min: 40, critical: 20, optimal: 100, costCents: 220, cat: catBebidas, sup: proveedorBebidas, perish: false, level: "PREPARED" },
     // Condimentos
-    { name: "Ají panca pasta", unit: "kg", current: 4.5, min: 3, critical: 1, optimal: 10, costCents: 2400, cat: catCondimentos, sup: proveedorAbarrotes, perish: false },
-    { name: "Ají amarillo pasta", unit: "kg", current: 3.8, min: 3, critical: 1, optimal: 10, costCents: 2200, cat: catCondimentos, sup: proveedorAbarrotes, perish: false },
-    { name: "Aceite vegetal", unit: "l", current: 18, min: 10, critical: 5, optimal: 40, costCents: 980, cat: catCondimentos, sup: proveedorAbarrotes, perish: false },
-    { name: "Salsa BBQ", unit: "l", current: 4, min: 3, critical: 1, optimal: 8, costCents: 1800, cat: catCondimentos, sup: proveedorAbarrotes, perish: false },
-    { name: "Mayonesa", unit: "kg", current: 5.5, min: 4, critical: 2, optimal: 12, costCents: 1400, cat: catCondimentos, sup: proveedorAbarrotes, perish: true },
-    { name: "Sal", unit: "kg", current: 6, min: 3, critical: 1, optimal: 10, costCents: 180, cat: catCondimentos, sup: proveedorAbarrotes, perish: false },
-    { name: "Canela", unit: "kg", current: 0.4, min: 0.3, critical: 0.1, optimal: 1, costCents: 8500, cat: catCondimentos, sup: proveedorAbarrotes, perish: false }
+    { name: "Ají panca pasta", unit: "kg", current: 4.5, min: 3, critical: 1, optimal: 10, costCents: 2400, cat: catCondimentos, sup: proveedorAbarrotes, perish: false, level: "RAW" },
+    { name: "Ají amarillo pasta", unit: "kg", current: 3.8, min: 3, critical: 1, optimal: 10, costCents: 2200, cat: catCondimentos, sup: proveedorAbarrotes, perish: false, level: "RAW" },
+    { name: "Aceite vegetal", unit: "l", current: 18, min: 10, critical: 5, optimal: 40, costCents: 980, cat: catCondimentos, sup: proveedorAbarrotes, perish: false, level: "RAW" },
+    { name: "Salsa BBQ", unit: "l", current: 4, min: 3, critical: 1, optimal: 8, costCents: 1800, cat: catCondimentos, sup: proveedorAbarrotes, perish: false, level: "PREPARED" },
+    { name: "Mayonesa", unit: "kg", current: 5.5, min: 4, critical: 2, optimal: 12, costCents: 1400, cat: catCondimentos, sup: proveedorAbarrotes, perish: true, level: "RAW" },
+    { name: "Sal", unit: "kg", current: 6, min: 3, critical: 1, optimal: 10, costCents: 180, cat: catCondimentos, sup: proveedorAbarrotes, perish: false, level: "RAW" },
+    { name: "Canela", unit: "kg", current: 0.4, min: 0.3, critical: 0.1, optimal: 1, costCents: 8500, cat: catCondimentos, sup: proveedorAbarrotes, perish: false, level: "RAW" }
   ];
 
   const ingMap = new Map<string, string>();
@@ -251,7 +282,8 @@ async function main() {
         optimalStock: ing.optimal,
         costPerUnitCents: ing.costCents,
         avgCostPerUnitCents: ing.costCents,
-        trackExpiration: ing.perish
+        trackExpiration: ing.perish,
+        level: ing.level ?? "RAW"
       }
     });
     ingMap.set(ing.name, created.id);
@@ -273,6 +305,93 @@ async function main() {
     }
   }
   console.log(`✓ Created ${ingDefs.length} ingredients (with expiration lots for perishables)`);
+
+  // ═══════════════════════════════════════════════════════════
+  //        Ingredient Transformations (Conversiones)
+  // ═══════════════════════════════════════════════════════════
+  const transformations = [
+    // Pescado bonito: entero → sin vísceras (80% yield)
+    {
+      fromName: "Pescado bonito entero",
+      toName: "Pescado sin vísceras",
+      inputQty: 1.0,
+      outputQty: 0.8,
+      laborMinutes: 5,
+      station: "frio"
+    },
+    // Pescado: sin vísceras → fileteado (75% of intermediate = 60% global)
+    {
+      fromName: "Pescado sin vísceras",
+      toName: "Pescado fileteado",
+      inputQty: 1.0,
+      outputQty: 0.75,
+      laborMinutes: 8,
+      station: "frio"
+    },
+    // Pescado: filete → picado (92% of filete = 55% global)
+    {
+      fromName: "Pescado fileteado",
+      toName: "Pescado picado",
+      inputQty: 1.0,
+      outputQty: 0.92,
+      laborMinutes: 12,
+      station: "prep"
+    },
+    // Pollo: entero → trozado (95% yield)
+    {
+      fromName: "Pollo entero",
+      toName: "Pollo trozado",
+      inputQty: 1.0,
+      outputQty: 0.95,
+      laborMinutes: 5,
+      station: "frio"
+    },
+    // Pollo: trozado → pechugas deshuesadas (70% of trozado = 66.5% global)
+    {
+      fromName: "Pollo trozado",
+      toName: "Pechugas deshuesadas",
+      inputQty: 1.0,
+      outputQty: 0.70,
+      laborMinutes: 4,
+      station: "frio"
+    },
+    // Lomo: entero → limpio (88% yield)
+    {
+      fromName: "Carne de res (lomo)",
+      toName: "Lomo limpio",
+      inputQty: 1.0,
+      outputQty: 0.88,
+      laborMinutes: 6,
+      station: "frio"
+    }
+  ];
+
+  for (const t of transformations) {
+    const fromId = ingMap.get(t.fromName);
+    const toId = ingMap.get(t.toName);
+    if (!fromId || !toId) {
+      console.warn(`⚠ Transformation ${t.fromName} → ${t.toName} skipped (ingredient not found)`);
+      continue;
+    }
+
+    const yieldPct = (t.outputQty / t.inputQty) * 100;
+    const laborCostCents = Math.round(t.laborMinutes * 50); // 50 cents per minute avg
+
+    await prisma.ingredientTransformation.create({
+      data: {
+        restaurantId: restaurant.id,
+        fromIngredientId: fromId,
+        toIngredientId: toId,
+        inputQty: t.inputQty,
+        outputQty: t.outputQty,
+        yieldPct,
+        laborMinutes: t.laborMinutes,
+        laborCostCents,
+        station: t.station
+      }
+    });
+  }
+  console.log(`✓ Created ${transformations.length} ingredient transformations`);
 
   // ═══════════════════════════════════════════════════════════
   //                Recipes (menu item ←→ ingredients)

@@ -279,6 +279,76 @@ Devuelve SOLO un JSON con esta forma exacta:
     }
   }
 
+  /**
+   * Extrae items de una foto de guía de proveedor (Claude Vision).
+   * Devuelve lista de productos con cantidades y precios unitarios.
+   */
+  async extractFromGoodsReceiptPhoto(
+    imageBase64: string,
+    expectedIngredientNames: string[] = []
+  ): Promise<{
+    items: {
+      name: string;
+      quantity: number;
+      unit: string;
+      unitPrice: number;
+      lotNumber?: string;
+      expirationDate?: string;
+    }[];
+    guideNumber?: string;
+    supplierName?: string;
+    notes?: string;
+  } | null> {
+    if (!this.enabled) return null;
+
+    const catalogHint = expectedIngredientNames.length > 0
+      ? `\n\nExpected ingredients in this delivery: ${expectedIngredientNames.join(", ")}`
+      : "";
+
+    const text = await this.callClaude({
+      system: `Eres experto en lectura de guías de proveedores de restaurantes peruanos. Recibe una foto de una guía de remisión o documento de compra. Extrae:
+- Número de guía
+- Nombre del proveedor (si visible)
+- Lista de productos con: nombre exacto, cantidad, unidad, precio unitario (si visible)
+- Lote y fecha de vencimiento (si están presentes)
+
+Reglas:
+- Sé conservador: si no puedes leer claramente, marca como "uncertain"
+- Extrae SOLO lo que ves en la imagen
+- Standardiza unidades: kg, g, l, ml, unidad, docena, atado
+- Precios: si ve "S/ 25,50 x kg", extrae 25.50
+- Devuelve SOLO JSON válido, sin markdown, sin explicación
+
+Forma exacta esperada:
+{
+  "items": [
+    {"name": "Pollo entero", "quantity": 5, "unit": "unidad", "unitPrice": 18.50, "lotNumber": "L-2024-001", "expirationDate": "2024-12-31"}
+  ],
+  "guideNumber": "G-123456",
+  "supplierName": "Avícola San Fernando",
+  "notes": "Observaciones generales"
+}${catalogHint}`,
+      messages: [
+        {
+          role: "user",
+          content: "Por favor, extrae todos los items de esta guía de proveedor."
+        }
+      ],
+      maxTokens: 2000,
+      temperature: 0.1,
+      visionImage: { mediaType: "image/jpeg", data: imageBase64 }
+    });
+
+    if (!text) return null;
+    try {
+      const cleaned = text.replace(/```json\s*|\s*```/g, "").trim();
+      return JSON.parse(cleaned);
+    } catch (err) {
+      logger.warn({ err, text: text.slice(0, 200) }, "AI goods receipt photo parse failed");
+      return null;
+    }
+  }
+
   // ═══════════════════════════════════════════════════════════
   //                ERP — EXPIRATION RISK ANALYSIS
   // ═══════════════════════════════════════════════════════════

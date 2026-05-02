@@ -29,6 +29,10 @@ import { supplierRoutes } from "./routes/suppliers.routes.js";
 import { pnlRoutes } from "./routes/pnl.routes.js";
 import { campaignRoutes } from "./routes/campaigns.routes.js";
 import { publicRoutes } from "./routes/public.routes.js";
+import { transformationRoutes } from "./routes/transformations.routes.js";
+import { planRoutes } from "./routes/plans.routes.js";
+import { goodsReceiptRoutes } from "./routes/goods-receipts.routes.js";
+import { auditRoutes } from "./routes/audit.routes.js";
 
 const app = express();
 const server = createServer(app);
@@ -102,6 +106,12 @@ app.use("/api/inventory", inventoryRoutes);
 app.use("/api/suppliers", supplierRoutes);
 app.use("/api/pnl", pnlRoutes);
 app.use("/api/campaigns", campaignRoutes);
+
+// Pivot: transformations, plans, goods receipts, audit
+app.use("/api/transformations", transformationRoutes);
+app.use("/api/plans", planRoutes);
+app.use("/api/goods-receipts", goodsReceiptRoutes);
+app.use("/api/audit", auditRoutes);
 
 // Public routes (no auth, used by cliente.html with qrToken)
 app.use("/api/public", publicRoutes);

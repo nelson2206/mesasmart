@@ -377,6 +377,42 @@
     .stats > div:nth-child(3) .stat-label { animation-delay: 300ms; }
     .stats > div:nth-child(4) .stat-num { animation-delay: 450ms; }
     .stats > div:nth-child(4) .stat-label { animation-delay: 450ms; }
+
+    /* Why section */
+    .why-section {
+      padding: 80px 0;
+      background: var(--cream);
+    }
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+    }
+    .why-card {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .why-icon {
+      font-size: 32px;
+      margin-bottom: 16px;
+      display: inline-block;
+    }
+    .why-card h4 {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--ink);
+    }
+    .why-card p {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--muted);
+    }
   </style>
 </head>
 <body>
@@ -387,8 +423,8 @@
         <div class="brand-logo">M</div>
         <span class="brand-text">MESASMART</span>
       </div>
-      <h1>El sistema operativo del restaurante <em>peruano moderno.</em></h1>
-      <p>Una plataforma, cuatro experiencias. Diseñado desde el cliente hasta la cocina, cumpliendo SUNAT al 100%.</p>
+      <h1>El ERP simple para tu restaurante peruano. <em>Operación, costos y crecimiento</em> sin complicaciones.</h1>
+      <p>Conoce tu costo real por plato. Recibe mercadería con foto IA. Crece de 1 a 50 locales sin migrar de sistema.</p>
       <div class="badges">
         <span class="badge"><span class="badge-dot"></span>Cumple SUNAT (RS 097-2012)</span>
         <span class="badge"><span class="badge-dot"></span>Yape · Plin · Tarjeta</span>
@@ -398,20 +434,48 @@
       </div>
       <div class="stats">
         <div>
-          <div class="stat-num">−30%</div>
-          <div class="stat-label">tiempo de atención</div>
+          <div class="stat-num">−15%</div>
+          <div class="stat-label">merma de inventario</div>
         </div>
         <div>
-          <div class="stat-num">+18%</div>
-          <div class="stat-label">ticket promedio</div>
+          <div class="stat-num">+12pp</div>
+          <div class="stat-label">margen identificado</div>
         </div>
         <div>
-          <div class="stat-num">12 min</div>
-          <div class="stat-label">ahorrados por mesa</div>
+          <div class="stat-num">30 seg</div>
+          <div class="stat-label">para recibir guía con IA</div>
         </div>
         <div>
-          <div class="stat-num">5×</div>
-          <div class="stat-label">más reseñas Google</div>
+          <div class="stat-num">1 a 50</div>
+          <div class="stat-label">locales sin migrar</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="why-section">
+    <div class="container">
+      <div class="section-title">
+        <div>
+          <h2>Por qué MesaSmart</h2>
+          <p>Las tres características clave que diferencian al operador de cocina peruana.</p>
+        </div>
+      </div>
+      <div class="why-grid">
+        <div class="why-card">
+          <div class="why-icon">🔄</div>
+          <h4>Conversiones de insumos</h4>
+          <p>Conoce el costo real de cada plato incluyendo mermas y labor. Pescado entero → fileteado sin perder track del yield.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">📥</div>
+          <h4>Recepción con foto IA</h4>
+          <p>Toma foto a la guía del proveedor y la IA extrae los items en 30 segundos. Sin digitación manual.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">⚙️</div>
+          <h4>Modular según tu tamaño</h4>
+          <p>Empieza con 1 local. Activa módulos cuando los necesites. Crece a 50 sin cambiar de sistema.</p>
         </div>
       </div>
     </div>
@@ -428,25 +492,46 @@
 
       <div class="role-grid">
 
-        <a href="cliente.html" class="role-card accent-clay">
+        <a href="erp.html" class="role-card accent-clay">
           <div class="role-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="6" width="20" height="14" rx="2" />
-              <line x1="6" y1="20" x2="18" y2="20" />
-              <line x1="12" y1="20" x2="12" y2="22" />
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z" />
             </svg>
           </div>
-          <p class="role-meta">Tablet · Tablet en mesa</p>
-          <h3>Cliente</h3>
-          <p>Carta digital con fotos profesionales, filtros, favoritos, llamar al mozo, pago y comprobante electrónico.</p>
+          <p class="role-meta">Web · Dueño y administrador</p>
+          <h3>ERP + Marketing IA</h3>
+          <p>Conversiones de insumos, recepción de guías con IA, modularidad por tamaño, multi-local, P&L y CRM.</p>
           <ul class="role-features">
-            <li>Carta foto-first con búsqueda</li>
-            <li>Carrito sticky y bottom sheets</li>
-            <li>Boleta / Factura SUNAT</li>
-            <li>Yape, Plin, tarjeta, efectivo</li>
+            <li>Pescado entero → fileteado con yields reales</li>
+            <li>Recibir mercadería en 30 segundos con foto IA</li>
+            <li>Crece de 1 a 50 locales sin migrar</li>
+            <li>Campañas IA y segmentación automática</li>
           </ul>
           <span class="role-cta">
-            Abrir vista cliente
+            Abrir ERP
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </span>
+        </a>
+
+        <a href="admin.html" class="role-card accent-gold">
+          <div class="role-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="20" x2="12" y2="10" />
+              <line x1="18" y1="20" x2="18" y2="4" />
+              <line x1="6" y1="20" x2="6" y2="16" />
+            </svg>
+          </div>
+          <p class="role-meta">Web · PC del administrador</p>
+          <h3>Administrador</h3>
+          <p>Multi-local consolidado, plan de planes modular, audit log, gestión completa.</p>
+          <ul class="role-features">
+            <li>Floor plan en tiempo real</li>
+            <li>Ventas por hora y top platos</li>
+            <li>Llamados activos del salón</li>
+            <li>Personal y reportes</li>
+          </ul>
+          <span class="role-cta">
+            Abrir panel admin
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           </span>
         </a>
@@ -473,29 +558,6 @@
           </span>
         </a>
 
-        <a href="admin.html" class="role-card accent-gold">
-          <div class="role-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="20" x2="12" y2="10" />
-              <line x1="18" y1="20" x2="18" y2="4" />
-              <line x1="6" y1="20" x2="6" y2="16" />
-            </svg>
-          </div>
-          <p class="role-meta">Web · PC del administrador</p>
-          <h3>Administrador</h3>
-          <p>Dashboard con KPIs en vivo, plano de mesas, reportes de ventas y gestión completa del restaurante.</p>
-          <ul class="role-features">
-            <li>Floor plan en tiempo real</li>
-            <li>Ventas por hora y top platos</li>
-            <li>Llamados activos del salón</li>
-            <li>Personal y reportes</li>
-          </ul>
-          <span class="role-cta">
-            Abrir panel admin
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </span>
-        </a>
-
         <a href="mozo.html" class="role-card accent-olive">
           <div class="role-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -518,30 +580,31 @@
           </span>
         </a>
 
-        <a href="erp.html" class="role-card" style="--accent: #C8941F; --accent-soft: rgba(200,148,31,0.10);">
+        <a href="cliente.html" class="role-card accent-clay">
           <div class="role-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-              <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-              <line x1="12" y1="22.08" x2="12" y2="12" />
+              <rect x="2" y="6" width="20" height="14" rx="2" />
+              <line x1="6" y1="20" x2="18" y2="20" />
+              <line x1="12" y1="20" x2="12" y2="22" />
             </svg>
           </div>
-          <p class="role-meta">Web · Administrador y dueño</p>
-          <h3>ERP + Marketing IA</h3>
-          <p>Inventario foto-first, recetas, proveedores con auto-pedido, P&L por mozo/día/categoría y campañas IA inteligentes.</p>
+          <p class="role-meta">ADD-ON · Tablet en mesa (opcional)</p>
+          <h3>Cliente</h3>
+          <p>Tablet en mesa para auto-pedido. Funciona perfecto en fast food y restaurantes con alta transaccionalidad.</p>
           <ul class="role-features">
-            <li>Conteo de inventario por foto IA</li>
-            <li>Caducidad y auto-restock</li>
-            <li>P&L con vistas múltiples</li>
-            <li>Campañas IA con análisis de data</li>
+            <li>Carta foto-first con búsqueda</li>
+            <li>Carrito sticky y bottom sheets</li>
+            <li>Boleta / Factura SUNAT</li>
+            <li>Yape, Plin, tarjeta, efectivo</li>
           </ul>
           <span class="role-cta">
-            Abrir ERP
+            Abrir vista cliente
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           </span>
         </a>
 
       </div>
+    
     </div>
   </section>
 
@@ -570,6 +633,18 @@
     </div>
   </section>
 
+  <section style="padding: 40px 0; background: var(--paper); border-top: 1px solid var(--border); text-align: center;">
+    <div class="container">
+      <p style="font-size: 14px; color: var(--muted); margin-bottom: 12px;">¿Eres consultor o implementador?</p>
+      <p style="font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 600; color: var(--ink); margin-bottom: 16px;">
+        Sé partner certificado de MesaSmart
+      </p>
+      <a href="#" style="display: inline-flex; align-items: center; gap: 6px; color: var(--clay); text-decoration: none; font-weight: 600; font-size: 14px; transition: color 0.2s;" onmouseover="this.style.color='var(--clay-dark)'" onmouseout="this.style.color='var(--clay)'">
+        Conoce el programa →
+      </a>
+    </div>
+  </section>
+
   <footer>
     <div class="container">
       <div class="footer-content">
@@ -584,6 +659,7 @@
           <a href="DESIGN_SYSTEM.md">Design System</a>
           <a href="BENCHMARK.md">Benchmark</a>
           <a href="README.md">Documentación</a>
+          <a href="PITCH.html">Ver pitch para socios</a>
         </div>
         <p class="footer-copyright">© 2026 MesaSmart · Prototipo MVP · Cumple SUNAT (RS 097-2012)</p>
       </div>
