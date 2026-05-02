@@ -5,8 +5,10 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Para producción: PostgreSQL en Render / Neon / Supabase
+// Para dev local: usar docker-compose up para Postgres en localhost
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

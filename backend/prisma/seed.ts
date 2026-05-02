@@ -6,7 +6,14 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 Seeding MesaSmart database...");
 
-  // Clean (in dev only)
+  // Idempotent guard: skip if DB already has restaurants (prod safety)
+  const existing = await prisma.restaurant.count();
+  if (existing > 0 && process.env.SEED_FORCE !== "true") {
+    console.log(`✓ DB already seeded (${existing} restaurants). Skipping. Set SEED_FORCE=true to re-seed.`);
+    return;
+  }
+
+  // Clean (used for re-seeding)
   await prisma.modificationRequest.deleteMany();
   await prisma.payment.deleteMany();
   await prisma.comprobante.deleteMany();

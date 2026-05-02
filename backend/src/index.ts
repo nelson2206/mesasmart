@@ -36,19 +36,40 @@ const server = createServer(app);
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(
   cors({
-    origin: env.CORS_ORIGINS === "*" ? true : env.CORS_ORIGINS.split(","),
+    origin: env.CORS_ORIGINS === "*" ? true : (origin, cb) => {
+      if (!origin) return cb(null, true); // mobile apps, curl
+      const allowed = env.CORS_ORIGINS.split(",").map(s => s.trim());
+      if (allowed.includes(origin) || allowed.some(a => a.endsWith("*") && origin.startsWith(a.slice(0, -1)))) {
+        return cb(null, true);
+      }
+      cb(new Error(`CORS: origin ${origin} not allowed`));
+    },
     credentials: true
   })
 );
 app.use(express.json({ limit: "1mb" }));
-app.use(
-  rateLimit({
+
+// Skip rate limit on health checks (Render pings these constantly)
+app.use((req, res, next) => {
+  if (req.path.startsWith("/health")) return next();
+  return rateLimit({
     windowMs: 60 * 1000,
     max: 200,
     standardHeaders: true,
     legacyHeaders: false
-  })
-);
+  })(req, res, next);
+});
+
+// ─── Root: API info ───
+app.get("/", (_req, res) => {
+  res.json({
+    name: "MesaSmart API",
+    version: "0.1.0",
+    docs: "https://github.com/nelson2206/mesasmart",
+    health: "/health",
+    api: "/api"
+  });
+});
 
 // ─── Health ───
 app.get("/health", (_req, res) => res.json({ ok: true, ts: Date.now() }));
