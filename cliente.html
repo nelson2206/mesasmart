@@ -351,6 +351,72 @@
       color: #A0322B;
     }
 
+    /* ─── PREMIUM CALL WAITER FAB ────────────────────── */
+    .waiter-fab {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 40;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 22px 14px 16px;
+      background: linear-gradient(135deg, #A0322B 0%, #C8941F 100%);
+      color: white;
+      border: none;
+      border-radius: 100px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'Inter', system-ui, sans-serif;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow:
+        0 12px 32px rgba(160,50,43,0.40),
+        0 0 0 1px rgba(255,255,255,0.10) inset,
+        0 1px 0 rgba(255,255,255,0.20) inset;
+    }
+    .waiter-fab:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow:
+        0 18px 40px rgba(160,50,43,0.55),
+        0 0 0 1px rgba(255,255,255,0.20) inset;
+    }
+    .waiter-fab:active { transform: translateY(-1px) scale(1); }
+    .waiter-fab-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px; height: 32px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 50%;
+    }
+    .waiter-fab-label {
+      white-space: nowrap;
+      letter-spacing: 0.005em;
+    }
+    .waiter-fab-pulse {
+      position: absolute;
+      inset: 0;
+      border-radius: 100px;
+      pointer-events: none;
+      animation: waiterFabRing 2.4s ease-out infinite;
+    }
+    @keyframes waiterFabRing {
+      0% { box-shadow: 0 0 0 0 rgba(160,50,43,0.50); }
+      70% { box-shadow: 0 0 0 18px rgba(160,50,43,0); }
+      100% { box-shadow: 0 0 0 0 rgba(160,50,43,0); }
+    }
+    .waiter-fab-called {
+      background: linear-gradient(135deg, #2D7D5A 0%, #4A9B72 100%);
+      box-shadow: 0 8px 24px rgba(45,125,90,0.40);
+    }
+    .waiter-fab-called:hover { box-shadow: 0 12px 32px rgba(45,125,90,0.55); }
+
+    @media (max-width: 480px) {
+      .waiter-fab-label { display: none; }
+      .waiter-fab { padding: 14px; }
+    }
+
     /* Image fallback gradient pattern */
     .fallback-bg {
       background-image:
@@ -1042,7 +1108,7 @@
     }
 
     // Cart sheet (right drawer)
-    function CartSheet({ open, onClose, cart, updateQty, onCheckout, onCallWaiter }) {
+    function CartSheet({ open, onClose, cart, updateQty, onCheckout, onCallWaiter, servingMode, setServingMode }) {
       if (!open) return null;
       const subtotal = cart.reduce((s, c) => s + c.item.price * c.qty, 0);
       return (
@@ -1094,7 +1160,30 @@
             </div>
             {cart.length > 0 && (
               <div className="border-t border-border p-5 space-y-3 bg-paper">
-                <div className="flex justify-between">
+                {/* Serving mode preference */}
+                <div>
+                  <p className="text-sm font-semibold mb-2">¿Cómo prefieres recibir tus platos?</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setServingMode("together")}
+                      className={`p-3 rounded-xl border-2 text-left transition ${servingMode === "together" ? 'border-clay bg-clay/5' : 'border-border bg-paper hover:border-charcoal/40'}`}
+                    >
+                      <div className="text-2xl">🍽️</div>
+                      <p className="font-semibold text-sm mt-1">Todos juntos</p>
+                      <p className="text-[11px] text-muted leading-tight mt-0.5">Cocina sincroniza · puede demorar más</p>
+                    </button>
+                    <button
+                      onClick={() => setServingMode("asReady")}
+                      className={`p-3 rounded-xl border-2 text-left transition ${servingMode === "asReady" ? 'border-clay bg-clay/5' : 'border-border bg-paper hover:border-charcoal/40'}`}
+                    >
+                      <div className="text-2xl">⚡</div>
+                      <p className="font-semibold text-sm mt-1">Según vayan saliendo</p>
+                      <p className="text-[11px] text-muted leading-tight mt-0.5">Más rápido · platos al ritmo de cocina</p>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex justify-between pt-1">
                   <span className="text-muted">Subtotal</span>
                   <span className="font-bold">{PEN(subtotal)}</span>
                 </div>
@@ -1973,10 +2062,17 @@
       return (
         <button
           onClick={onClick}
-          className={`fixed bottom-4 right-4 z-30 w-14 h-14 rounded-full shadow-float flex items-center justify-center transition ${called ? 'bg-olive text-white' : 'bg-paper border border-border text-clay hover:bg-clay hover:text-white'}`}
+          className={`waiter-fab ${called ? 'waiter-fab-called' : ''}`}
           title="Llamar al mozo"
+          aria-label="Llamar al mozo"
         >
-          <Icon name={called ? "check" : "bell"} size={22} />
+          <span className="waiter-fab-icon">
+            <Icon name={called ? "check" : "bell"} size={20} />
+          </span>
+          <span className="waiter-fab-label">
+            {called ? "Mozo en camino" : "Llamar al mozo"}
+          </span>
+          {!called && <span className="waiter-fab-pulse"></span>}
         </button>
       );
     }
@@ -2000,6 +2096,7 @@
       const [backendStatus, setBackendStatus] = useState("connecting"); // connecting | online | offline
       const [orderId, setOrderId] = useState(null);
       const [dataVersion, setDataVersion] = useState(0);
+      const [servingMode, setServingMode] = useState("asReady"); // together | asReady
 
       // Fetch backend session on mount
       useEffect(() => {
@@ -2047,13 +2144,16 @@
         // Si backend está online, persiste la orden ahí
         if (backendStatus === "online" && RESTAURANT.qrToken && cart.length > 0) {
           try {
+            const servingNote = servingMode === "together"
+              ? "[Servir todo junto]"
+              : "[Servir según salgan]";
             const order = await window.MesaSmartAPI.public.createOrder(
               RESTAURANT.qrToken,
               splitN || 1,
               cart.map(c => ({
                 menuItemId: c.item.backendId || c.item.id,
                 qty: c.qty,
-                notes: c.notes,
+                notes: [servingNote, c.notes].filter(Boolean).join(" · "),
                 course: "MAIN"
               }))
             );
@@ -2096,7 +2196,7 @@
           }} />}
 
           <DetailSheet item={selectedItem} onClose={() => setSelectedItem(null)} onAdd={addToCart} isFav={selectedItem && favorites.includes(selectedItem.id)} onFav={toggleFav} />
-          <CartSheet open={cartOpen} onClose={() => setCartOpen(false)} cart={cart} updateQty={updateQty} onCheckout={submitOrder} onCallWaiter={() => { setCartOpen(false); setWaiterOpen(true); }} />
+          <CartSheet open={cartOpen} onClose={() => setCartOpen(false)} cart={cart} updateQty={updateQty} onCheckout={submitOrder} onCallWaiter={() => { setCartOpen(false); setWaiterOpen(true); }} servingMode={servingMode} setServingMode={setServingMode} />
           <CallWaiterModal open={waiterOpen} onClose={() => setWaiterOpen(false)} onConfirm={callWaiter} />
 
           {screen === "menu" && <CartBar count={cartCount} total={subtotal} onClick={() => setCartOpen(true)} />}
