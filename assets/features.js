@@ -36,7 +36,8 @@
     PROFESIONAL: {
       id: "PROFESIONAL",
       name: "Profesional",
-      tagline: "Para 2-15 locales con IA · S/ 399/mes",
+      tagline: "Para 2-15 locales · IA operativa incluida · S/ 399/mes",
+      summary: "ERP completo + IA en cocina, mozo, marketing y compras",
       priceCents: 39900,
       setupCents: 80000,
       color: "#A0322B",
@@ -45,9 +46,10 @@
     ENTERPRISE: {
       id: "ENTERPRISE",
       name: "Enterprise",
-      tagline: "Para 16+ locales · soporte priority · S/ 799/mes",
-      priceCents: 79900,
-      setupCents: 150000,
+      tagline: "Para 16+ locales o cadenas · gobierno corporativo · S/ 1499/mes",
+      summary: "Forecasting IA, SSO, integraciones contables/BI, CSM dedicado y SLA 99.9%",
+      priceCents: 149900,
+      setupCents: 250000,
       color: "#C8941F",
       gradient: "linear-gradient(135deg, #A0322B 0%, #C8941F 100%)"
     }
@@ -140,30 +142,95 @@
     },
     {
       id: "ia_avanzada",
-      name: "Inteligencia operativa",
+      name: "IA operativa",
       desc: "IA real integrada · no chatbot decorativo",
       icon: "🤖",
       color: "#1F1A17",
       features: [
         { id: "smart_priority", name: "Smart Priority cocina", desc: "Algoritmo prioriza tickets en KDS", icon: "⚡", plans: ["PROFESIONAL", "ENTERPRISE"] },
         { id: "ai_assistant_waiter", name: "Asistente IA mozo", desc: "Sugiere acciones en tiempo real", icon: "🧭", plans: ["PROFESIONAL", "ENTERPRISE"] },
-        { id: "ai_explanations", name: "Explicaciones IA", desc: "Claude explica decisiones operativas", icon: "💬", plans: ["ENTERPRISE"] },
-        { id: "expiration_predict", name: "Predicción de mermas", desc: "IA estima riesgo de pérdida por caducidad", icon: "🔮", plans: ["ENTERPRISE"] }
+        { id: "ai_explanations", name: "Explicaciones IA por decisión", desc: "Claude justifica priorizaciones, alertas y campañas", icon: "💬", plans: ["PROFESIONAL", "ENTERPRISE"] },
+        { id: "expiration_predict", name: "Predicción de mermas", desc: "IA estima riesgo de pérdida por caducidad", icon: "🔮", plans: ["PROFESIONAL", "ENTERPRISE"] }
+      ]
+    },
+    {
+      id: "ia_avanzada_enterprise",
+      name: "IA avanzada · Enterprise",
+      desc: "Modelos de forecasting y optimización a escala",
+      icon: "🧠",
+      color: "#7C3AED",
+      enterpriseOnly: true,
+      features: [
+        { id: "forecast_demand_ai", name: "Forecast de demanda 14 días", desc: "Predice ventas por local/hora con histórico + clima + feriados", icon: "📈", plans: ["ENTERPRISE"] },
+        { id: "staff_optimizer_ai", name: "Optimización de turnos IA", desc: "Sugiere staffing óptimo por local según forecast", icon: "🗓️", plans: ["ENTERPRISE"] },
+        { id: "menu_engineering_ai", name: "Menu engineering IA", desc: "Clasifica platos en stars/dogs · sugiere precios", icon: "📊", plans: ["ENTERPRISE"] },
+        { id: "anomaly_detection", name: "Detección de anomalías", desc: "Alerta automática si fuga de stock o caídas de venta", icon: "🚨", plans: ["ENTERPRISE"] },
+        { id: "fine_tune_brand", name: "IA fine-tuned a tu marca", desc: "Modelo entrenado con tus recetas, voz y políticas", icon: "🎯", plans: ["ENTERPRISE"] }
       ]
     },
     {
       id: "escalamiento",
-      name: "Multi-local y escalamiento",
+      name: "Multi-local y operación",
       desc: "Crece sin migrar de sistema",
       icon: "🏬",
       color: "#3B82F6",
       features: [
         { id: "multi_location", name: "Multi-local consolidado", desc: "P&L por local + comparativos", icon: "🌐", plans: ["PROFESIONAL", "ENTERPRISE"] },
+        { id: "audit_log", name: "Auditoría completa", desc: "Trazabilidad de todos los cambios", icon: "🔒", plans: ["PROFESIONAL", "ENTERPRISE"] },
         { id: "transfers", name: "Transferencias entre locales", desc: "Mueve insumos · contabiliza autom.", icon: "🔁", plans: ["ENTERPRISE"] },
         { id: "central_purchases", name: "Compras centralizadas", desc: "1 PO para todos los locales", icon: "📦", plans: ["ENTERPRISE"] },
-        { id: "audit_log", name: "Auditoría completa", desc: "Trazabilidad de todos los cambios", icon: "🔒", plans: ["PROFESIONAL", "ENTERPRISE"] },
-        { id: "priority_support", name: "Soporte priority", desc: "Respuesta < 2 horas · canal directo", icon: "📞", plans: ["ENTERPRISE"] },
-        { id: "partners_program", name: "Implementadores certificados", desc: "Red de partners para tu rollout", icon: "🤝", plans: ["ENTERPRISE"] }
+        { id: "central_kitchen", name: "Cocina central / commissary", desc: "Producción centralizada → distribución a locales", icon: "🏭", plans: ["ENTERPRISE"] },
+        { id: "consolidated_pnl", name: "P&L consolidado de holding", desc: "Reporte agregado para directorio · multi-RUC", icon: "🏛️", plans: ["ENTERPRISE"] },
+        { id: "exec_reports", name: "Reportes ejecutivos al directorio", desc: "PDF mensual automático con KPIs por local", icon: "📑", plans: ["ENTERPRISE"] }
+      ]
+    },
+    {
+      id: "gobierno",
+      name: "Gobierno corporativo",
+      desc: "Lo que el área de TI/Compliance va a pedir",
+      icon: "🛡️",
+      color: "#1F1A17",
+      enterpriseOnly: true,
+      features: [
+        { id: "sso_saml", name: "SSO · SAML / OIDC", desc: "Login con Google Workspace, Azure AD, Okta", icon: "🔐", plans: ["ENTERPRISE"] },
+        { id: "granular_roles", name: "Roles y permisos granulares", desc: "Define permisos al nivel de campo/acción", icon: "🧩", plans: ["ENTERPRISE"] },
+        { id: "ip_allowlist", name: "Restricciones por IP", desc: "Solo se accede desde tus oficinas/locales", icon: "🌐", plans: ["ENTERPRISE"] },
+        { id: "data_residency", name: "Backup diario + retención 7 años", desc: "Cumple SUNAT · backup encriptado", icon: "💾", plans: ["ENTERPRISE"] },
+        { id: "sla_99_9", name: "SLA 99.9% con créditos", desc: "Compromiso contractual · créditos automáticos", icon: "📜", plans: ["ENTERPRISE"] },
+        { id: "white_label", name: "White-label opcional", desc: "Branding propio · logo · dominio custom", icon: "🎨", plans: ["ENTERPRISE"] },
+        { id: "dedicated_environment", name: "Ambiente dedicado", desc: "Base de datos aislada · no shared tenancy", icon: "🏗️", plans: ["ENTERPRISE"] }
+      ]
+    },
+    {
+      id: "integraciones",
+      name: "Integraciones corporativas",
+      desc: "Conecta con tu stack contable, BI y bancario",
+      icon: "🔌",
+      color: "#2D7D5A",
+      enterpriseOnly: true,
+      features: [
+        { id: "api_webhooks", name: "API REST + Webhooks", desc: "Endpoints abiertos para tus sistemas internos", icon: "🛜", plans: ["ENTERPRISE"] },
+        { id: "concar_export", name: "Export a Concar / SAP / Siigo", desc: "Asientos contables generados automáticamente", icon: "📤", plans: ["ENTERPRISE"] },
+        { id: "bi_export", name: "Conector Power BI / Tableau", desc: "Dataset directo para tu equipo de analytics", icon: "📊", plans: ["ENTERPRISE"] },
+        { id: "bank_reconciliation", name: "Conciliación bancaria automática", desc: "Cruza cuentas BCP/BBVA/Interbank con caja", icon: "🏦", plans: ["ENTERPRISE"] },
+        { id: "delivery_aggregators", name: "Integración Rappi / PedidosYa", desc: "Pedidos y stock sincronizados con apps", icon: "🛵", plans: ["ENTERPRISE"] },
+        { id: "loyalty_integration", name: "Integración con CRM externo", desc: "HubSpot, Salesforce, Mailchimp", icon: "🔗", plans: ["ENTERPRISE"] }
+      ]
+    },
+    {
+      id: "soporte_enterprise",
+      name: "Soporte Enterprise",
+      desc: "Acompañamiento humano dedicado",
+      icon: "🤝",
+      color: "#C8941F",
+      enterpriseOnly: true,
+      features: [
+        { id: "csm_dedicated", name: "Customer Success Manager dedicado", desc: "Una persona asignada a tu cuenta", icon: "👤", plans: ["ENTERPRISE"] },
+        { id: "priority_support", name: "Soporte priority 24/7", desc: "Respuesta < 1 hora · canal directo Slack/WhatsApp", icon: "📞", plans: ["ENTERPRISE"] },
+        { id: "quarterly_review", name: "Quarterly business review", desc: "Reunión trimestral revisión KPIs y roadmap", icon: "🔭", plans: ["ENTERPRISE"] },
+        { id: "training_recurring", name: "Capacitación recurrente", desc: "Onboarding inicial + refrescos para nuevo staff", icon: "🎓", plans: ["ENTERPRISE"] },
+        { id: "partners_program", name: "Implementadores certificados", desc: "Red de partners para tu rollout multi-local", icon: "🛠️", plans: ["ENTERPRISE"] },
+        { id: "custom_dev_hours", name: "Horas de desarrollo custom", desc: "Bolsa mensual para integraciones a medida", icon: "⚙️", plans: ["ENTERPRISE"] }
       ]
     }
   ];
