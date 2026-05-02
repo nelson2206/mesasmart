@@ -204,12 +204,12 @@
       );
     }
 
-    function Tabs({ active, setActive, callCount }) {
+    function Tabs({ active, setActive, callCount, aiCount }) {
       const tabs = [
+        { id: "asistente", label: "✨ Asistente", badge: aiCount },
         { id: "mesas", label: "Mis mesas" },
         { id: "plano", label: "Plano" },
-        { id: "llamados", label: "Llamados", badge: callCount },
-        { id: "pedidos", label: "Pedidos" }
+        { id: "llamados", label: "Llamados", badge: callCount }
       ];
       return (
         <div className="bg-paper border-b border-border sticky top-[136px] z-20">
@@ -873,6 +873,341 @@
       );
     }
 
+    // ════════════════════════════════════════════════════════
+    //              ASISTENTE IA (Smart Service)
+    // ════════════════════════════════════════════════════════
+    // Basado en benchmark de 10 Steps of Service de la industria.
+    // Genera recomendaciones priorizadas en tiempo real.
+
+    const AI_DEFAULT_CONFIG = {
+      // Cada tipo: { enabled, weight (0-100), thresholdMin (minutos) }
+      complaint:        { enabled: true,  weight: 100, thresholdMin: 0 },
+      callPending:      { enabled: true,  weight: 90,  thresholdMin: 1 },
+      foodReady:        { enabled: true,  weight: 85,  thresholdMin: 2 },
+      newTableGreet:    { enabled: true,  weight: 75,  thresholdMin: 0.5 },
+      drinkDelay:       { enabled: true,  weight: 70,  thresholdMin: 5 },
+      checkBack:        { enabled: true,  weight: 60,  thresholdMin: 5 },
+      preBus:           { enabled: true,  weight: 45,  thresholdMin: 3 },
+      offerDessert:     { enabled: true,  weight: 50,  thresholdMin: 8 },
+      cleanTable:       { enabled: true,  weight: 55,  thresholdMin: 1 },
+      refillDrink:      { enabled: true,  weight: 35,  thresholdMin: 10 },
+      vipAttention:     { enabled: true,  weight: 80,  thresholdMin: 0 },
+      walkRound:        { enabled: true,  weight: 30,  thresholdMin: 10 }
+    };
+
+    const AI_CONFIG_KEY = "mesasmart_ai_assistant_config_v1";
+    function loadAIConfig() {
+      try {
+        const stored = localStorage.getItem(AI_CONFIG_KEY);
+        if (stored) return { ...AI_DEFAULT_CONFIG, ...JSON.parse(stored) };
+      } catch {}
+      return AI_DEFAULT_CONFIG;
+    }
+
+    /**
+     * Algoritmo de recomendaciones del mozo.
+     * Toma estado actual (mesas, llamados) y devuelve lista priorizada de acciones.
+     */
+    function generateRecommendations({ tables, calls, config, dismissed = new Set() }) {
+      const recs = [];
+      const now = Date.now();
+
+      const myTables = tables.filter(t => t.server === ME.name);
+
+      // 1. Quejas activas → urgente
+      myTables.filter(t => t.complaint && config.complaint.enabled).forEach(t => {
+        recs.push({
+          id: `complaint-${t.id}`,
+          type: "complaint",
+          urgency: "critical",
+          icon: "alert",
+          title: `Atender queja en Mesa ${t.id}`,
+          desc: t.complaint,
+          mesa: t.id,
+          actions: ["resolved", "later"],
+          score: config.complaint.weight + 50,
+          ageLabel: "AHORA"
+        });
+      });
+
+      // 2. Llamados pendientes
+      calls.filter(c => config.callPending.enabled).forEach(c => {
+        const ageMin = Math.max(c.time, 0);
+        recs.push({
+          id: `call-${c.id}`,
+          type: "callPending",
+          urgency: c.urgent || ageMin > 3 ? "high" : "medium",
+          icon: "bell",
+          title: `Mesa ${c.mesa} te llamó`,
+          desc: c.reason,
+          mesa: c.mesa,
+          actions: ["resolved", "later"],
+          score: config.callPending.weight + ageMin * 5,
+          ageLabel: `hace ${ageMin} min`
+        });
+      });
+
+      // 3. Platos listos para servir (>2 min en cocina = urgente)
+      myTables.forEach(t => {
+        if (!config.foodReady.enabled) return;
+        const readyItems = (t.items || []).filter(i => i.status === "ready");
+        if (readyItems.length === 0) return;
+        const urgency = readyItems.length >= 2 ? "high" : "medium";
+        recs.push({
+          id: `ready-${t.id}`,
+          type: "foodReady",
+          urgency,
+          icon: "utensils",
+          title: `Llevar ${readyItems.length} ${readyItems.length === 1 ? 'plato listo' : 'platos listos'}`,
+          desc: `Mesa ${t.id} · ${readyItems.map(i => i.qty + '× ' + i.name).join(', ')}`,
+          mesa: t.id,
+          actions: ["served", "later"],
+          score: config.foodReady.weight + readyItems.length * 5,
+          ageLabel: "Listo"
+        });
+      });
+
+      // 4. Mesa nueva ocupada — saludar y tomar pedido
+      myTables.forEach(t => {
+        if (!config.newTableGreet.enabled) return;
+        if (t.status !== "occupied" || t.time > 3) return;
+        if (t.items && t.items.length > 0) return; // ya pidió
+        recs.push({
+          id: `greet-${t.id}`,
+          type: "newTableGreet",
+          urgency: t.time > 1 ? "high" : "medium",
+          icon: "users",
+          title: `Saludar a Mesa ${t.id}`,
+          desc: `${t.party} comensales recién sentados · ofrecer agua y tomar bebidas`,
+          mesa: t.id,
+          actions: ["done", "later"],
+          score: config.newTableGreet.weight + t.time * 8,
+          ageLabel: `hace ${t.time} min`
+        });
+      });
+
+      // 5. Bebida demorada (cliente pidió hace >5 min y aún no llega)
+      myTables.forEach(t => {
+        if (!config.drinkDelay.enabled) return;
+        const drinks = (t.items || []).filter(i => /chicha|limonada|kola|coca|cerveza|agua/i.test(i.name));
+        const pending = drinks.find(i => i.status === "preparing" || i.status === "received");
+        if (!pending) return;
+        if (t.time < config.drinkDelay.thresholdMin) return;
+        recs.push({
+          id: `drink-${t.id}`,
+          type: "drinkDelay",
+          urgency: "medium",
+          icon: "alert",
+          title: `Apurar bebida Mesa ${t.id}`,
+          desc: `${pending.name} pendiente hace ${t.time} min · ir a barra`,
+          mesa: t.id,
+          actions: ["done", "later"],
+          score: config.drinkDelay.weight + t.time * 3,
+          ageLabel: `${t.time} min`
+        });
+      });
+
+      // 6. Check-back de 2 minutos (después de servir plato fuerte)
+      myTables.forEach(t => {
+        if (!config.checkBack.enabled) return;
+        const served = (t.items || []).filter(i => i.status === "served");
+        if (served.length === 0) return;
+        if (t.time < 5 || t.time > 12) return; // ventana de check-back
+        recs.push({
+          id: `checkback-${t.id}`,
+          type: "checkBack",
+          urgency: "medium",
+          icon: "users",
+          title: `Check-back Mesa ${t.id}`,
+          desc: `Pasar a preguntar "¿todo bien con la comida?" · regla 2 minutos`,
+          mesa: t.id,
+          actions: ["done", "later"],
+          score: config.checkBack.weight + Math.min(20, t.time)
+        });
+      });
+
+      // 7. Mesa pagada → limpiar para próximo turno
+      tables.forEach(t => {
+        if (!config.cleanTable.enabled) return;
+        if (t.status !== "cleaning") return;
+        recs.push({
+          id: `clean-${t.id}`,
+          type: "cleanTable",
+          urgency: "medium",
+          icon: "x",
+          title: `Limpiar Mesa ${t.id}`,
+          desc: `Lista para próximo turno · pasa a alistar`,
+          mesa: t.id,
+          actions: ["done", "later"],
+          score: config.cleanTable.weight,
+          ageLabel: "Por hacer"
+        });
+      });
+
+      // 8. Ofrecer postre (>15 min ocupado, comieron principal)
+      myTables.forEach(t => {
+        if (!config.offerDessert.enabled) return;
+        if (t.time < 15 || t.time > 35) return;
+        const ate = (t.items || []).filter(i => i.status === "served").length;
+        const dessert = (t.items || []).find(i => /postre|torta|suspiro|cheesecake|mazamorra/i.test(i.name));
+        if (ate < 1 || dessert) return;
+        recs.push({
+          id: `dessert-${t.id}`,
+          type: "offerDessert",
+          urgency: "low",
+          icon: "users",
+          title: `Ofrecer postre · Mesa ${t.id}`,
+          desc: `Sugerir suspiro a la limeña, mazamorra o cheesecake (sube ticket promedio)`,
+          mesa: t.id,
+          actions: ["done", "later"],
+          score: config.offerDessert.weight
+        });
+      });
+
+      // 9. Ronda general — ninguna mesa atendida en >7 min
+      const longestSinceCheck = Math.max(...myTables.map(t => t.time || 0), 0);
+      if (config.walkRound.enabled && longestSinceCheck > 8 && myTables.length > 1) {
+        recs.push({
+          id: `round-${Date.now()}`,
+          type: "walkRound",
+          urgency: "low",
+          icon: "users",
+          title: `Ronda por tus mesas`,
+          desc: `${myTables.length} mesas en tu sección · pasa a chequear si todo está bien`,
+          actions: ["done", "later"],
+          score: config.walkRound.weight + longestSinceCheck
+        });
+      }
+
+      // Filter dismissed
+      return recs.filter(r => !dismissed.has(r.id)).sort((a, b) => b.score - a.score);
+    }
+
+    function AsistenteView({ tables, calls, onAction }) {
+      const [config] = useState(loadAIConfig);
+      const [dismissed, setDismissed] = useState(new Set());
+      const [snoozed, setSnoozed] = useState({}); // id → expireTime
+      const [tick, setTick] = useState(0);
+
+      useEffect(() => {
+        const i = setInterval(() => setTick(t => t + 1), 30000); // refresh every 30s
+        return () => clearInterval(i);
+      }, []);
+
+      const recs = useMemo(() => {
+        const now = Date.now();
+        // Clean expired snoozes
+        const activeDismissed = new Set(dismissed);
+        Object.entries(snoozed).forEach(([id, exp]) => {
+          if (now < exp) activeDismissed.add(id);
+        });
+        return generateRecommendations({ tables, calls, config, dismissed: activeDismissed });
+      }, [tables, calls, config, dismissed, snoozed, tick]);
+
+      const handleAction = (rec, action) => {
+        if (action === "later") {
+          setSnoozed(prev => ({ ...prev, [rec.id]: Date.now() + 5 * 60 * 1000 }));
+        } else if (action === "dismiss") {
+          setDismissed(prev => new Set([...prev, rec.id]));
+        } else {
+          // done / served / resolved → mark and remove from list
+          setDismissed(prev => new Set([...prev, rec.id]));
+          if (onAction) onAction(rec, action);
+        }
+      };
+
+      const stats = {
+        total: recs.length,
+        critical: recs.filter(r => r.urgency === "critical").length,
+        high: recs.filter(r => r.urgency === "high").length
+      };
+
+      return (
+        <div className="px-5 py-5 space-y-4">
+          {/* AI Hero card */}
+          <div className="bg-gradient-to-br from-clay to-clay-dark text-white rounded-2xl p-5 relative overflow-hidden">
+            <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-gold/30 blur-2xl"></div>
+            <div className="relative">
+              <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-cream/80 font-bold">
+                <span className="w-2 h-2 rounded-full bg-cream animate-pulse"></span>
+                Asistente IA · en vivo
+              </div>
+              <h2 className="font-display text-2xl font-bold mt-2 leading-tight">
+                {recs.length === 0 ? "Todo bajo control 👌" : `${recs.length} ${recs.length === 1 ? 'cosa pendiente' : 'cosas pendientes'}`}
+              </h2>
+              {stats.critical > 0 && (
+                <p className="text-sm text-cream/90 mt-1">
+                  ⚠️ {stats.critical} {stats.critical === 1 ? 'urgente' : 'urgentes'} · atender ahora
+                </p>
+              )}
+              {stats.critical === 0 && stats.high > 0 && (
+                <p className="text-sm text-cream/90 mt-1">{stats.high} {stats.high === 1 ? 'recomendación' : 'recomendaciones'} prioritarias</p>
+              )}
+            </div>
+          </div>
+
+          {/* Recommendations list */}
+          {recs.length === 0 ? (
+            <div className="text-center py-16 bg-paper border border-border rounded-2xl">
+              <div className="w-14 h-14 mx-auto rounded-full bg-olive/10 text-olive flex items-center justify-center">
+                <Icon name="check" size={26} />
+              </div>
+              <p className="font-display text-xl font-semibold mt-4">Excelente trabajo</p>
+              <p className="text-sm text-muted mt-1">No hay acciones pendientes ahora</p>
+              <p className="text-[11px] text-muted mt-3">El asistente revisa cada 30 segundos</p>
+            </div>
+          ) : (
+            recs.map(rec => <RecCard key={rec.id} rec={rec} onAction={handleAction} />)
+          )}
+
+          {/* Footer info */}
+          {recs.length > 0 && (
+            <div className="text-[11px] text-muted text-center pt-2">
+              💡 Tip: toca "No ahora" para posponer 5 min · "Hecho" cuando lo hagas
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function RecCard({ rec, onAction }) {
+      const colorMap = {
+        critical: { bg: "bg-danger/10 border-danger", text: "text-danger", label: "URGENTE" },
+        high:     { bg: "bg-clay/10 border-clay", text: "text-clay", label: "ALTA" },
+        medium:   { bg: "bg-warn/10 border-warn", text: "text-warn", label: "MEDIA" },
+        low:      { bg: "bg-paper border-border", text: "text-muted", label: "" }
+      };
+      const c = colorMap[rec.urgency];
+      return (
+        <div className={`border-2 rounded-2xl p-4 ${c.bg} ${rec.urgency === 'critical' ? 'shake' : ''}`}>
+          <div className="flex items-start gap-3">
+            <div className={`w-11 h-11 rounded-xl bg-paper border border-border flex items-center justify-center shrink-0 ${c.text}`}>
+              <Icon name={rec.icon} size={20} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                {c.label && <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${c.text} bg-paper`}>{c.label}</span>}
+                {rec.ageLabel && <span className="text-[10px] text-muted font-mono">{rec.ageLabel}</span>}
+              </div>
+              <p className="font-bold text-sm mt-1 leading-tight">{rec.title}</p>
+              <p className="text-xs text-muted mt-1 leading-relaxed">{rec.desc}</p>
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <button onClick={() => onAction(rec, "later")} className="py-2 bg-paper border border-border rounded-lg text-xs font-semibold text-muted hover:bg-cream">
+              No ahora
+            </button>
+            <button onClick={() => onAction(rec, "dismiss")} className="py-2 bg-paper border border-border rounded-lg text-xs font-semibold text-muted hover:bg-cream">
+              Descartar
+            </button>
+            <button onClick={() => onAction(rec, rec.actions[0] || "done")} className="py-2 bg-olive text-white rounded-lg text-xs font-bold inline-flex items-center justify-center gap-1">
+              <Icon name="check" size={12} /> Hecho
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     function PedidosView() {
       const recent = [
         { id: "T-1042", mesa: 7, time: "21:28", total: 287.40, status: "served" },
@@ -903,7 +1238,7 @@
 
     // ─────────────────────────── APP ───────────────────────────
     function App() {
-      const [tab, setTab] = useState("mesas");
+      const [tab, setTab] = useState("asistente");
       const [tables, setTables] = useState(ALL_TABLES_INIT);
       const [calls, setCalls] = useState(CALLS);
       const [selectedTable, setSelectedTable] = useState(null); // for "mis mesas" detail
@@ -998,12 +1333,20 @@
       return (
         <div className="phone-frame">
           <Header />
-          <Tabs active={tab} setActive={setTab} callCount={calls.length} />
+          <Tabs active={tab} setActive={setTab} callCount={calls.length} aiCount={tables.filter(t => t.complaint || (t.items && t.items.some(i => i.status === "ready"))).length + calls.length} />
 
+          {tab === "asistente" && <AsistenteView tables={tables} calls={calls} onAction={(rec, action) => {
+            if (action === "resolved" && rec.type === "callPending") {
+              setCalls(prev => prev.filter(c => `call-${c.id}` !== rec.id));
+            }
+            if (action === "resolved" && rec.type === "complaint") {
+              setTables(prev => prev.map(t => t.id === rec.mesa ? { ...t, complaint: null } : t));
+            }
+            showToast(`✓ ${rec.title}`);
+          }} />}
           {tab === "mesas" && <MesasView tables={myTables} onTable={setSelectedTable} />}
           {tab === "plano" && <PlanoView tables={tables} onTap={handlePlanoTap} joinMode={!!joinFirst} joinFirst={joinFirst} />}
           {tab === "llamados" && <LlamadosView calls={calls} onResolve={(id) => setCalls(c => c.filter(x => x.id !== id))} />}
-          {tab === "pedidos" && <PedidosView />}
 
           <TableDetail table={selectedTable} onClose={() => setSelectedTable(null)} />
           <TableActionSheet open={!!actionTable} table={actionTable} onClose={() => setActionTable(null)} onAction={handleAction} />

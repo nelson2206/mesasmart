@@ -80,6 +80,277 @@
 
     .img-fade-in { animation: fadeIn .4s ease-out; }
 
+    /* ─── PREMIUM WELCOME ─────────────────────────────── */
+    .welcome-screen { background: #1F1A17; }
+    .welcome-bg {
+      transform: scale(1.08);
+      animation: welcomeDrift 40s ease-in-out infinite alternate;
+    }
+    @keyframes welcomeDrift {
+      0% { transform: scale(1.08) translate(0,0); }
+      100% { transform: scale(1.14) translate(-1%, 1%); }
+    }
+    .welcome-overlay {
+      background:
+        radial-gradient(ellipse at 50% 30%, rgba(31,26,23,0.20) 0%, rgba(31,26,23,0.65) 50%, rgba(31,26,23,0.92) 100%),
+        linear-gradient(135deg, rgba(160,50,43,0.28) 0%, transparent 45%, rgba(200,148,31,0.18) 100%);
+    }
+    .welcome-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.45;
+      pointer-events: none;
+    }
+    .welcome-orb-1 {
+      width: 560px; height: 560px;
+      background: #A0322B;
+      top: -120px; right: -120px;
+      animation: welcomeFloat1 22s ease-in-out infinite;
+    }
+    .welcome-orb-2 {
+      width: 440px; height: 440px;
+      background: #C8941F;
+      bottom: -120px; left: -60px;
+      animation: welcomeFloat2 28s ease-in-out infinite;
+    }
+    @keyframes welcomeFloat1 {
+      0%,100% { transform: translate(0,0); }
+      50% { transform: translate(-50px, 40px); }
+    }
+    @keyframes welcomeFloat2 {
+      0%,100% { transform: translate(0,0); }
+      50% { transform: translate(40px, -40px); }
+    }
+    @keyframes welcomeFadeIn {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .welcome-fade-in { animation: welcomeFadeIn 1s cubic-bezier(0.16, 1, 0.3, 1); }
+
+    .welcome-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 18px;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.20);
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #E5B458;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    .welcome-eyebrow-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #E5B458;
+      animation: welcomePulse 2s infinite;
+      box-shadow: 0 0 8px #E5B458;
+    }
+    @keyframes welcomePulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.5); }
+    }
+    .welcome-accent {
+      color: #E5B458;
+      font-style: normal;
+    }
+
+    .welcome-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 18px 36px;
+      background: linear-gradient(135deg, #A0322B 0%, #C8941F 100%);
+      color: white;
+      border: none;
+      border-radius: 100px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow:
+        0 12px 32px rgba(160,50,43,0.45),
+        0 0 0 1px rgba(255,255,255,0.10) inset,
+        0 1px 0 rgba(255,255,255,0.20) inset;
+      font-family: inherit;
+    }
+    .welcome-cta:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow:
+        0 18px 40px rgba(160,50,43,0.55),
+        0 0 0 1px rgba(255,255,255,0.15) inset,
+        0 1px 0 rgba(255,255,255,0.30) inset;
+    }
+    .welcome-cta:active { transform: translateY(-1px) scale(1); }
+
+    .welcome-glass-pill {
+      padding: 1px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.08) 100%);
+    }
+    .welcome-glass-pill-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      padding: 10px 18px;
+      background: rgba(255,255,255,0.10);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-radius: 17px;
+    }
+
+    .welcome-lang-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      padding: 8px 18px;
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 100px;
+    }
+    .welcome-lang {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.65);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: color 0.15s;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .welcome-lang:hover { color: white; }
+    .welcome-lang-sep {
+      width: 1px;
+      height: 12px;
+      background: rgba(255,255,255,0.15);
+    }
+
+    /* ─── PREMIUM SUCCESS ─────────────────────────────── */
+    .success-screen {
+      min-height: 100vh;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(180deg, #FAF7F2 0%, #F0E8D8 100%);
+    }
+    .success-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+    }
+    .success-orb-1 {
+      width: 400px; height: 400px;
+      background: rgba(45, 125, 90, 0.20);
+      top: -100px; left: -100px;
+      animation: welcomeFloat1 18s ease-in-out infinite;
+    }
+    .success-orb-2 {
+      width: 350px; height: 350px;
+      background: rgba(200,148,31,0.18);
+      top: 200px; right: -80px;
+      animation: welcomeFloat2 24s ease-in-out infinite;
+    }
+    .success-orb-3 {
+      width: 300px; height: 300px;
+      background: rgba(160,50,43,0.10);
+      bottom: -60px; left: 30%;
+      animation: welcomeFloat1 20s ease-in-out infinite reverse;
+    }
+    .success-check-wrap {
+      position: relative;
+      width: 96px; height: 96px;
+      margin: 0 auto;
+    }
+    .success-check {
+      position: relative;
+      z-index: 3;
+      width: 96px; height: 96px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2D7D5A 0%, #4A9B72 100%);
+      display: flex; align-items: center; justify-content: center;
+      color: white;
+      box-shadow: 0 16px 40px rgba(45,125,90,0.40), 0 0 0 1px rgba(255,255,255,0.30) inset;
+    }
+    .success-check-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid rgba(45,125,90,0.40);
+      pointer-events: none;
+    }
+    .success-check-ring-1 { animation: ringPulse 2.5s ease-out infinite; }
+    .success-check-ring-2 { animation: ringPulse 2.5s ease-out 1.25s infinite; }
+    @keyframes ringPulse {
+      0% { transform: scale(1); opacity: 0.6; }
+      100% { transform: scale(1.8); opacity: 0; }
+    }
+
+    .success-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 24px;
+      padding: 6px 14px;
+      background: rgba(45,125,90,0.10);
+      border: 1px solid rgba(45,125,90,0.25);
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: #2D7D5A;
+    }
+    .success-eyebrow-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #2D7D5A;
+    }
+
+    .success-receipt {
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(232,223,211,0.80);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow:
+        0 20px 50px rgba(31,26,23,0.10),
+        0 0 0 1px rgba(255,255,255,0.40) inset;
+    }
+    .success-receipt-header {
+      background: linear-gradient(135deg, #1F1A17 0%, #2A1F1A 100%);
+      color: white;
+      padding: 18px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .success-receipt-body {
+      padding: 24px;
+    }
+    .success-divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, #E8DFD3, transparent);
+      margin: 16px 0;
+    }
+    .success-total-block {
+      padding: 18px 20px;
+      background: linear-gradient(135deg, rgba(160,50,43,0.06) 0%, rgba(200,148,31,0.06) 100%);
+      border: 1px solid rgba(160,50,43,0.15);
+      border-radius: 14px;
+      color: #A0322B;
+    }
+
     /* Image fallback gradient pattern */
     .fallback-bg {
       background-image:
@@ -400,43 +671,85 @@
     // Welcome / Hero
     function WelcomeScreen({ onStart }) {
       return (
-        <div className="h-full relative overflow-hidden">
-          <div className="absolute inset-0">
+        <div className="h-full relative overflow-hidden text-white welcome-screen">
+          {/* Atmospheric background */}
+          <div className="absolute inset-0 welcome-bg">
             <FoodImage
               src={RESTAURANT.heroImage}
               fb={{ color: "#1F1A17", emoji: "🍽️" }}
-              alt="Restaurante"
+              alt={RESTAURANT.name}
               className="w-full h-full"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/60 to-charcoal/30"></div>
           </div>
-          <div className="relative h-full flex flex-col justify-end px-12 pb-16 text-white">
-            <div className="max-w-3xl">
-              <p className="text-gold-light tracking-widest uppercase text-sm font-medium">{RESTAURANT.tagline}</p>
-              <h1 className="font-display text-7xl font-bold mt-3 leading-tight">{RESTAURANT.name}</h1>
-              <p className="text-lg text-white/80 mt-4 max-w-xl leading-relaxed">{RESTAURANT.description}</p>
+          <div className="absolute inset-0 welcome-overlay"></div>
 
-              <div className="mt-12 flex items-center gap-6">
-                <button
-                  onClick={onStart}
-                  className="group inline-flex items-center gap-3 px-10 py-5 bg-clay hover:bg-clay-dark text-white text-lg font-semibold rounded-full shadow-float transition"
-                >
-                  Ver la carta
-                  <Icon name="chevronRight" size={22} />
-                </button>
-                <div className="text-white/70">
-                  <p className="text-xs uppercase tracking-wider">Estás en</p>
-                  <p className="font-display text-2xl">Mesa {RESTAURANT.tableNumber}</p>
-                </div>
+          {/* Floating ambient orbs */}
+          <div className="welcome-orb welcome-orb-1"></div>
+          <div className="welcome-orb welcome-orb-2"></div>
+
+          {/* Top brand bar */}
+          <div className="relative z-10 flex items-center justify-between px-10 pt-10">
+            <div className="inline-flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center font-bold text-base shadow-2xl"
+                   style={{ background: "linear-gradient(135deg, #A0322B 0%, #C8941F 100%)" }}>
+                {RESTAURANT.name.split(" ").map(s => s[0]).slice(0, 2).join("")}
+              </div>
+              <div>
+                <p className="text-[10px] tracking-[0.2em] uppercase text-white/60 font-semibold">MesaSmart</p>
+                <p className="font-display text-lg font-semibold leading-tight">{RESTAURANT.name}</p>
               </div>
             </div>
-            <div className="mt-12 flex items-center gap-6 text-sm text-white/60">
-              <button className="hover:text-white transition">🇪🇸 Español</button>
-              <span>·</span>
-              <button className="hover:text-white transition">🇬🇧 English</button>
-              <span>·</span>
-              <button className="hover:text-white transition">🇧🇷 Português</button>
+
+            {/* Mesa pill (glassmorphic) */}
+            <div className="welcome-glass-pill">
+              <div className="welcome-glass-pill-inner">
+                <span className="text-[10px] tracking-[0.18em] uppercase text-white/60">Estás en</span>
+                <span className="font-display text-xl font-semibold">Mesa {RESTAURANT.tableNumber}</span>
+              </div>
             </div>
+          </div>
+
+          {/* Center content */}
+          <div className="relative z-10 h-full flex flex-col justify-center items-center px-10 -mt-12">
+            <div className="max-w-2xl text-center welcome-fade-in">
+              <span className="welcome-eyebrow">
+                <span className="welcome-eyebrow-dot"></span>
+                {RESTAURANT.tagline || "Bienvenido"}
+              </span>
+              <h1 className="font-display font-semibold mt-5 leading-[1.05] tracking-tight"
+                  style={{ fontSize: "clamp(48px, 7vw, 84px)" }}>
+                {RESTAURANT.name.split(" ").length > 1 ? (
+                  <>
+                    {RESTAURANT.name.split(" ").slice(0, -1).join(" ")}
+                    <br />
+                    <em className="welcome-accent">{RESTAURANT.name.split(" ").slice(-1).join(" ")}</em>
+                  </>
+                ) : RESTAURANT.name}
+              </h1>
+              <p className="text-lg text-white/75 mt-6 max-w-xl mx-auto leading-relaxed">
+                {RESTAURANT.description || "Disfruta una experiencia gastronómica única. Pide directo desde tu mesa, llama al mozo cuando lo necesites, paga sin esperas."}
+              </p>
+
+              <button
+                onClick={onStart}
+                className="welcome-cta group mt-10"
+              >
+                <span>Comenzar experiencia</span>
+                <Icon name="chevronRight" size={20} />
+              </button>
+            </div>
+          </div>
+
+          {/* Bottom: languages + footer */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-3">
+            <div className="welcome-lang-row">
+              <button className="welcome-lang"><span>🇪🇸</span> Español</button>
+              <span className="welcome-lang-sep"></span>
+              <button className="welcome-lang"><span>🇬🇧</span> English</button>
+              <span className="welcome-lang-sep"></span>
+              <button className="welcome-lang"><span>🇧🇷</span> Português</button>
+            </div>
+            <p className="text-[10px] tracking-[0.18em] uppercase text-white/30 font-medium">Powered by MesaSmart</p>
           </div>
         </div>
       );
@@ -1468,73 +1781,102 @@
       );
     }
 
-    // Success
+    // Success — premium celebratory
     function SuccessScreen({ paymentMethod, total, billingData, onSurvey }) {
       const serial = (billingData.type === 'factura' ? 'F001-' : 'B001-') + String(Math.floor(Math.random() * 99999)).padStart(5, '0');
       return (
-        <div className="px-6 py-8 max-w-xl mx-auto pb-32">
-          <div className="text-center anim-pop">
-            <div className="w-20 h-20 mx-auto rounded-full bg-olive flex items-center justify-center text-white shadow-card">
-              <Icon name="check" size={40} />
-            </div>
-            <h1 className="font-display text-4xl font-semibold mt-5">Pago exitoso</h1>
-            <p className="text-muted mt-2">Gracias por visitarnos. Vuelve pronto.</p>
-          </div>
+        <div className="success-screen">
+          {/* Ambient orbs */}
+          <div className="success-orb success-orb-1"></div>
+          <div className="success-orb success-orb-2"></div>
+          <div className="success-orb success-orb-3"></div>
 
-          <div className="mt-8 bg-paper rounded-2xl shadow-soft border border-border overflow-hidden">
-            <div className="bg-clay text-white px-6 py-3 flex items-center justify-between text-sm">
-              <span className="font-semibold">Comprobante electrónico</span>
-              <span>{serial}</span>
-            </div>
-            <div className="p-6">
-              <p className="font-display text-xl font-semibold">{RESTAURANT.name}</p>
-              <p className="text-xs text-muted">RUC {RESTAURANT.ruc}</p>
-              <p className="text-xs text-muted">{RESTAURANT.address}</p>
-              <div className="divider my-4"></div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted">Mesa</span>
-                <span className="font-semibold">{RESTAURANT.tableNumber}</span>
-              </div>
-              <div className="flex justify-between text-sm mt-1">
-                <span className="text-muted">Tipo</span>
-                <span className="font-semibold uppercase">{billingData.type}</span>
-              </div>
-              <div className="flex justify-between text-sm mt-1">
-                <span className="text-muted">Pagado con</span>
-                <span className="font-semibold">{paymentMethod.name}</span>
-              </div>
-              <div className="divider my-4"></div>
-              <div className="flex justify-between font-display text-2xl font-bold">
-                <span>Total</span>
-                <span className="text-clay">{PEN(total)}</span>
-              </div>
-              <div className="mt-5 flex items-center justify-center gap-4 p-4 bg-cream rounded-xl border border-border">
-                <div className="w-20 h-20 grid grid-cols-5 gap-px bg-charcoal p-1">
-                  {[...Array(25)].map((_, i) => (
-                    <div key={i} style={{ background: Math.random() > 0.45 ? 'white' : '#1F1A17' }} />
-                  ))}
+          <div className="relative z-10 px-6 py-12 max-w-xl mx-auto">
+            {/* Hero check icon with glow */}
+            <div className="text-center anim-pop">
+              <div className="success-check-wrap">
+                <div className="success-check">
+                  <Icon name="check" size={42} />
                 </div>
-                <div className="text-xs text-muted">
-                  <p className="font-semibold text-ink">Validado por SUNAT</p>
-                  <p>Vía OSE Nubefact</p>
-                  <p>Hash 7E4A...B3F2</p>
+                <div className="success-check-ring success-check-ring-1"></div>
+                <div className="success-check-ring success-check-ring-2"></div>
+              </div>
+
+              <span className="success-eyebrow">
+                <span className="success-eyebrow-dot"></span>
+                Comprobante {serial}
+              </span>
+              <h1 className="font-display text-5xl font-semibold mt-4 leading-tight">
+                ¡Gracias por <em className="welcome-accent">tu visita!</em>
+              </h1>
+              <p className="text-muted mt-3 text-base">Tu pago se procesó correctamente. Vuelve pronto.</p>
+            </div>
+
+            {/* Premium receipt card with glass effect */}
+            <div className="success-receipt mt-8">
+              <div className="success-receipt-header">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.18em] opacity-60">Comprobante electrónico</p>
+                  <p className="font-display text-lg font-semibold mt-0.5">{billingData.type === 'factura' ? 'Factura' : billingData.type === 'boleta' ? 'Boleta de Venta' : 'Ticket'}</p>
+                </div>
+                <p className="font-mono text-sm font-bold opacity-90">{serial}</p>
+              </div>
+
+              <div className="success-receipt-body">
+                <p className="font-display text-xl font-bold">{RESTAURANT.name}</p>
+                <p className="text-xs text-muted mt-0.5">RUC {RESTAURANT.ruc}</p>
+                <p className="text-xs text-muted">{RESTAURANT.address}</p>
+
+                <div className="success-divider"></div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[10px] text-muted uppercase tracking-wider">Mesa</p>
+                    <p className="font-semibold">{RESTAURANT.tableNumber}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted uppercase tracking-wider">Pagado con</p>
+                    <p className="font-semibold">{paymentMethod.name}</p>
+                  </div>
+                </div>
+
+                <div className="success-total-block mt-5">
+                  <p className="text-[10px] uppercase tracking-[0.18em] opacity-70">Total pagado</p>
+                  <p className="font-display text-4xl font-bold mt-1">{PEN(total)}</p>
+                </div>
+
+                <div className="mt-5 flex items-center gap-4 p-3 bg-cream rounded-xl border border-border">
+                  <div className="w-16 h-16 grid grid-cols-5 gap-px bg-charcoal p-1 rounded">
+                    {[...Array(25)].map((_, i) => (
+                      <div key={i} style={{ background: Math.random() > 0.45 ? 'white' : '#1F1A17' }} />
+                    ))}
+                  </div>
+                  <div className="text-[11px] flex-1">
+                    <p className="font-semibold text-olive inline-flex items-center gap-1">
+                      <Icon name="check" size={11} /> Validado por SUNAT
+                    </p>
+                    <p className="text-muted mt-0.5">Vía OSE Nubefact</p>
+                    <p className="text-muted font-mono">Hash 7E4A...B3F2</p>
+                  </div>
                 </div>
               </div>
             </div>
+
+            {billingData.email && (
+              <p className="text-center text-sm text-muted mt-5">
+                <Icon name="info" size={12} className="inline mr-1" />
+                Enviamos copia a <span className="font-semibold text-ink">{billingData.email}</span>
+              </p>
+            )}
+
+            <button onClick={onSurvey} className="welcome-cta mt-8" style={{ width: "100%", justifyContent: "center" }}>
+              <Icon name="star" size={18} />
+              <span>Calificar mi experiencia</span>
+            </button>
+            <button className="w-full mt-3 py-3 text-sm text-muted hover:text-ink transition">
+              Libro de Reclamaciones (INDECOPI)
+            </button>
           </div>
-
-          {billingData.email && (
-            <p className="text-center text-sm text-muted mt-4">
-              Enviamos tu comprobante a <span className="font-semibold text-ink">{billingData.email}</span>
-            </p>
-          )}
-
-          <button onClick={onSurvey} className="w-full mt-8 py-5 bg-clay hover:bg-clay-dark text-white text-lg font-semibold rounded-full shadow-card transition">
-            Calificar mi experiencia
-          </button>
-          <button className="w-full mt-3 py-3 text-sm text-muted hover:text-ink transition">
-            Libro de Reclamaciones (INDECOPI)
-          </button>
         </div>
       );
     }

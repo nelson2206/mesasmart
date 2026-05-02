@@ -98,7 +98,9 @@
         moreH: <><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></>,
         eye: <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></>,
         cash: <><rect x="2" y="6" width="20" height="12" rx="2" /><circle cx="12" cy="12" r="2" /><path d="M6 12h.01M18 12h.01" /></>,
-        utensils: <><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7" /></>
+        utensils: <><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7" /></>,
+        alert: <><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12" y2="17" /></>,
+        x: <><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>
       };
       return (
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -185,10 +187,12 @@
       const items = [
         { id: "dashboard", label: "Dashboard", icon: "home" },
         { id: "mesas", label: "Mesas y plano", icon: "table" },
+        { id: "cola", label: "Cola de espera", icon: "users" },
         { id: "menu", label: "Carta", icon: "menu" },
         { id: "pedidos", label: "Pedidos", icon: "receipt" },
         { id: "reportes", label: "Reportes", icon: "chart" },
         { id: "personal", label: "Personal", icon: "users" },
+        { id: "asistente_config", label: "Asistente IA", icon: "settings" },
         { id: "ajustes", label: "Ajustes", icon: "settings" }
       ];
       return (
@@ -321,7 +325,7 @@
       );
     }
 
-    function FloorPlan({ onTable }) {
+    function FloorPlan({ onTable, tables = TABLES }) {
       const cols = 6;
       const rows = 3;
       return (
@@ -339,7 +343,7 @@
             </div>
           </div>
           <div className="grid grid-cols-6 gap-3">
-            {TABLES.map(t => <FloorPlanTable key={t.id} table={t} onClick={onTable} />)}
+            {tables.map(t => <FloorPlanTable key={t.id} table={t} onClick={onTable} />)}
           </div>
         </div>
       );
@@ -507,9 +511,17 @@
     }
 
     // Dashboard view
-    function Dashboard() {
+    function Dashboard({ tables, setTables }) {
       const [calls, setCalls] = useState(CALLS);
       const [tableModal, setTableModal] = useState(null);
+
+      const handleAssign = (id, patch) => {
+        setTables(prev => prev.map(t => t.id === id ? { ...t, status: patch.status || 'occupied', ...patch, time: 0, total: 0 } : t));
+      };
+      const handleToggleVip = (id, vip, vipNote) => {
+        setTables(prev => prev.map(t => t.id === id ? { ...t, vip, vipNote } : t));
+        setTableModal(prev => prev && prev.id === id ? { ...prev, vip, vipNote } : prev);
+      };
 
       return (
         <div className="space-y-6">
@@ -557,7 +569,7 @@
           {/* Recent orders */}
           <RecentOrders orders={RECENT_ORDERS} />
 
-          {tableModal && <TableModal table={tableModal} onClose={() => setTableModal(null)} />}
+          {tableModal && <TableModal table={tableModal} onClose={() => setTableModal(null)} onAssign={handleAssign} onToggleVip={handleToggleVip} />}
         </div>
       );
     }
@@ -572,17 +584,34 @@
       );
     }
 
-    function TableModal({ table, onClose }) {
+    function TableModal({ table, onClose, onAssign, onToggleVip }) {
+      const [showAssign, setShowAssign] = useState(false);
+      const [party, setParty] = useState(2);
+      const [waiter, setWaiter] = useState("María Quispe");
+      const [vipNote, setVipNote] = useState(table.vipNote || "");
+      const isVip = table.vip || false;
+      const waiters = ["María Quispe", "Juan Cárdenas", "Carlos Mendoza"];
+
+      const handleAssign = () => {
+        if (onAssign) onAssign(table.id, { party, server: waiter });
+        onClose();
+      };
+      const handleToggleVip = () => {
+        if (onToggleVip) onToggleVip(table.id, !isVip, vipNote);
+      };
+
       return (
         <div className="fixed inset-0 z-50 bg-charcoal/40 flex items-center justify-center p-6" onClick={onClose}>
-          <div onClick={(e) => e.stopPropagation()} className="bg-paper rounded-2xl max-w-md w-full p-6">
+          <div onClick={(e) => e.stopPropagation()} className="bg-paper rounded-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <div>
+              <div className="flex items-center gap-2">
                 <h2 className="font-display text-2xl font-semibold">Mesa {table.id}</h2>
-                <p className="text-sm text-muted">{table.seats} asientos</p>
+                {isVip && <span className="px-2 py-0.5 bg-gold text-charcoal text-[10px] font-bold rounded-full uppercase tracking-wider">⭐ VIP</span>}
               </div>
               <button onClick={onClose} className="w-9 h-9 rounded-full bg-cream flex items-center justify-center">×</button>
             </div>
+            <p className="text-sm text-muted mb-4">{table.seats} asientos</p>
+
             {table.status === 'occupied' || table.status === 'billing' ? (
               <div className="space-y-3">
                 <Detail label="Estado" value={table.status === 'billing' ? 'Pidió la cuenta' : 'Ocupada'} />
@@ -591,6 +620,35 @@
                 <Detail label="Tiempo en mesa" value={`${table.time} minutos`} />
                 <Detail label="Total acumulado" value={PEN(table.total)} highlight />
                 {table.alert && <p className="bg-clay/10 border border-clay/30 text-clay p-3 rounded-xl text-sm font-medium">⚠ {table.alert}</p>}
+                {isVip && table.vipNote && (
+                  <div className="bg-gold/10 border border-gold/40 rounded-xl p-3">
+                    <p className="text-[10px] text-gold uppercase font-bold tracking-wider">Nota VIP</p>
+                    <p className="text-sm mt-1">{table.vipNote}</p>
+                  </div>
+                )}
+
+                {/* VIP toggle */}
+                <div className="bg-paper border border-border rounded-xl p-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold">Categorizar como VIP</p>
+                      <p className="text-[11px] text-muted">Sube prioridad en cocina y servicio</p>
+                    </div>
+                    <button onClick={handleToggleVip} className={`relative inline-flex w-12 h-6 rounded-full transition ${isVip ? 'bg-gold' : 'bg-border'}`}>
+                      <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition ${isVip ? 'left-6' : 'left-0.5'}`}></span>
+                    </button>
+                  </div>
+                  {isVip && (
+                    <input
+                      value={vipNote}
+                      onChange={(e) => setVipNote(e.target.value)}
+                      onBlur={() => onToggleVip && onToggleVip(table.id, true, vipNote)}
+                      placeholder="Razón VIP (ej: crítico gastronómico, frecuente, cumpleaños)"
+                      className="mt-2 w-full px-3 py-2 bg-cream border border-border rounded-lg text-xs"
+                    />
+                  )}
+                </div>
+
                 <div className="flex gap-2 pt-2">
                   <button className="flex-1 py-2.5 bg-cream border border-border rounded-lg text-sm font-medium">Ver pedido</button>
                   <button className="flex-1 py-2.5 bg-clay text-white rounded-lg text-sm font-medium">Cobrar</button>
@@ -600,7 +658,42 @@
               <div className="space-y-3">
                 <Detail label="Estado" value={table.status === 'free' ? 'Libre' : table.status === 'cleaning' ? 'En limpieza' : 'Reservada'} />
                 {table.reservation && <Detail label="Reserva" value={table.reservation} />}
-                <button className="w-full py-2.5 bg-clay text-white rounded-lg font-medium">Asignar mesa</button>
+
+                {!showAssign ? (
+                  <>
+                    <button onClick={() => setShowAssign(true)} className="w-full py-2.5 bg-clay text-white rounded-lg font-medium">
+                      Asignar mesa
+                    </button>
+                    {table.status === 'cleaning' && (
+                      <button className="w-full py-2 bg-cream border border-border rounded-lg text-sm font-medium" onClick={() => { onAssign && onAssign(table.id, { status: 'free' }); onClose(); }}>
+                        Marcar como limpia
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <div className="space-y-2 anim-fade-in">
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted">Datos de asignación</p>
+                    <div>
+                      <label className="text-xs text-muted">Comensales</label>
+                      <div className="mt-1 inline-flex items-center bg-cream rounded-full">
+                        <button onClick={() => setParty(Math.max(1, party - 1))} className="w-9 h-9 text-clay font-bold">−</button>
+                        <span className="w-12 text-center font-bold">{party}</span>
+                        <button onClick={() => setParty(Math.min(table.seats, party + 1))} className="w-9 h-9 text-clay font-bold">+</button>
+                        <span className="text-xs text-muted px-2">de {table.seats}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted">Mozo asignado</label>
+                      <select value={waiter} onChange={(e) => setWaiter(e.target.value)} className="mt-1 w-full px-3 py-2 bg-cream border border-border rounded-lg text-sm">
+                        {waiters.map(w => <option key={w}>{w}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <button onClick={() => setShowAssign(false)} className="flex-1 py-2.5 bg-cream border border-border rounded-lg text-sm">Cancelar</button>
+                      <button onClick={handleAssign} className="flex-1 py-2.5 bg-clay text-white rounded-lg text-sm font-bold">Confirmar</button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -618,16 +711,25 @@
     }
 
     // Other views (placeholders with appropriate richness)
-    function Mesas() {
+    function Mesas({ tables, setTables }) {
       const [tableModal, setTableModal] = useState(null);
+
+      const handleAssign = (id, patch) => {
+        setTables(prev => prev.map(t => t.id === id ? { ...t, status: patch.status || 'occupied', ...patch, time: 0, total: 0 } : t));
+      };
+      const handleToggleVip = (id, vip, vipNote) => {
+        setTables(prev => prev.map(t => t.id === id ? { ...t, vip, vipNote } : t));
+        setTableModal(prev => prev && prev.id === id ? { ...prev, vip, vipNote } : prev);
+      };
+
       return (
         <div>
           <h1 className="font-display text-3xl font-semibold">Mesas y plano del salón</h1>
-          <p className="text-muted mt-1">Gestión visual del estado de cada mesa en tiempo real.</p>
+          <p className="text-muted mt-1">Gestión visual del estado de cada mesa en tiempo real. Marca VIP para priorizar en cocina.</p>
           <div className="mt-6">
-            <FloorPlan onTable={setTableModal} />
+            <FloorPlan onTable={setTableModal} tables={tables} />
           </div>
-          {tableModal && <TableModal table={tableModal} onClose={() => setTableModal(null)} />}
+          {tableModal && <TableModal table={tableModal} onClose={() => setTableModal(null)} onAssign={handleAssign} onToggleVip={handleToggleVip} />}
         </div>
       );
     }
@@ -763,9 +865,309 @@
       );
     }
 
+    // ════════════════════════════════════════════════════════
+    //              COLA DE ESPERA (CAJA) CON IA
+    // ════════════════════════════════════════════════════════
+    function ColaView({ tables, setTables, queue, setQueue }) {
+      const [name, setName] = useState("");
+      const [size, setSize] = useState(2);
+      const [phone, setPhone] = useState("");
+      const [pref, setPref] = useState("any"); // any, ventana, terraza
+      const [tick, setTick] = useState(0);
+
+      // Refresh para recalcular esperas cada 30s
+      useEffect(() => {
+        const i = setInterval(() => setTick(t => t + 1), 30000);
+        return () => clearInterval(i);
+      }, []);
+
+      // ─── ALGORITMO IA: Asignación óptima ─────────────────────
+      // Score por mesa libre: + capacidad - desperdicio - distancia preferencia
+      const findBestTable = (groupSize, preference = "any") => {
+        const free = tables.filter(t => t.status === "free" && !t.blocked);
+        if (free.length === 0) return null;
+        // Filtrar mesas suficientemente grandes
+        const usable = free.filter(t => t.seats >= groupSize);
+        if (usable.length === 0) {
+          // Sugerir unir mesas (no implementado en esta demo, pero retornamos hint)
+          return { type: "needsJoin", suggestion: `Considerar unir 2 mesas pequeñas para grupo de ${groupSize}` };
+        }
+        // Score: penaliza desperdicio (mesa muy grande para grupo pequeño)
+        const scored = usable.map(t => {
+          const waste = t.seats - groupSize; // 0 = ajuste perfecto
+          const wasteScore = waste === 0 ? 100 : (waste === 1 ? 60 : 30 - waste * 5);
+          const prefBonus = preference !== "any" && t.zone === preference ? 30 : 0;
+          return { table: t, score: wasteScore + prefBonus, waste };
+        });
+        scored.sort((a, b) => b.score - a.score);
+        return { type: "match", best: scored[0].table, alternatives: scored.slice(1, 3).map(s => s.table) };
+      };
+
+      // ─── ESTIMACIÓN DE TIEMPO DE ESPERA ──────────────────────
+      const estimateWait = (groupSize) => {
+        const free = tables.filter(t => t.status === "free" && !t.blocked && t.seats >= groupSize).length;
+        if (free > 0) return 0;
+        // Tiempo promedio de mesa: 45 min. Mesas ocupadas con tiempo restante:
+        const candidateOccupied = tables
+          .filter(t => (t.status === "occupied" || t.status === "billing") && t.seats >= groupSize)
+          .map(t => Math.max(5, 45 - (t.time || 0)));
+        if (candidateOccupied.length === 0) return 60; // peor caso
+        candidateOccupied.sort((a, b) => a - b);
+        // Cuenta cuántos grupos hay ya en cola antes para esta capacidad
+        const aheadInQueue = queue.filter(q => q.size <= groupSize && q.status === "waiting").length;
+        const earliestSlot = candidateOccupied[Math.min(aheadInQueue, candidateOccupied.length - 1)];
+        return earliestSlot + 5; // +5 min buffer (limpieza)
+      };
+
+      const addToQueue = () => {
+        if (!name.trim()) return;
+        const wait = estimateWait(size);
+        setQueue(prev => [...prev, {
+          id: `q-${Date.now()}`,
+          name: name.trim(),
+          size,
+          phone: phone.trim(),
+          pref,
+          arrivedAt: Date.now(),
+          estimatedWait: wait,
+          status: "waiting"
+        }]);
+        setName(""); setPhone(""); setSize(2); setPref("any");
+      };
+
+      const seatGroup = (qid) => {
+        const group = queue.find(q => q.id === qid);
+        if (!group) return;
+        const result = findBestTable(group.size, group.pref);
+        if (!result || result.type === "needsJoin") {
+          alert(result?.suggestion || "No hay mesa disponible");
+          return;
+        }
+        // Sentar
+        setTables(prev => prev.map(t => t.id === result.best.id ? { ...t, status: 'occupied', party: group.size, server: 'María Quispe', time: 0, total: 0 } : t));
+        setQueue(prev => prev.map(q => q.id === qid ? { ...q, status: 'seated', tableId: result.best.id, seatedAt: Date.now() } : q));
+      };
+
+      const removeFromQueue = (qid) => setQueue(prev => prev.filter(q => q.id !== qid));
+
+      const waiting = queue.filter(q => q.status === "waiting");
+      const seated = queue.filter(q => q.status === "seated");
+      const totalCovers = waiting.reduce((s, q) => s + q.size, 0);
+      const freeTables = tables.filter(t => t.status === "free" && !t.blocked).length;
+
+      return (
+        <div className="space-y-6">
+          <div>
+            <h1 className="font-display text-3xl font-semibold">Cola de espera</h1>
+            <p className="text-muted mt-1">La IA asigna la mesa óptima según tamaño del grupo, capacidad disponible y rotación esperada.</p>
+          </div>
+
+          {/* KPIs cabecera */}
+          <div className="grid grid-cols-4 gap-4">
+            <KpiCard label="En cola" value={waiting.length} sub={`${totalCovers} comensales`} accent="clay" icon="users" />
+            <KpiCard label="Mesas libres" value={freeTables} sub={`de ${tables.length} totales`} accent="olive" icon="table" />
+            <KpiCard label="Espera estimada" value={waiting.length > 0 ? `${Math.max(...waiting.map(q => q.estimatedWait))} min` : "—"} accent="warn" icon="clock" />
+            <KpiCard label="Sentados hoy" value={seated.length} accent="sky" icon="check" />
+          </div>
+
+          {/* Form añadir grupo */}
+          <div className="bg-paper border border-border rounded-2xl p-6">
+            <h2 className="font-display text-xl font-semibold mb-4">Registrar grupo entrante</h2>
+            <div className="grid grid-cols-12 gap-3">
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Nombre del cliente"
+                className="col-span-4 px-4 py-3 bg-cream border border-border rounded-xl text-sm focus:outline-none focus:border-clay"
+              />
+              <div className="col-span-2 inline-flex items-center bg-cream border border-border rounded-xl">
+                <button onClick={() => setSize(Math.max(1, size - 1))} className="w-10 h-full text-clay font-bold">−</button>
+                <span className="flex-1 text-center font-bold">{size}</span>
+                <button onClick={() => setSize(Math.min(20, size + 1))} className="w-10 h-full text-clay font-bold">+</button>
+              </div>
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Teléfono (opcional)"
+                className="col-span-3 px-4 py-3 bg-cream border border-border rounded-xl text-sm focus:outline-none focus:border-clay"
+              />
+              <select value={pref} onChange={(e) => setPref(e.target.value)} className="col-span-2 px-3 py-3 bg-cream border border-border rounded-xl text-sm">
+                <option value="any">Cualquier zona</option>
+                <option value="Ventana">Ventana</option>
+                <option value="Centro">Centro</option>
+                <option value="Pared">Pared</option>
+                <option value="Terraza">Terraza</option>
+              </select>
+              <button
+                onClick={addToQueue}
+                disabled={!name.trim()}
+                className="col-span-1 py-3 bg-clay text-white rounded-xl font-bold disabled:opacity-50"
+              >
+                +
+              </button>
+            </div>
+
+            {/* IA preview */}
+            {name.trim() && (
+              <div className="mt-3 p-3 bg-clay/5 border border-clay/20 rounded-xl">
+                <p className="text-xs font-semibold text-clay mb-1">🤖 Asignación sugerida</p>
+                {(() => {
+                  const r = findBestTable(size, pref);
+                  if (!r) return <p className="text-xs text-muted">Sin mesas libres → entra en cola</p>;
+                  if (r.type === "needsJoin") return <p className="text-xs text-warn">{r.suggestion}</p>;
+                  return (
+                    <div className="text-xs">
+                      <p>Mesa <span className="font-bold text-clay">{r.best.id}</span> · {r.best.zone} · {r.best.seats} asientos {r.best.seats === size && '✓ ajuste perfecto'}</p>
+                      {r.alternatives.length > 0 && <p className="text-muted mt-0.5">Alternativas: Mesa {r.alternatives.map(a => a.id).join(', ')}</p>}
+                    </div>
+                  );
+                })()}
+                <p className="text-[10px] text-muted mt-1">Espera estimada: <span className="font-bold">{estimateWait(size)} min</span></p>
+              </div>
+            )}
+          </div>
+
+          {/* Lista de cola */}
+          <div className="bg-paper border border-border rounded-2xl p-6">
+            <h2 className="font-display text-xl font-semibold mb-4">En cola ({waiting.length})</h2>
+            {waiting.length === 0 ? (
+              <div className="text-center py-12 text-muted">
+                <Icon name="check" size={36} className="mx-auto opacity-50" />
+                <p className="mt-3 font-medium">Sin cola de espera</p>
+                <p className="text-xs mt-1">Cuando llegue un grupo, regístralo arriba</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {waiting.map((q, idx) => {
+                  const ageMin = Math.floor((Date.now() - q.arrivedAt) / 60000);
+                  const result = findBestTable(q.size, q.pref);
+                  const canSeat = result && result.type === "match";
+                  return (
+                    <div key={q.id} className={`flex items-center gap-4 p-4 rounded-xl border ${canSeat ? 'border-olive/40 bg-olive/5' : 'border-border bg-cream'}`}>
+                      <div className="w-12 h-12 rounded-xl bg-paper border border-border flex items-center justify-center font-display text-lg font-bold text-clay">
+                        {idx + 1}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold">{q.name}</p>
+                        <p className="text-xs text-muted">
+                          <Icon name="users" size={11} className="inline" /> {q.size} · {q.phone || 'sin teléfono'} · llegó hace {ageMin} min
+                          {q.pref !== "any" && ` · prefiere ${q.pref}`}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-muted">Espera estimada</p>
+                        <p className="font-display font-bold">{Math.max(0, q.estimatedWait - ageMin)} min</p>
+                      </div>
+                      {canSeat && (
+                        <button onClick={() => seatGroup(q.id)} className="px-4 py-2 bg-olive text-white rounded-lg text-sm font-bold inline-flex items-center gap-1">
+                          <Icon name="check" size={14} /> Sentar Mesa {result.best.id}
+                        </button>
+                      )}
+                      <button onClick={() => removeFromQueue(q.id)} className="px-3 py-2 bg-paper border border-border rounded-lg text-sm">
+                        ×
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ════════════════════════════════════════════════════════
+    //          PARAMETRIZACIÓN ASISTENTE IA MOZO
+    // ════════════════════════════════════════════════════════
+    function AsistenteConfigView() {
+      const TYPES = [
+        { id: "complaint", label: "Atender quejas", desc: "Mesas con queja registrada", icon: "alert", default: 100 },
+        { id: "callPending", label: "Llamados pendientes", desc: "Cliente llamó al mozo", icon: "bell", default: 90 },
+        { id: "foodReady", label: "Platos listos para servir", desc: "Cocina marcó plato como listo", icon: "utensils", default: 85 },
+        { id: "newTableGreet", label: "Saludar mesa nueva", desc: "Mesa recién sentada (regla 30s)", icon: "users", default: 75 },
+        { id: "drinkDelay", label: "Bebidas demoradas", desc: "Bebidas pendientes >5 min", icon: "alert", default: 70 },
+        { id: "checkBack", label: "Check-back de 2 minutos", desc: "Pasar a preguntar después de servir", icon: "users", default: 60 },
+        { id: "preBus", label: "Pre-bus platos vacíos", desc: "Retirar platos terminados", icon: "x", default: 45 },
+        { id: "offerDessert", label: "Ofrecer postre", desc: "Sube ticket promedio (mesa >15min)", icon: "users", default: 50 },
+        { id: "cleanTable", label: "Limpiar mesas pagadas", desc: "Mesa lista para próximo turno", icon: "x", default: 55 },
+        { id: "refillDrink", label: "Refill de bebidas", desc: "Vasos vacíos detectados", icon: "users", default: 35 },
+        { id: "vipAttention", label: "Atención VIP", desc: "Cliente VIP llegó al local", icon: "users", default: 80 },
+        { id: "walkRound", label: "Rondas generales", desc: "Pasar por todas tus mesas cada 8min", icon: "users", default: 30 }
+      ];
+      const [config, setConfig] = useState(() => {
+        try { return JSON.parse(localStorage.getItem("mesasmart_ai_assistant_config_v1")) || {}; } catch { return {}; }
+      });
+
+      const updateType = (typeId, patch) => {
+        const newConfig = { ...config, [typeId]: { ...(config[typeId] || { enabled: true, weight: TYPES.find(t => t.id === typeId).default }), ...patch } };
+        setConfig(newConfig);
+        localStorage.setItem("mesasmart_ai_assistant_config_v1", JSON.stringify(newConfig));
+      };
+
+      return (
+        <div className="space-y-6">
+          <div>
+            <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
+              <span>✨</span>Asistente IA del Mozo
+            </h1>
+            <p className="text-muted mt-1">Configura qué tipos de recomendaciones genera la IA y con qué prioridad. Basado en las 10 etapas del servicio profesional.</p>
+          </div>
+
+          <div className="bg-clay/5 border border-clay/20 rounded-2xl p-5 flex items-start gap-3">
+            <Icon name="alert" size={18} className="text-clay shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-sm">Lógica de priorización</p>
+              <p className="text-xs text-muted mt-1">El score base de cada tipo se ajusta en tiempo real según: tiempo transcurrido, urgencia, mesa VIP, queja activa. Tipos desactivados se omiten del feed del mozo.</p>
+            </div>
+          </div>
+
+          <div className="bg-paper border border-border rounded-2xl divide-y divide-border">
+            {TYPES.map(type => {
+              const cfg = config[type.id] || { enabled: true, weight: type.default };
+              return (
+                <div key={type.id} className="p-4 flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${cfg.enabled ? 'bg-clay/10 text-clay' : 'bg-cream text-muted'}`}>
+                    <Icon name={type.icon} size={18} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`font-semibold text-sm ${!cfg.enabled && 'text-muted'}`}>{type.label}</p>
+                    <p className="text-xs text-muted">{type.desc}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-muted uppercase tracking-wider">Prioridad</span>
+                      <input
+                        type="range"
+                        min="0" max="100"
+                        value={cfg.weight}
+                        onChange={(e) => updateType(type.id, { weight: parseInt(e.target.value) })}
+                        disabled={!cfg.enabled}
+                        className="w-24"
+                      />
+                      <span className="font-mono font-bold text-sm w-8 text-right">{cfg.weight}</span>
+                    </div>
+                    <button
+                      onClick={() => updateType(type.id, { enabled: !cfg.enabled })}
+                      className={`relative inline-flex w-11 h-6 rounded-full transition ${cfg.enabled ? 'bg-olive' : 'bg-border'}`}
+                    >
+                      <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition ${cfg.enabled ? 'left-5.5' : 'left-0.5'}`} style={{ left: cfg.enabled ? '22px' : '2px' }}></span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <p className="text-xs text-muted text-center">Cambios se guardan automáticamente · sincronizan con todos los mozos del turno</p>
+        </div>
+      );
+    }
+
     // ─────────────────────────── APP ───────────────────────────
     function App() {
       const [view, setView] = useState("dashboard");
+      const [tables, setTables] = useState(TABLES);
+      const [queue, setQueue] = useState([]); // Cola de espera
 
       return (
         <div className="flex min-h-full">
@@ -773,13 +1175,15 @@
           <div className="flex-1">
             <TopBar alerts={CALLS.length} />
             <main className="p-8">
-              {view === "dashboard" && <Dashboard />}
-              {view === "mesas" && <Mesas />}
+              {view === "dashboard" && <Dashboard tables={tables} setTables={setTables} />}
+              {view === "mesas" && <Mesas tables={tables} setTables={setTables} />}
               {view === "menu" && <MenuView />}
               {view === "pedidos" && <PedidosView />}
               {view === "reportes" && <ReportsView />}
               {view === "personal" && <PersonalView />}
               {view === "ajustes" && <AjustesView />}
+              {view === "cola" && <ColaView tables={tables} setTables={setTables} queue={queue} setQueue={setQueue} />}
+              {view === "asistente_config" && <AsistenteConfigView />}
             </main>
           </div>
         </div>
