@@ -898,24 +898,42 @@
     const AI_CONFIG_KEY = "mesasmart_ai_assistant_config_v1";
     function loadAIConfig() {
       try {
+        if (typeof localStorage === "undefined") return AI_DEFAULT_CONFIG;
         const stored = localStorage.getItem(AI_CONFIG_KEY);
-        if (stored) return { ...AI_DEFAULT_CONFIG, ...JSON.parse(stored) };
-      } catch {}
-      return AI_DEFAULT_CONFIG;
+        if (!stored) return AI_DEFAULT_CONFIG;
+        const parsed = JSON.parse(stored);
+        // Merge defensively: cada tipo del default + override de stored
+        const merged = {};
+        Object.keys(AI_DEFAULT_CONFIG).forEach(k => {
+          merged[k] = { ...AI_DEFAULT_CONFIG[k], ...(parsed[k] || {}) };
+        });
+        return merged;
+      } catch (_e) {
+        return AI_DEFAULT_CONFIG;
+      }
     }
 
     /**
      * Algoritmo de recomendaciones del mozo.
      * Toma estado actual (mesas, llamados) y devuelve lista priorizada de acciones.
      */
-    function generateRecommendations({ tables, calls, config, dismissed = new Set() }) {
+    function generateRecommendations(args) {
+      try {
+        return _generateRecommendationsImpl(args);
+      } catch (e) {
+        console.error("[Asistente IA] error generando recomendaciones:", e);
+        return [];
+      }
+    }
+    function _generateRecommendationsImpl({ tables = [], calls = [], config = AI_DEFAULT_CONFIG, dismissed = new Set() } = {}) {
       const recs = [];
       const now = Date.now();
+      const cfg = (k) => config[k] || AI_DEFAULT_CONFIG[k] || { enabled: true, weight: 50 };
 
       const myTables = tables.filter(t => t.server === ME.name);
 
       // 1. Quejas activas → urgente
-      myTables.filter(t => t.complaint && config.complaint.enabled).forEach(t => {
+      myTables.filter(t => t.complaint && cfg("complaint").enabled).forEach(t => {
         recs.push({
           id: `complaint-${t.id}`,
           type: "complaint",
@@ -925,13 +943,13 @@
           desc: t.complaint,
           mesa: t.id,
           actions: ["resolved", "later"],
-          score: config.complaint.weight + 50,
+          score: cfg("complaint").weight + 50,
           ageLabel: "AHORA"
         });
       });
 
       // 2. Llamados pendientes
-      calls.filter(c => config.callPending.enabled).forEach(c => {
+      calls.filter(c => cfg("callPending").enabled).forEach(c => {
         const ageMin = Math.max(c.time, 0);
         recs.push({
           id: `call-${c.id}`,
@@ -942,14 +960,14 @@
           desc: c.reason,
           mesa: c.mesa,
           actions: ["resolved", "later"],
-          score: config.callPending.weight + ageMin * 5,
+          score: cfg("callPending").weight + ageMin * 5,
           ageLabel: `hace ${ageMin} min`
         });
       });
 
       // 3. Platos listos para servir (>2 min en cocina = urgente)
       myTables.forEach(t => {
-        if (!config.foodReady.enabled) return;
+        if (!cfg("foodReady").enabled) return;
         const readyItems = (t.items || []).filter(i => i.status === "ready");
         if (readyItems.length === 0) return;
         const urgency = readyItems.length >= 2 ? "high" : "medium";
@@ -962,14 +980,14 @@
           desc: `Mesa ${t.id} · ${readyItems.map(i => i.qty + '× ' + i.name).join(', ')}`,
           mesa: t.id,
           actions: ["served", "later"],
-          score: config.foodReady.weight + readyItems.length * 5,
+          score: cfg("foodReady").weight + readyItems.length * 5,
           ageLabel: "Listo"
         });
       });
 
       // 4. Mesa nueva ocupada — saludar y tomar pedido
       myTables.forEach(t => {
-        if (!config.newTableGreet.enabled) return;
+        if (!cfg("newTableGreet").enabled) return;
         if (t.status !== "occupied" || t.time > 3) return;
         if (t.items && t.items.length > 0) return; // ya pidió
         recs.push({
@@ -981,18 +999,18 @@
           desc: `${t.party} comensales recién sentados · ofrecer agua y tomar bebidas`,
           mesa: t.id,
           actions: ["done", "later"],
-          score: config.newTableGreet.weight + t.time * 8,
+          score: cfg("newTableGreet").weight + t.time * 8,
           ageLabel: `hace ${t.time} min`
         });
       });
 
       // 5. Bebida demorada (cliente pidió hace >5 min y aún no llega)
       myTables.forEach(t => {
-        if (!config.drinkDelay.enabled) return;
+        if (!cfg("drinkDelay").enabled) return;
         const drinks = (t.items || []).filter(i => /chicha|limonada|kola|coca|cerveza|agua/i.test(i.name));
         const pending = drinks.find(i => i.status === "preparing" || i.status === "received");
         if (!pending) return;
-        if (t.time < config.drinkDelay.thresholdMin) return;
+        if (t.time < cfg("drinkDelay").thresholdMin) return;
         recs.push({
           id: `drink-${t.id}`,
           type: "drinkDelay",
@@ -1002,14 +1020,14 @@
           desc: `${pending.name} pendiente hace ${t.time} min · ir a barra`,
           mesa: t.id,
           actions: ["done", "later"],
-          score: config.drinkDelay.weight + t.time * 3,
+          score: cfg("drinkDelay").weight + t.time * 3,
           ageLabel: `${t.time} min`
         });
       });
 
       // 6. Check-back de 2 minutos (después de servir plato fuerte)
       myTables.forEach(t => {
-        if (!config.checkBack.enabled) return;
+        if (!cfg("checkBack").enabled) return;
         const served = (t.items || []).filter(i => i.status === "served");
         if (served.length === 0) return;
         if (t.time < 5 || t.time > 12) return; // ventana de check-back
@@ -1022,13 +1040,13 @@
           desc: `Pasar a preguntar "¿todo bien con la comida?" · regla 2 minutos`,
           mesa: t.id,
           actions: ["done", "later"],
-          score: config.checkBack.weight + Math.min(20, t.time)
+          score: cfg("checkBack").weight + Math.min(20, t.time)
         });
       });
 
       // 7. Mesa pagada → limpiar para próximo turno
       tables.forEach(t => {
-        if (!config.cleanTable.enabled) return;
+        if (!cfg("cleanTable").enabled) return;
         if (t.status !== "cleaning") return;
         recs.push({
           id: `clean-${t.id}`,
@@ -1039,14 +1057,14 @@
           desc: `Lista para próximo turno · pasa a alistar`,
           mesa: t.id,
           actions: ["done", "later"],
-          score: config.cleanTable.weight,
+          score: cfg("cleanTable").weight,
           ageLabel: "Por hacer"
         });
       });
 
       // 8. Ofrecer postre (>15 min ocupado, comieron principal)
       myTables.forEach(t => {
-        if (!config.offerDessert.enabled) return;
+        if (!cfg("offerDessert").enabled) return;
         if (t.time < 15 || t.time > 35) return;
         const ate = (t.items || []).filter(i => i.status === "served").length;
         const dessert = (t.items || []).find(i => /postre|torta|suspiro|cheesecake|mazamorra/i.test(i.name));
@@ -1060,13 +1078,13 @@
           desc: `Sugerir suspiro a la limeña, mazamorra o cheesecake (sube ticket promedio)`,
           mesa: t.id,
           actions: ["done", "later"],
-          score: config.offerDessert.weight
+          score: cfg("offerDessert").weight
         });
       });
 
       // 9. Ronda general — ninguna mesa atendida en >7 min
       const longestSinceCheck = Math.max(...myTables.map(t => t.time || 0), 0);
-      if (config.walkRound.enabled && longestSinceCheck > 8 && myTables.length > 1) {
+      if (cfg("walkRound").enabled && longestSinceCheck > 8 && myTables.length > 1) {
         recs.push({
           id: `round-${Date.now()}`,
           type: "walkRound",
@@ -1075,7 +1093,7 @@
           title: `Ronda por tus mesas`,
           desc: `${myTables.length} mesas en tu sección · pasa a chequear si todo está bien`,
           actions: ["done", "later"],
-          score: config.walkRound.weight + longestSinceCheck
+          score: cfg("walkRound").weight + longestSinceCheck
         });
       }
 
@@ -1397,7 +1415,26 @@
       );
     }
 
-    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    // Error boundary para capturar errores y mostrarlos
+    class ErrorBoundary extends React.Component {
+      constructor(props) { super(props); this.state = { error: null }; }
+      static getDerivedStateFromError(error) { return { error }; }
+      componentDidCatch(error, info) { console.error("[Mozo error boundary]", error, info); }
+      render() {
+        if (this.state.error) {
+          return (
+            <div style={{padding: 24, fontFamily: "system-ui", color: "#A0322B", maxWidth: 420, margin: "40px auto"}}>
+              <h2 style={{fontWeight: 700, marginBottom: 12}}>⚠️ Error en la app</h2>
+              <pre style={{background:"#fff", padding: 12, borderRadius: 8, fontSize: 12, overflow: "auto", whiteSpace: "pre-wrap"}}>{String(this.state.error && this.state.error.message ? this.state.error.message : this.state.error)}</pre>
+              <button onClick={() => location.reload()} style={{marginTop: 12, padding: "10px 20px", background: "#A0322B", color: "white", border: "none", borderRadius: 8}}>Recargar</button>
+            </div>
+          );
+        }
+        return this.props.children;
+      }
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<ErrorBoundary><App /></ErrorBoundary>);
   </script>
 </body>
 </html>
