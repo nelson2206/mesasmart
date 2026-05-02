@@ -414,6 +414,409 @@
       color: var(--muted);
     }
 
+    /* ═══════════════════════════════════════════════════════
+       CATÁLOGO VISUAL DE PLANES (la vista hero del producto)
+       ═══════════════════════════════════════════════════════ */
+    .catalog-section {
+      padding: 80px 0 60px;
+      background: linear-gradient(180deg, var(--cream) 0%, #FFFFFF 60%, var(--cream) 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .catalog-section::before {
+      content: '';
+      position: absolute;
+      top: -120px; right: -80px;
+      width: 380px; height: 380px;
+      background: radial-gradient(circle, rgba(200,148,31,0.12) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .catalog-section::after {
+      content: '';
+      position: absolute;
+      bottom: -120px; left: -80px;
+      width: 380px; height: 380px;
+      background: radial-gradient(circle, rgba(160,50,43,0.10) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .catalog-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 14px;
+      background: rgba(160,50,43,0.08);
+      border: 1px solid rgba(160,50,43,0.20);
+      color: var(--clay);
+      border-radius: 100px;
+      font-size: 12px; font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .catalog-eyebrow::before {
+      content: ''; width: 6px; height: 6px;
+      background: var(--clay); border-radius: 50%;
+    }
+    .catalog-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(28px, 4.5vw, 42px);
+      font-weight: 600;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+      max-width: 760px;
+      line-height: 1.1;
+    }
+    .catalog-title em { font-style: italic; color: var(--clay); }
+    .catalog-sub {
+      font-size: 16px; color: var(--muted);
+      max-width: 620px;
+      margin-top: 14px;
+    }
+
+    /* Plan cards row */
+    .plan-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-top: 48px;
+      position: relative;
+      z-index: 1;
+    }
+    @media (max-width: 1024px) { .plan-cards { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px)  { .plan-cards { grid-template-columns: 1fr; } }
+
+    .plan-card {
+      position: relative;
+      background: white;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      padding: 26px 22px 22px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+    .plan-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px rgba(31,26,23,0.10);
+      border-color: var(--clay);
+    }
+    .plan-card.featured {
+      background: linear-gradient(180deg, #FFF8F0 0%, #FFFFFF 100%);
+      border-color: var(--clay);
+      box-shadow: 0 12px 32px rgba(160,50,43,0.12);
+    }
+    .plan-card.enterprise-pure {
+      background: linear-gradient(180deg, #1F1A17 0%, #2A1F1A 100%);
+      color: white;
+      border-color: var(--gold);
+    }
+    .plan-card.enterprise-pure .plan-card-name,
+    .plan-card.enterprise-pure .plan-card-price-num,
+    .plan-card.enterprise-pure .plan-card-tagline,
+    .plan-card.enterprise-pure .plan-card-li,
+    .plan-card.enterprise-pure .plan-card-setup { color: white; }
+    .plan-card.enterprise-pure .plan-card-li-icon { color: var(--gold); }
+    .plan-card.enterprise-pure .plan-card-foot { border-color: rgba(255,255,255,0.10); color: rgba(255,255,255,0.65); }
+
+    .plan-card-ribbon {
+      position: absolute; top: 14px; right: 14px;
+      padding: 4px 10px;
+      background: var(--clay); color: white;
+      border-radius: 100px;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .plan-card.enterprise-pure .plan-card-ribbon { background: var(--gold); color: #1F1A17; }
+
+    .plan-card-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      margin-bottom: 14px;
+    }
+    .plan-card.pos-solo .plan-card-icon    { background: rgba(107,93,82,0.12); }
+    .plan-card.operacion .plan-card-icon   { background: rgba(45,125,90,0.12); }
+    .plan-card.profesional .plan-card-icon { background: rgba(160,50,43,0.12); }
+    .plan-card.enterprise-pure .plan-card-icon { background: rgba(200,148,31,0.16); }
+
+    .plan-card-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px; font-weight: 600;
+      color: var(--ink);
+      line-height: 1; margin-bottom: 4px;
+    }
+    .plan-card-tagline {
+      font-size: 12px; color: var(--muted);
+      line-height: 1.4; margin-bottom: 18px;
+      min-height: 32px;
+    }
+    .plan-card-price-row {
+      display: flex; align-items: baseline; gap: 4px;
+    }
+    .plan-card-price-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px; font-weight: 700;
+      color: var(--ink); line-height: 1;
+    }
+    .plan-card-price-period { font-size: 12px; color: var(--muted); }
+    .plan-card-setup {
+      font-size: 11px; color: var(--muted);
+      margin-top: 4px; font-style: italic;
+    }
+    .plan-card-divider {
+      height: 1px; background: var(--border);
+      margin: 18px 0;
+    }
+    .plan-card.enterprise-pure .plan-card-divider { background: rgba(255,255,255,0.10); }
+
+    .plan-card-list {
+      list-style: none; padding: 0; margin: 0 0 18px 0;
+      flex: 1;
+    }
+    .plan-card-li {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 5px 0;
+      font-size: 13px; color: var(--ink);
+      line-height: 1.4;
+    }
+    .plan-card-li-icon {
+      flex-shrink: 0;
+      width: 16px; height: 16px;
+      color: var(--clay);
+      font-weight: 700; font-size: 14px;
+      margin-top: 1px;
+    }
+    .plan-card.operacion .plan-card-li-icon { color: var(--olive); }
+    .plan-card.pos-solo  .plan-card-li-icon { color: var(--muted); }
+
+    .plan-card-foot {
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      font-size: 11px; color: var(--muted);
+      text-align: center;
+    }
+    .plan-card-foot strong { color: var(--clay); font-weight: 700; }
+    .plan-card.enterprise-pure .plan-card-foot strong { color: var(--gold); }
+
+    /* Matrix filterable */
+    .catalog-filters {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-top: 56px; margin-bottom: 24px;
+      position: relative; z-index: 1;
+    }
+    .catalog-filter-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 14px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 13px; font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .catalog-filter-pill:hover { border-color: var(--clay); color: var(--clay); }
+    .catalog-filter-pill.active {
+      background: var(--clay); border-color: var(--clay); color: white;
+      box-shadow: 0 4px 12px rgba(160,50,43,0.25);
+    }
+    .catalog-filter-pill .pill-emoji { font-size: 14px; }
+    .catalog-filter-pill .pill-count {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 18px; height: 18px; padding: 0 5px;
+      background: rgba(0,0,0,0.06);
+      border-radius: 100px;
+      font-size: 10px; font-weight: 700;
+    }
+    .catalog-filter-pill.active .pill-count { background: rgba(255,255,255,0.20); }
+
+    .catalog-matrix {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      position: relative; z-index: 1;
+      box-shadow: 0 8px 24px rgba(31,26,23,0.04);
+    }
+    .matrix-header {
+      display: grid;
+      grid-template-columns: 1.6fr repeat(4, 1fr);
+      background: linear-gradient(180deg, #FAF7F2 0%, #FFFFFF 100%);
+      border-bottom: 1.5px solid var(--border);
+      padding: 18px 24px;
+      position: sticky; top: 0; z-index: 5;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .matrix-header-cell {
+      font-size: 12px; text-transform: uppercase;
+      letter-spacing: 0.06em; font-weight: 700;
+      color: var(--ink); text-align: center;
+    }
+    .matrix-header-cell.feat { text-align: left; }
+    .matrix-header-cell .plan-mini-name {
+      display: block;
+      font-family: 'Playfair Display', serif;
+      font-size: 13px; letter-spacing: 0;
+      text-transform: none; font-weight: 600;
+    }
+    .matrix-header-cell .plan-mini-price {
+      display: block;
+      font-size: 10px; font-weight: 500;
+      color: var(--muted);
+      text-transform: none; letter-spacing: 0;
+      margin-top: 2px;
+    }
+    .matrix-header-cell .plan-mini-name.clay  { color: var(--clay); }
+    .matrix-header-cell .plan-mini-name.olive { color: var(--olive); }
+    .matrix-header-cell .plan-mini-name.gold  { color: var(--gold); }
+
+    .matrix-group-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 16px 24px 10px;
+      background: linear-gradient(90deg, rgba(160,50,43,0.04) 0%, transparent 100%);
+      border-top: 1px solid var(--border);
+      font-size: 13px; font-weight: 700;
+      color: var(--ink);
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .matrix-group-header.enterprise-only {
+      background: linear-gradient(90deg, rgba(200,148,31,0.10) 0%, transparent 100%);
+      color: #6F4F0A;
+    }
+    .matrix-group-header .group-emoji { font-size: 18px; }
+    .matrix-group-header .enterprise-tag {
+      margin-left: auto;
+      padding: 3px 8px;
+      background: var(--gold); color: #1F1A17;
+      border-radius: 100px;
+      font-size: 9px; font-weight: 800;
+      letter-spacing: 0.06em;
+    }
+
+    .matrix-row {
+      display: grid;
+      grid-template-columns: 1.6fr repeat(4, 1fr);
+      padding: 14px 24px;
+      border-bottom: 1px solid #F4ECDF;
+      transition: background 0.15s ease;
+    }
+    .matrix-row:hover { background: #FFFAF3; }
+    .matrix-row.enterprise-row {
+      background: linear-gradient(90deg, rgba(200,148,31,0.04) 0%, transparent 100%);
+    }
+    .matrix-row.enterprise-row:hover {
+      background: linear-gradient(90deg, rgba(200,148,31,0.08) 0%, rgba(255,250,243,1) 100%);
+    }
+
+    .matrix-feat {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding-right: 8px;
+    }
+    .matrix-feat-icon {
+      flex-shrink: 0;
+      width: 32px; height: 32px;
+      background: var(--cream);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .matrix-feat-text { display: flex; flex-direction: column; gap: 2px; }
+    .matrix-feat-name {
+      font-size: 14px; font-weight: 600;
+      color: var(--ink);
+      display: flex; align-items: center; gap: 6px;
+      flex-wrap: wrap;
+    }
+    .matrix-feat-new-tag {
+      padding: 2px 6px;
+      background: var(--clay); color: white;
+      font-size: 9px; font-weight: 800;
+      border-radius: 4px; letter-spacing: 0.04em;
+    }
+    .matrix-feat-new-tag.gold { background: var(--gold); color: #1F1A17; }
+    .matrix-feat-desc {
+      font-size: 12px; color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .matrix-cell {
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .cell-yes {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, #2D7D5A 0%, #4A9B72 100%);
+      border-radius: 50%;
+      color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700;
+      box-shadow: 0 2px 6px rgba(45,125,90,0.30);
+    }
+    .cell-yes-clay {
+      background: linear-gradient(135deg, #A0322B 0%, #C4493A 100%);
+      box-shadow: 0 2px 6px rgba(160,50,43,0.30);
+    }
+    .cell-yes-gold {
+      background: linear-gradient(135deg, #C8941F 0%, #E0AF3F 100%);
+      box-shadow: 0 2px 6px rgba(200,148,31,0.30);
+    }
+    .cell-no {
+      width: 18px; height: 2px;
+      background: var(--border);
+      border-radius: 100px;
+    }
+
+    @media (max-width: 720px) {
+      .matrix-header { padding: 14px 12px; }
+      .matrix-row { padding: 12px; }
+      .matrix-group-header { padding: 14px 12px 8px; font-size: 11px; }
+      .matrix-feat-icon { width: 26px; height: 26px; font-size: 13px; }
+      .matrix-feat-name { font-size: 12px; }
+      .matrix-feat-desc { font-size: 10px; }
+      .matrix-header-cell { font-size: 10px; }
+      .matrix-header-cell .plan-mini-name { font-size: 11px; }
+      .matrix-header-cell .plan-mini-price { display: none; }
+      .cell-yes { width: 22px; height: 22px; font-size: 11px; }
+    }
+
+    .catalog-cta {
+      margin-top: 32px;
+      padding: 26px;
+      background: linear-gradient(135deg, var(--ink) 0%, var(--charcoal) 100%);
+      border-radius: 20px;
+      color: white; text-align: center;
+      position: relative; overflow: hidden;
+      z-index: 1;
+    }
+    .catalog-cta::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at center, rgba(200,148,31,0.18) 0%, transparent 70%);
+    }
+    .catalog-cta-content { position: relative; z-index: 1; }
+    .catalog-cta h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px; font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .catalog-cta p {
+      font-size: 14px; color: rgba(255,255,255,0.75);
+      margin-bottom: 20px;
+    }
+    .catalog-cta a {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 28px;
+      background: var(--gold); color: #1F1A17;
+      border-radius: 100px;
+      font-weight: 700; font-size: 14px;
+      text-decoration: none;
+      transition: transform 0.2s ease;
+    }
+    .catalog-cta a:hover { transform: translateY(-2px); }
+
     /* Consultant Section */
     .consultant-section {
       padding: 80px 0;
@@ -874,7 +1277,151 @@
     </div>
   </section>
 
-  <section class="consultant-section">
+  <!-- ═══ CATÁLOGO VISUAL DE PLANES ═══ -->
+  <section class="catalog-section" id="catalogo">
+    <div class="container">
+      <span class="catalog-eyebrow">4 planes · sin migrar de sistema</span>
+      <h2 class="catalog-title">Planes y funcionalidades, <em>uno al lado del otro</em></h2>
+      <p class="catalog-sub">Cada plan suma sobre el anterior. Si crece tu negocio, solo activas el siguiente — no migras de software.</p>
+
+      <!-- 4 Plan Cards -->
+      <div class="plan-cards">
+        <!-- Solo POS -->
+        <div class="plan-card pos-solo" onclick="window.MesaSmartFeatures && window.MesaSmartFeatures.setActivePlan('POS_SOLO'); document.querySelector('#consultor').scrollIntoView({behavior:'smooth'});">
+          <div class="plan-card-icon">📋</div>
+          <div class="plan-card-name">Solo POS</div>
+          <div class="plan-card-tagline">Para empezar gratis con lo esencial</div>
+          <div class="plan-card-price-row">
+            <span class="plan-card-price-num">Gratis</span>
+          </div>
+          <div class="plan-card-setup">Sin setup · Sin tarjeta</div>
+          <div class="plan-card-divider"></div>
+          <ul class="plan-card-list">
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>POS, mesas, cocina KDS</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>App del mozo en celular</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Boletas y facturas SUNAT</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Yape, Plin, tarjeta, efectivo</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Libro de Reclamaciones</li>
+          </ul>
+          <div class="plan-card-foot">Ideal para <strong>1 local pequeño</strong></div>
+        </div>
+
+        <!-- Operación -->
+        <div class="plan-card operacion" onclick="window.MesaSmartFeatures && window.MesaSmartFeatures.setActivePlan('OPERACION'); document.querySelector('#consultor').scrollIntoView({behavior:'smooth'});">
+          <div class="plan-card-icon">📦</div>
+          <div class="plan-card-name">Operación</div>
+          <div class="plan-card-tagline">Inventario, costos y P&L para 1 local</div>
+          <div class="plan-card-price-row">
+            <span class="plan-card-price-num">S/ 199</span>
+            <span class="plan-card-price-period">/mes</span>
+          </div>
+          <div class="plan-card-setup">+ S/ 500 setup · 1 local</div>
+          <div class="plan-card-divider"></div>
+          <ul class="plan-card-list">
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Todo Solo POS</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Insumos · recetas · stock real</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Caducidad por lotes (FEFO)</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>P&L · food cost · costos laborales</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Pedidos a proveedores</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Conteo físico · variance</li>
+          </ul>
+          <div class="plan-card-foot">Ideal para <strong>1 local con cocina propia</strong></div>
+        </div>
+
+        <!-- Profesional (FEATURED) -->
+        <div class="plan-card profesional featured" onclick="window.MesaSmartFeatures && window.MesaSmartFeatures.setActivePlan('PROFESIONAL'); document.querySelector('#consultor').scrollIntoView({behavior:'smooth'});">
+          <span class="plan-card-ribbon">Más elegido</span>
+          <div class="plan-card-icon">🤖</div>
+          <div class="plan-card-name">Profesional</div>
+          <div class="plan-card-tagline">Multi-local + IA operativa para crecer</div>
+          <div class="plan-card-price-row">
+            <span class="plan-card-price-num">S/ 399</span>
+            <span class="plan-card-price-period">/mes</span>
+          </div>
+          <div class="plan-card-setup">+ S/ 800 setup · 2 a 15 locales</div>
+          <div class="plan-card-divider"></div>
+          <ul class="plan-card-list">
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Todo Operación</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Conversiones de insumos (yields)</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Recepción de guías con foto IA</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Smart Priority cocina + asistente mozo</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Cliente recurrente · rewards · tablet</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Campañas IA · cola de espera IA</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Multi-local consolidado · auditoría</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>EBITDA y margen real</li>
+          </ul>
+          <div class="plan-card-foot">Ideal para <strong>cadena 2-15 locales</strong></div>
+        </div>
+
+        <!-- Enterprise (PURE BLACK + GOLD) -->
+        <div class="plan-card enterprise-pure" onclick="window.MesaSmartFeatures && window.MesaSmartFeatures.setActivePlan('ENTERPRISE'); document.querySelector('#consultor').scrollIntoView({behavior:'smooth'});">
+          <span class="plan-card-ribbon">Corporate</span>
+          <div class="plan-card-icon">🏛️</div>
+          <div class="plan-card-name">Enterprise</div>
+          <div class="plan-card-tagline">Gobierno corporativo, SSO y forecasting IA</div>
+          <div class="plan-card-price-row">
+            <span class="plan-card-price-num">S/ 1499</span>
+            <span class="plan-card-price-period">/mes</span>
+          </div>
+          <div class="plan-card-setup">+ S/ 2500 setup · 16+ locales</div>
+          <div class="plan-card-divider"></div>
+          <ul class="plan-card-list">
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Todo Profesional</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Forecast demanda IA · staffing IA</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>SSO SAML/OIDC · roles granulares</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Integración Concar/SAP · Power BI</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Conciliación bancaria automática</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Cocina central · transferencias</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>SLA 99.9% · backup 7 años</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Customer Success Manager dedicado</li>
+            <li class="plan-card-li"><span class="plan-card-li-icon">✓</span>Reportes ejecutivos al directorio</li>
+          </ul>
+          <div class="plan-card-foot">Ideal para <strong>16+ locales o multi-RUC</strong></div>
+        </div>
+      </div>
+
+      <!-- Filterable matrix -->
+      <div class="catalog-filters" id="catalog-filters">
+        <!-- pills generated by JS -->
+      </div>
+
+      <div class="catalog-matrix">
+        <div class="matrix-header">
+          <div class="matrix-header-cell feat">Funcionalidad</div>
+          <div class="matrix-header-cell">
+            <span class="plan-mini-name">Solo POS</span>
+            <span class="plan-mini-price">Gratis</span>
+          </div>
+          <div class="matrix-header-cell">
+            <span class="plan-mini-name olive">Operación</span>
+            <span class="plan-mini-price">S/ 199</span>
+          </div>
+          <div class="matrix-header-cell">
+            <span class="plan-mini-name clay">Profesional</span>
+            <span class="plan-mini-price">S/ 399</span>
+          </div>
+          <div class="matrix-header-cell">
+            <span class="plan-mini-name gold">Enterprise</span>
+            <span class="plan-mini-price">S/ 1499</span>
+          </div>
+        </div>
+        <div id="catalog-matrix-body">
+          <!-- generated by JS from window.MesaSmartFeatures.FEATURE_GROUPS -->
+          <div style="padding: 60px 24px; text-align: center; color: var(--muted); font-size: 14px;">Cargando catálogo…</div>
+        </div>
+      </div>
+
+      <div class="catalog-cta">
+        <div class="catalog-cta-content">
+          <h3>¿No sabes cuál elegir?</h3>
+          <p>Responde 5 preguntas y nuestro consultor IA te recomienda el plan que tu operación necesita.</p>
+          <a href="#consultor">Probar consultor IA →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="consultant-section" id="consultor">
     <div class="container">
       <div class="consultant-header">
         <h2 class="display" style="font-size: 32px; font-weight: 600; margin-bottom: 12px;">¿Qué plan necesita tu restaurante?</h2>
@@ -1326,7 +1873,92 @@
     </div>
   </footer>
 
+  <script src="./assets/features.js"></script>
   <script>
+    // ═══ CATÁLOGO MATRIX RENDER ═══
+    (function renderCatalog() {
+      function build() {
+        if (!window.MesaSmartFeatures) {
+          setTimeout(build, 50);
+          return;
+        }
+        const PLAN_IDS = ["POS_SOLO", "OPERACION", "PROFESIONAL", "ENTERPRISE"];
+        const PLAN_CELL_CLASS = {
+          "POS_SOLO": "",
+          "OPERACION": "cell-yes",          // green default
+          "PROFESIONAL": "cell-yes-clay",
+          "ENTERPRISE": "cell-yes-gold"
+        };
+        const groups = window.MesaSmartFeatures.FEATURE_GROUPS;
+
+        // Filter pills
+        const filtersEl = document.getElementById("catalog-filters");
+        const pillsHtml = [`<button class="catalog-filter-pill active" data-group="all"><span class="pill-emoji">⭐</span>Todos<span class="pill-count">${groups.reduce((s, g) => s + g.features.length, 0)}</span></button>`];
+        groups.forEach(g => {
+          pillsHtml.push(`<button class="catalog-filter-pill" data-group="${g.id}"><span class="pill-emoji">${g.icon}</span>${g.name}<span class="pill-count">${g.features.length}</span></button>`);
+        });
+        filtersEl.innerHTML = pillsHtml.join("");
+
+        // Matrix body
+        const body = document.getElementById("catalog-matrix-body");
+        const rows = [];
+        groups.forEach(g => {
+          const isEnterpriseGroup = !!g.enterpriseOnly;
+          rows.push(`
+            <div class="matrix-group-header${isEnterpriseGroup ? ' enterprise-only' : ''}" data-group="${g.id}">
+              <span class="group-emoji">${g.icon}</span>
+              <span>${g.name}</span>
+              ${isEnterpriseGroup ? '<span class="enterprise-tag">Enterprise</span>' : ''}
+            </div>
+          `);
+          g.features.forEach(f => {
+            const onlyEnterprise = f.plans.length === 1 && f.plans[0] === "ENTERPRISE";
+            const cells = PLAN_IDS.map(p => {
+              if (!f.plans.includes(p)) return `<div class="matrix-cell"><div class="cell-no"></div></div>`;
+              const cls = PLAN_CELL_CLASS[p] || "cell-yes";
+              const label = p === "POS_SOLO" ? "Incluido" : "✓";
+              const styledCls = p === "POS_SOLO" ? "cell-yes" : cls;
+              return `<div class="matrix-cell"><div class="${styledCls}" title="Incluido en ${p}">${label === "Incluido" ? "✓" : label}</div></div>`;
+            }).join("");
+            rows.push(`
+              <div class="matrix-row${onlyEnterprise ? ' enterprise-row' : ''}" data-group="${g.id}" data-feature="${f.id}">
+                <div class="matrix-feat">
+                  <div class="matrix-feat-icon">${f.icon}</div>
+                  <div class="matrix-feat-text">
+                    <div class="matrix-feat-name">
+                      ${f.name}
+                      ${onlyEnterprise ? '<span class="matrix-feat-new-tag gold">Solo Enterprise</span>' : ''}
+                    </div>
+                    <div class="matrix-feat-desc">${f.desc}</div>
+                  </div>
+                </div>
+                ${cells}
+              </div>
+            `);
+          });
+        });
+        body.innerHTML = rows.join("");
+
+        // Filter behavior
+        filtersEl.addEventListener("click", (e) => {
+          const pill = e.target.closest(".catalog-filter-pill");
+          if (!pill) return;
+          filtersEl.querySelectorAll(".catalog-filter-pill").forEach(p => p.classList.remove("active"));
+          pill.classList.add("active");
+          const group = pill.dataset.group;
+          body.querySelectorAll(".matrix-row, .matrix-group-header").forEach(el => {
+            const elGroup = el.dataset.group;
+            el.style.display = (group === "all" || elGroup === group) ? "" : "none";
+          });
+        });
+      }
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", build);
+      } else {
+        build();
+      }
+    })();
+
     // Wizard state
     let currentStep = 1;
     const totalSteps = 5;
@@ -1400,19 +2032,23 @@
       'ENTERPRISE': {
         name: 'Enterprise',
         badge: 'Plan Enterprise',
-        price: 'S/ 799',
-        period: 'por mes (custom)',
-        description: 'Para grandes operaciones con todo incluido',
+        price: 'S/ 1499',
+        period: 'por mes (16+ locales)',
+        description: 'Gobierno corporativo, forecasting IA, integraciones contables y CSM dedicado',
         features: [
           'Todo Profesional',
-          'Soporte priority',
-          'Onboarding dedicado',
-          'IA completa (Claude Vision)',
-          'Features custom',
-          'Integración SUNAT/OSE'
+          'Forecast de demanda IA · staffing IA',
+          'SSO SAML/OIDC · roles granulares',
+          'Integración Concar / SAP / Power BI',
+          'Conciliación bancaria automática',
+          'Cocina central · transferencias',
+          'SLA 99.9% · backup 7 años',
+          'Customer Success Manager dedicado',
+          'Reportes ejecutivos al directorio'
         ],
         optional: [
-          'Consultoría estratégica'
+          'Ambiente dedicado · white-label',
+          'Horas de desarrollo custom'
         ]
       }
     };
@@ -1523,6 +2159,17 @@
       // Build optional features list
       const optionalList = document.getElementById('plan-optional');
       optionalList.innerHTML = plan.optional.map(f => `<li>${f}</li>`).join('');
+
+      // Persist plan via features.js so el resto de vistas filtre por plan
+      if (window.MesaSmartFeatures) {
+        window.MesaSmartFeatures.setActivePlan(recommendedPlan, {
+          locations: wizardData.locations,
+          daily: wizardData.daily,
+          menuSize: wizardData.menuSize,
+          painPoints: wizardData.painPoints,
+          recommendedAt: new Date().toISOString()
+        });
+      }
     }
 
     // Form event listeners
