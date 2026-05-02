@@ -103,7 +103,7 @@
     const { useState, useEffect, useMemo, useRef } = React;
 
     // ───────────────────────────── DATA ─────────────────────────────
-    const RESTAURANT = {
+    let RESTAURANT = {
       name: "La Brasa Dorada",
       tagline: "Pollería · Desde 1985",
       description: "Carbón, paciencia y receta familiar. Cuatro generaciones cocinando el mejor pollo a la brasa de Lima.",
@@ -113,7 +113,7 @@
       heroImage: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1600&q=80"
     };
 
-    const CATEGORIES = [
+    let CATEGORIES = [
       { id: "todo", name: "Todo" },
       { id: "pollos", name: "Pollos a la Brasa" },
       { id: "parrillas", name: "Parrillas" },
@@ -135,7 +135,7 @@
     // Reliable Unsplash food photo IDs
     const IMG = (id, w = 600) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`;
 
-    const MENU = [
+    let MENU = [
       // POLLOS
       { id: 1, cat: "pollos", img: IMG("1598103442097-8b74394b95c6"), fb: { color: "#A0322B", emoji: "🍗" },
         name: "1/4 de Pollo a la Brasa", price: 22.90, time: 15, popular: true,
@@ -275,6 +275,75 @@
 
     const PEN = (n) => "S/ " + n.toFixed(2);
     const IGV_RATE = 0.18;
+
+    // ─── BACKEND INTEGRATION ──────────────────────────────────
+    // Mapping de estación de cocina → fallback visual cuando no hay foto
+    const STATION_FALLBACK = {
+      brasa: { color: "#A0322B", emoji: "🍗" },
+      parrilla: { color: "#7E2820", emoji: "🍢" },
+      frio: { color: "#2D7D5A", emoji: "🥗" },
+      bebidas: { color: "#7C3AED", emoji: "🥤" },
+      postres: { color: "#C4493A", emoji: "🍰" }
+    };
+
+    // Slugifica nombres de categoría → matchea las claves locales (pollos, parrillas, etc.)
+    const slugify = (s) => s.toLowerCase()
+      .normalize("NFD").replace(/[̀-ͯ]/g, "")
+      .replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "")
+      .replace(/^pollos.*/, "pollos")
+      .replace(/^parrillas$/, "parrillas")
+      .replace(/^para_compartir$/, "compartir")
+      .replace(/^sandwiches$/, "sandwiches")
+      .replace(/^ensaladas$/, "ensaladas")
+      .replace(/^acompanamientos$/, "acompanamientos")
+      .replace(/^bebidas$/, "bebidas")
+      .replace(/^postres$/, "postres");
+
+    // Reemplaza in-place los datos mock con los del backend
+    function applyBackendSession(session) {
+      RESTAURANT = {
+        ...RESTAURANT,
+        name: session.restaurant.name,
+        ruc: session.restaurant.ruc,
+        address: session.restaurant.address,
+        tableNumber: session.table.number,
+        backendId: session.restaurant.id,
+        tableId: session.table.id,
+        qrToken: session.table.qrToken,
+        taxRate: session.restaurant.taxRate
+      };
+
+      // Reemplaza CATEGORIES
+      CATEGORIES.length = 0;
+      CATEGORIES.push({ id: "todo", name: "Todo" });
+      for (const cat of session.categories) {
+        CATEGORIES.push({ id: slugify(cat.name), name: cat.name, backendId: cat.id });
+      }
+
+      // Reemplaza MENU
+      MENU.length = 0;
+      for (const cat of session.categories) {
+        const slug = slugify(cat.name);
+        for (const item of cat.items) {
+          MENU.push({
+            id: item.id,
+            cat: slug,
+            name: item.name,
+            desc: item.description,
+            price: item.priceCents / 100,
+            time: item.prepMinutes,
+            popular: item.popular,
+            recommended: item.recommended,
+            spicy: item.spicy,
+            calories: item.calories,
+            tags: item.tags || [],
+            img: item.imageUrl,
+            fb: STATION_FALLBACK[item.kitchenStation] || { color: "#6B5D52", emoji: "🍽️" },
+            backendId: item.id
+          });
+        }
+      }
+    }
 
     // ─────────────────────────── ICONS (lucide style) ───────────────────────────
     const Icon = ({ name, size = 20, className = "" }) => {
@@ -1585,6 +1654,33 @@
       const [paymentMethod, setPaymentMethod] = useState(null);
       const [toast, setToast] = useState(null);
 
+      // Backend integration state
+      const [backendStatus, setBackendStatus] = useState("connecting"); // connecting | online | offline
+      const [orderId, setOrderId] = useState(null);
+      const [dataVersion, setDataVersion] = useState(0);
+
+      // Fetch backend session on mount
+      useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const qr = params.get("qr") || "demo";
+        const api = window.MesaSmartAPI;
+        if (!api || !api.isConfigured()) {
+          setBackendStatus("offline");
+          return;
+        }
+        api.public.session(qr)
+          .then(session => {
+            applyBackendSession(session);
+            setBackendStatus("online");
+            setDataVersion(v => v + 1);
+            console.log("[MesaSmart] Backend conectado:", session.restaurant.name, "· Mesa", session.table.number);
+          })
+          .catch(err => {
+            console.warn("[MesaSmart] Backend no disponible, usando datos demo:", err.message);
+            setBackendStatus("offline");
+          });
+      }, []);
+
       const showToast = (m) => { setToast(m); setTimeout(() => setToast(null), 1800); };
       const addToCart = (item, qty, notes) => {
         setCart(prev => [...prev, { item, qty, notes }]);
@@ -1595,10 +1691,42 @@
         else setCart(prev => prev.map((c, i) => i === idx ? { ...c, qty } : c));
       };
       const toggleFav = (id) => setFavorites(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-      const callWaiter = (reason) => {
+      const callWaiter = async (reason) => {
         setWaiterOpen(false); setWaiterCalled(true);
         showToast(`Mozo notificado: ${reason.label}`);
         setTimeout(() => setWaiterCalled(false), 8000);
+        // Backend: notifica al mozo real
+        if (backendStatus === "online" && RESTAURANT.qrToken) {
+          try { await window.MesaSmartAPI.public.callWaiter(RESTAURANT.qrToken, reason.label, reason.id === "queja"); }
+          catch (e) { console.warn("Call waiter backend error:", e.message); }
+        }
+      };
+      const submitOrder = async () => {
+        // Si backend está online, persiste la orden ahí
+        if (backendStatus === "online" && RESTAURANT.qrToken && cart.length > 0) {
+          try {
+            const order = await window.MesaSmartAPI.public.createOrder(
+              RESTAURANT.qrToken,
+              splitN || 1,
+              cart.map(c => ({
+                menuItemId: c.item.backendId || c.item.id,
+                qty: c.qty,
+                notes: c.notes,
+                course: "MAIN"
+              }))
+            );
+            setOrderId(order.id);
+            showToast(`Pedido #${order.id.slice(-6)} enviado a cocina`);
+            // Suscribe a updates en vivo
+            const sock = window.MesaSmartAPI.socket();
+            if (sock) sock.emit("subscribe:order", order.id);
+          } catch (e) {
+            console.warn("Order backend error:", e.message);
+            showToast("Pedido guardado localmente (sin conexión)");
+          }
+        }
+        setCartOpen(false);
+        setScreen("orderStatus");
       };
 
       const subtotal = cart.reduce((s, c) => s + c.item.price * c.qty, 0);
@@ -1626,11 +1754,17 @@
           }} />}
 
           <DetailSheet item={selectedItem} onClose={() => setSelectedItem(null)} onAdd={addToCart} isFav={selectedItem && favorites.includes(selectedItem.id)} onFav={toggleFav} />
-          <CartSheet open={cartOpen} onClose={() => setCartOpen(false)} cart={cart} updateQty={updateQty} onCheckout={() => { setCartOpen(false); setScreen("orderStatus"); }} onCallWaiter={() => { setCartOpen(false); setWaiterOpen(true); }} />
+          <CartSheet open={cartOpen} onClose={() => setCartOpen(false)} cart={cart} updateQty={updateQty} onCheckout={submitOrder} onCallWaiter={() => { setCartOpen(false); setWaiterOpen(true); }} />
           <CallWaiterModal open={waiterOpen} onClose={() => setWaiterOpen(false)} onConfirm={callWaiter} />
 
           {screen === "menu" && <CartBar count={cartCount} total={subtotal} onClick={() => setCartOpen(true)} />}
           {screen !== "success" && screen !== "survey" && <CallWaiterFAB onClick={() => setWaiterOpen(true)} called={waiterCalled} />}
+
+          {/* Indicador discreto de conexión backend */}
+          <div className="fixed top-2 right-2 z-50 inline-flex items-center gap-1.5 px-2.5 py-1 bg-paper/80 backdrop-blur border border-border rounded-full text-[10px] font-medium" title={backendStatus === "online" ? "Conectado al backend en vivo" : backendStatus === "connecting" ? "Conectando..." : "Modo demo offline"}>
+            <span className={`w-1.5 h-1.5 rounded-full ${backendStatus === "online" ? "bg-olive" : backendStatus === "connecting" ? "bg-warn animate-pulse" : "bg-muted"}`}></span>
+            <span className="text-muted">{backendStatus === "online" ? "Live" : backendStatus === "connecting" ? "..." : "Demo"}</span>
+          </div>
 
           <Toast message={toast} show={!!toast} />
         </div>

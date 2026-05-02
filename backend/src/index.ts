@@ -28,6 +28,7 @@ import { inventoryRoutes } from "./routes/inventory.routes.js";
 import { supplierRoutes } from "./routes/suppliers.routes.js";
 import { pnlRoutes } from "./routes/pnl.routes.js";
 import { campaignRoutes } from "./routes/campaigns.routes.js";
+import { publicRoutes } from "./routes/public.routes.js";
 
 const app = express();
 const server = createServer(app);
@@ -101,6 +102,9 @@ app.use("/api/inventory", inventoryRoutes);
 app.use("/api/suppliers", supplierRoutes);
 app.use("/api/pnl", pnlRoutes);
 app.use("/api/campaigns", campaignRoutes);
+
+// Public routes (no auth, used by cliente.html with qrToken)
+app.use("/api/public", publicRoutes);
 
 // ─── Error handlers (must be last) ───
 app.use(notFound);

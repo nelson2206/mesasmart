@@ -213,6 +213,20 @@
       update: (id, status) => request("PATCH", `/api/campaigns/${id}`, { status })
     },
 
+    // Público (cliente con qrToken, sin auth)
+    public: {
+      session: (qrToken = "demo") => request("GET", `/api/public/session/${qrToken}`),
+      createOrder: (qrToken, partySize, items) =>
+        request("POST", "/api/public/orders", { qrToken, partySize, items }),
+      getOrder: (id, qrToken) => request("GET", `/api/public/orders/${id}?qrToken=${qrToken}`),
+      requestModification: (orderId, itemId, qrToken, reason, note) =>
+        request("POST", `/api/public/orders/${orderId}/items/${itemId}/modifications`, { qrToken, reason, note }),
+      callWaiter: (qrToken, reason, urgent = false) =>
+        request("POST", "/api/public/calls", { qrToken, reason, urgent }),
+      checkout: (orderId, qrToken, tipPct = 0.10) =>
+        request("POST", `/api/public/orders/${orderId}/checkout`, { qrToken, tipPct })
+    },
+
     // AI
     ai: {
       status: () => request("GET", "/api/ai/status"),
