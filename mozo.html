@@ -1101,39 +1101,127 @@
 
       // PASO A: SELECCIONAR MESA
       if (step === "select") {
+        // Mesas LIBRES de cualquier mozo · auto-asignación al tomar pedido
+        const freeTables = tables.filter(t => t.status === "free" || !t.server);
+        // Mis mesas activas (con cliente)
+        const myActiveTables = myTables.filter(t => t.status !== "free");
+
+        const startOrderForTable = (t, claimAsMine = false) => {
+          if (claimAsMine && (!t.server || t.status === "free")) {
+            // Auto-asigna la mesa a mí
+            setTables(prev => prev.map(x => x.id === t.id ? { ...x, server: ME.name, status: "occupied", time: 0, party: x.party || 2 } : x));
+          }
+          setSelectedTable({ ...t, server: ME.name });
+          setStep("menu");
+          setCart([]);
+          setUpsellLog([]);
+          setShownPairings({});
+        };
+
         return (
-          <div className="px-5 py-5 space-y-5">
-            <div>
-              <h2 className="font-display text-lg font-semibold mb-3">Seleccionar mesa</h2>
-              <div className="space-y-2">
-                {myTables.map(t => (
-                  <button
-                    key={t.id}
-                    onClick={() => { setSelectedTable(t); setStep("menu"); setCart([]); }}
-                    className="w-full flex items-center gap-3 p-4 bg-paper border border-border rounded-2xl text-left hover:border-clay transition"
-                  >
-                    <div className="w-12 h-12 rounded-lg bg-clay/10 flex items-center justify-center text-clay font-bold text-lg">
-                      {t.id}
+          <div className="px-5 py-5 space-y-5 pb-32">
+            {/* Hero: tomar pedido walk-in o nueva mesa */}
+            <div className="bg-gradient-to-br from-clay to-clay-dark text-white rounded-2xl p-5 shadow-lg">
+              <p className="text-[10px] font-extrabold uppercase tracking-widest opacity-90">Atender cliente</p>
+              <p className="font-display text-xl font-bold mt-1 leading-tight">¿Cliente sentado? Toma su pedido en segundos.</p>
+              <p className="text-xs opacity-85 mt-1">Selecciona la mesa donde está sentado o escoge una libre y se le asigna a ti automáticamente.</p>
+            </div>
+
+            {/* Tabs internos · cambiar entre mis mesas y todas las libres */}
+            {(myActiveTables.length > 0 || myTables.length > 0) && (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="font-display text-lg font-semibold">Mis mesas activas</h2>
+                  <span className="text-xs text-muted">{myActiveTables.length} con cliente</span>
+                </div>
+                <div className="space-y-2">
+                  {myActiveTables.length === 0 ? (
+                    <div className="bg-paper border border-dashed border-border rounded-2xl p-5 text-center">
+                      <p className="text-2xl mb-1">🪑</p>
+                      <p className="text-sm font-semibold">Aún no tienes clientes</p>
+                      <p className="text-xs text-muted mt-1">Asígnate una mesa libre abajo cuando llegue alguien</p>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm">Mesa {t.id}</p>
-                      {t.status === "free" ? (
-                        <p className="text-xs text-muted">Tap para asignar y tomar pedido</p>
-                      ) : (
-                        <p className="text-xs text-muted inline-flex items-center gap-1">
-                          <Icon name="users" size={10} /> {t.party}/{t.seats} · {t.time}' en mesa
-                        </p>
-                      )}
-                    </div>
-                    <Icon name="chevronRight" size={14} className="text-muted" />
-                  </button>
-                ))}
+                  ) : (
+                    myActiveTables.map(t => (
+                      <button
+                        key={t.id}
+                        onClick={() => startOrderForTable(t, false)}
+                        className="w-full flex items-center gap-3 p-4 bg-paper border border-border rounded-2xl text-left hover:border-clay transition"
+                      >
+                        <div className="w-12 h-12 rounded-lg bg-clay/10 flex items-center justify-center text-clay font-bold text-lg">
+                          {t.id}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm">Mesa {t.id}</p>
+                          <p className="text-xs text-muted inline-flex items-center gap-1">
+                            <Icon name="users" size={10} /> {t.party || 1}/{t.seats || 4} comensales · {t.time || 0}' en mesa
+                          </p>
+                        </div>
+                        <Icon name="chevronRight" size={14} className="text-muted" />
+                      </button>
+                    ))
+                  )}
+                </div>
               </div>
-              {myTables.length === 0 && (
-                <div className="text-center py-12">
-                  <p className="text-muted text-sm">No tienes mesas asignadas</p>
+            )}
+
+            {/* Mesas libres del salón · auto-asignación */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-display text-lg font-semibold">Mesas libres del salón</h2>
+                <span className="text-xs text-muted">{freeTables.length} disponibles</span>
+              </div>
+              {freeTables.length === 0 ? (
+                <div className="bg-paper border border-border rounded-2xl p-6 text-center">
+                  <p className="text-3xl mb-2">🍽️</p>
+                  <p className="font-display text-base font-semibold">Salón lleno</p>
+                  <p className="text-xs text-muted mt-1">Todas las mesas están ocupadas. Espera a que se libere alguna o usa "Walk-in" abajo.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-2">
+                  {freeTables.map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => startOrderForTable(t, true)}
+                      className="flex flex-col items-center gap-1 p-3 bg-paper border border-border hover:border-olive hover:bg-olive/5 rounded-xl transition active:scale-95"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-olive/10 flex items-center justify-center text-olive font-bold">
+                        {t.id}
+                      </div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-olive">Libre</p>
+                      <p className="text-[10px] text-muted">{t.seats || 4} sillas</p>
+                    </button>
+                  ))}
                 </div>
               )}
+            </div>
+
+            {/* Walk-in · cliente nuevo sin mesa asignada */}
+            <div>
+              <h2 className="font-display text-lg font-semibold mb-3">Otras opciones</h2>
+              <button
+                onClick={() => {
+                  // Crea una mesa virtual walk-in
+                  const walkInId = `WI-${Date.now().toString(36).slice(-4).toUpperCase()}`;
+                  const virtualTable = { id: walkInId, status: "occupied", server: ME.name, party: 1, seats: 1, time: 0, walkIn: true };
+                  setTables(prev => [...prev, virtualTable]);
+                  setSelectedTable(virtualTable);
+                  setStep("menu");
+                  setCart([]);
+                  setUpsellLog([]);
+                  setShownPairings({});
+                }}
+                className="w-full flex items-center gap-3 p-4 bg-charcoal text-cream rounded-2xl text-left hover:bg-charcoal/90 transition"
+              >
+                <div className="w-12 h-12 rounded-lg bg-cream/10 flex items-center justify-center text-cream font-bold">
+                  🛍️
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm">Walk-in / Para llevar</p>
+                  <p className="text-xs text-cream/70">Cliente que pide para llevar o sin sentarse</p>
+                </div>
+                <Icon name="chevronRight" size={14} className="text-cream/70" />
+              </button>
             </div>
           </div>
         );
