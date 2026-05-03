@@ -4,9 +4,11 @@
  * Analiza frames de cámaras usando Claude Vision (cuando hay API key)
  * o devuelve heurísticas determinísticas (mock realista) en dev.
  */
-import Anthropic from "@anthropic-ai/sdk";
 import { env } from "../config/env.js";
 import { logger } from "../utils/logger.js";
+
+const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
+const CLAUDE_MODEL = "claude-opus-4-5-20250101";
 
 export type SecurityAlertType =
   | "FAKE_RECEIPT"
@@ -48,33 +50,48 @@ export async function analyzeFrame(input: AnalyzeFrameInput): Promise<AnalyzeFra
   }
 
   try {
-    const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
-
     const promptInstructions = buildPrompt(input);
-    const response = await client.messages.create({
-      model: "claude-opus-4-6",
-      max_tokens: 1024,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: "image/jpeg",
-                data: input.imageBase64.replace(/^data:image\/\w+;base64,/, "")
-              }
-            },
-            { type: "text", text: promptInstructions }
-          ]
-        }
-      ]
+    const cleanBase64 = input.imageBase64.replace(/^data:image\/\w+;base64,/, "");
+
+    const resp = await fetch(ANTHROPIC_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: CLAUDE_MODEL,
+        max_tokens: 1024,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "image",
+                source: {
+                  type: "base64",
+                  media_type: "image/jpeg",
+                  data: cleanBase64
+                }
+              },
+              { type: "text", text: promptInstructions }
+            ]
+          }
+        ]
+      })
     });
 
-    const text = response.content
-      .filter(c => c.type === "text")
-      .map(c => (c as any).text)
+    if (!resp.ok) {
+      const errBody = await resp.text();
+      logger.warn({ status: resp.status, body: errBody }, "Claude Vision API error");
+      return mockAnalysis(input);
+    }
+
+    const data: any = await resp.json();
+    const text: string = (data.content || [])
+      .filter((c: any) => c.type === "text")
+      .map((c: any) => c.text)
       .join("\n");
 
     const parsed = parseAiResponse(text);
