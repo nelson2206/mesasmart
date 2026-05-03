@@ -287,28 +287,36 @@
 
     function Tabs({ active, setActive, callCount, aiCount }) {
       const tabs = [
-        { id: "asistente", label: "✨ Asistente", badge: aiCount },
-        { id: "mesas", label: "Mis mesas" },
-        { id: "tomar", label: "📝 Tomar pedido" },
+        { id: "tomar", label: "Tomar", icon: "📝", primary: true },
+        { id: "mesas", label: "Mesas" },
+        { id: "asistente", label: "Asistente IA", icon: "✨", badge: aiCount },
         { id: "plano", label: "Plano" },
         { id: "llamados", label: "Llamados", badge: callCount }
       ];
       return (
         <div className="bg-paper border-b border-border sticky top-[136px] z-20">
           <div className="flex">
-            {tabs.map(t => (
-              <button
-                key={t.id}
-                onClick={() => setActive(t.id)}
-                className={`flex-1 py-3 text-xs font-semibold relative ${active === t.id ? 'text-clay' : 'text-muted'}`}
-              >
-                <span className="inline-flex items-center gap-1">
-                  {t.label}
-                  {t.badge > 0 && <span className="bg-clay text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{t.badge}</span>}
-                </span>
-                {active === t.id && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-0.5 bg-clay rounded-full"></span>}
-              </button>
-            ))}
+            {tabs.map(t => {
+              const isActive = active === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setActive(t.id)}
+                  className={`flex-1 py-3 text-xs font-semibold relative transition ${
+                    t.primary && isActive ? 'bg-gradient-to-b from-clay to-clay-dark text-white' :
+                    isActive ? 'text-clay' :
+                    t.primary ? 'bg-clay/8 text-clay' : 'text-muted'
+                  }`}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    {t.icon && <span className="text-sm">{t.icon}</span>}
+                    {t.label}
+                    {t.badge > 0 && <span className="bg-clay text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{t.badge}</span>}
+                  </span>
+                  {isActive && !t.primary && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-0.5 bg-clay rounded-full"></span>}
+                </button>
+              );
+            })}
           </div>
         </div>
       );
@@ -1890,7 +1898,7 @@
 
     // ─────────────────────────── APP ───────────────────────────
     function App() {
-      const [tab, setTab] = useState("asistente");
+      const [tab, setTab] = useState("tomar");  // ← landing en "Tomar pedido" por defecto
       const [tables, setTables] = useState(ALL_TABLES_INIT);
       const [calls, setCalls] = useState(CALLS);
       const [selectedTable, setSelectedTable] = useState(null); // for "mis mesas" detail
@@ -2000,6 +2008,18 @@
           {tab === "tomar" && <TomarPedidoView tables={tables} setTables={setTables} onSent={() => showToast("✓ Pedido enviado a cocina")} />}
           {tab === "plano" && <PlanoView tables={tables} onTap={handlePlanoTap} joinMode={!!joinFirst} joinFirst={joinFirst} />}
           {tab === "llamados" && <LlamadosView calls={calls} onResolve={(id) => setCalls(c => c.filter(x => x.id !== id))} />}
+
+          {/* FAB · Tomar pedido siempre accesible */}
+          {tab !== "tomar" && (
+            <button
+              onClick={() => setTab("tomar")}
+              className="fixed bottom-6 right-6 z-40 px-5 py-4 bg-gradient-to-br from-clay to-clay-dark text-white rounded-full shadow-2xl flex items-center gap-2 font-bold text-sm active:scale-95 transition"
+              style={{ boxShadow: "0 12px 28px rgba(160,50,43,0.40)" }}
+            >
+              <span className="text-xl">📝</span>
+              <span>Tomar pedido</span>
+            </button>
+          )}
 
           <TableDetail table={selectedTable} onClose={() => setSelectedTable(null)} />
           <TableActionSheet open={!!actionTable} table={actionTable} onClose={() => setActionTable(null)} onAction={handleAction} />
