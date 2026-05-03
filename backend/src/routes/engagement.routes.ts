@@ -366,13 +366,104 @@ const submitNpsSchema = z.object({
   source: z.enum(["TABLET", "EMAIL", "WHATSAPP", "QR"]).default("TABLET")
 });
 
-// POST sin auth — el cliente responde desde su tablet
+// POST /api/engagement/nps/token · genera token corto para que el cajero
+// imprima el QR junto a la boleta. Sin sesión, solo necesita restaurantId,
+// orderId y waiterId opcionales.
+const npsTokenSchema = z.object({
+  orderId: z.string().optional(),
+  waiterId: z.string().optional(),
+  customerId: z.string().optional()
+});
+
+// In-memory store de tokens · 24h validez (en prod usar Redis o DB)
+const npsTokens = new Map<string, { restaurantId: string; orderId?: string; waiterId?: string; customerId?: string; createdAt: number }>();
+const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
+
+function makeShortToken(): string {
+  return Math.random().toString(36).slice(2, 8) + Math.random().toString(36).slice(2, 6);
+}
+function purgeOldTokens() {
+  const now = Date.now();
+  for (const [key, val] of npsTokens.entries()) {
+    if (now - val.createdAt > TOKEN_TTL_MS) npsTokens.delete(key);
+  }
+}
+
+engagementRoutes.post(
+  "/nps/token",
+  authRequired,
+  asyncHandler(async (req, res) => {
+    purgeOldTokens();
+    const data = npsTokenSchema.parse(req.body);
+    const token = makeShortToken();
+    npsTokens.set(token, {
+      restaurantId: req.user!.restaurantId,
+      ...data,
+      createdAt: Date.now()
+    });
+
+    // Construir URL pública para el QR (frontend en GitHub Pages)
+    const baseUrl = process.env.PUBLIC_FRONTEND_URL || "https://nelson2206.github.io/mesasmart";
+    const surveyUrl = `${baseUrl}/encuesta.html?t=${token}`;
+
+    res.status(201).json({ token, url: surveyUrl, expiresAt: new Date(Date.now() + TOKEN_TTL_MS) });
+  })
+);
+
+// GET /api/engagement/nps/context/:token · valida token y devuelve contexto
+// (nombre del restaurante, mozo, fecha) para personalizar la encuesta
+engagementRoutes.get(
+  "/nps/context/:token",
+  asyncHandler(async (req, res) => {
+    const ctx = npsTokens.get(req.params.token);
+    if (!ctx) throw new HttpError(404, "token_invalid_or_expired");
+    if (Date.now() - ctx.createdAt > TOKEN_TTL_MS) {
+      npsTokens.delete(req.params.token);
+      throw new HttpError(410, "token_expired");
+    }
+
+    const restaurant = await prisma.restaurant.findUnique({
+      where: { id: ctx.restaurantId },
+      select: { id: true, name: true, address: true }
+    });
+    let waiter = null;
+    if (ctx.waiterId) {
+      waiter = await prisma.user.findUnique({
+        where: { id: ctx.waiterId },
+        select: { id: true, name: true, position: true }
+      });
+    }
+    res.json({ restaurant, waiter, orderId: ctx.orderId });
+  })
+);
+
+// POST sin auth — el cliente responde desde su tablet o desde el QR
+// Acepta { token, ...nps } — el token resuelve restaurantId, orderId y waiterId
 engagementRoutes.post(
   "/nps/public",
   asyncHandler(async (req, res) => {
     const data = submitNpsSchema.parse(req.body);
-    const restaurantId = String(req.body.restaurantId || "");
-    if (!restaurantId) throw new HttpError(400, "restaurant_required");
+    const token = String(req.body.token || "");
+    let restaurantId = "";
+    let resolvedWaiterId: string | undefined = data.waiterId;
+    let resolvedOrderId: string | undefined = data.orderId;
+    let resolvedCustomerId: string | undefined = data.customerId;
+
+    if (token) {
+      const ctx = npsTokens.get(token);
+      if (!ctx) throw new HttpError(404, "token_invalid");
+      if (Date.now() - ctx.createdAt > TOKEN_TTL_MS) {
+        npsTokens.delete(token);
+        throw new HttpError(410, "token_expired");
+      }
+      restaurantId = ctx.restaurantId;
+      resolvedWaiterId = resolvedWaiterId || ctx.waiterId;
+      resolvedOrderId = resolvedOrderId || ctx.orderId;
+      resolvedCustomerId = resolvedCustomerId || ctx.customerId;
+    } else {
+      restaurantId = String(req.body.restaurantId || "");
+      if (!restaurantId) throw new HttpError(400, "token_or_restaurant_required");
+    }
 
     const category = data.npsScore >= 9 ? "PROMOTER" : data.npsScore >= 7 ? "PASSIVE" : "DETRACTOR";
     const sentiment = data.comment
@@ -380,8 +471,24 @@ engagementRoutes.post(
       : null;
 
     const response = await prisma.nPSResponse.create({
-      data: { restaurantId, ...data, category, sentiment }
+      data: {
+        restaurantId,
+        npsScore: data.npsScore,
+        foodScore: data.foodScore,
+        serviceScore: data.serviceScore,
+        ambienceScore: data.ambienceScore,
+        speedScore: data.speedScore,
+        comment: data.comment,
+        source: data.source,
+        waiterId: resolvedWaiterId,
+        orderId: resolvedOrderId,
+        customerId: resolvedCustomerId,
+        category,
+        sentiment
+      }
     });
+    // Token de un solo uso: lo invalidamos
+    if (token) npsTokens.delete(token);
     res.status(201).json({ ok: true, id: response.id, category });
   })
 );

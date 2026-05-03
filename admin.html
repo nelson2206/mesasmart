@@ -134,6 +134,7 @@
   <div id="root"></div>
 
   <script src="./assets/features.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <script type="text/babel" data-presets="env,react">
     const { useState, useEffect, useMemo } = React;
 
@@ -1660,8 +1661,113 @@
       { id: 5, source: "GOOGLE", rating: 2, author: "Cliente anónimo", title: "Decepcionante", body: "Esperamos mucho, mozo desatento, comida tibia. No volvería.", sentiment: "NEGATIVE", reviewedAt: "hace 41 días" }
     ];
 
+    // ─── Modal QR para encuesta ───
+    function EncuestaQRModal({ open, onClose }) {
+      const [loading, setLoading] = useState(true);
+      const [data, setData] = useState(null);
+      const [qrDataUrl, setQrDataUrl] = useState(null);
+      const [error, setError] = useState(null);
+
+      useEffect(() => {
+        if (!open) return;
+        setLoading(true);
+        setError(null);
+
+        const generateToken = async () => {
+          try {
+            // Si hay backend disponible, pide token real
+            if (window.MesaSmartAPI && window.MesaSmartAPI.token && window.MesaSmartAPI.baseUrl) {
+              const r = await fetch(window.MesaSmartAPI.baseUrl + "/api/engagement/nps/token", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: "Bearer " + window.MesaSmartAPI.token },
+                body: JSON.stringify({})
+              });
+              if (r.ok) {
+                const d = await r.json();
+                setData(d);
+                if (window.QRCode) {
+                  window.QRCode.toDataURL(d.url, { width: 280, margin: 2, color: { dark: "#1F1A17", light: "#FFFFFF" } }, (err, url) => {
+                    if (!err) setQrDataUrl(url);
+                  });
+                }
+                setLoading(false);
+                return;
+              }
+            }
+            // Fallback demo
+            const demoToken = Math.random().toString(36).slice(2, 10);
+            const baseUrl = window.location.origin + window.location.pathname.replace(/admin\.html$/, "");
+            const url = `${baseUrl}encuesta.html?t=${demoToken}`;
+            setData({ token: demoToken, url, expiresAt: new Date(Date.now() + 24*60*60*1000) });
+            if (window.QRCode) {
+              window.QRCode.toDataURL(url, { width: 280, margin: 2, color: { dark: "#1F1A17", light: "#FFFFFF" } }, (err, qrUrl) => {
+                if (!err) setQrDataUrl(qrUrl);
+              });
+            }
+            setLoading(false);
+          } catch (e) {
+            setError(e.message);
+            setLoading(false);
+          }
+        };
+
+        generateToken();
+      }, [open]);
+
+      if (!open) return null;
+      return (
+        <div className="fixed inset-0 z-50 bg-charcoal/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+          <div className="bg-paper rounded-3xl max-w-md w-full overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 bg-gradient-to-br from-clay/10 via-gold/10 to-clay/5 border-b border-border text-center">
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-clay">Encuesta de satisfacción</p>
+              <h2 className="font-display text-2xl font-semibold mt-1">QR para el cliente</h2>
+              <p className="text-sm text-muted mt-2">Imprímelo o muéstralo en pantalla. El cliente escanea con su celular y responde en 30 segundos.</p>
+            </div>
+            <div className="p-6">
+              {loading ? (
+                <div className="text-center py-12">
+                  <p className="text-muted">Generando QR...</p>
+                </div>
+              ) : error ? (
+                <div className="text-center py-8">
+                  <p className="text-red-600 font-semibold">{error}</p>
+                </div>
+              ) : (
+                <>
+                  {/* QR */}
+                  <div className="flex justify-center mb-4">
+                    <div className="bg-white p-4 rounded-2xl border-2 border-charcoal/10">
+                      {qrDataUrl ? <img src={qrDataUrl} alt="QR encuesta" className="w-64 h-64 block" /> : <div className="w-64 h-64 bg-cream rounded flex items-center justify-center text-muted text-xs">Cargando...</div>}
+                    </div>
+                  </div>
+
+                  {/* URL */}
+                  <div className="bg-cream rounded-xl p-3 mb-3">
+                    <p className="text-[10px] uppercase tracking-widest text-muted font-bold">URL de la encuesta</p>
+                    <p className="text-xs font-mono break-all mt-1">{data?.url}</p>
+                  </div>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(data?.url || ""); alert("URL copiada"); }}
+                    className="w-full px-4 py-2.5 bg-cream border border-border rounded-lg text-sm font-semibold mb-2 hover:bg-border/40"
+                  >
+                    📋 Copiar URL
+                  </button>
+
+                  <div className="bg-cream/40 border border-border rounded-xl p-3 text-xs text-muted">
+                    <p>💡 Pega este QR en la boleta o muéstralo cuando entregas la cuenta. El token expira en 24 horas y es de un solo uso.</p>
+                  </div>
+                </>
+              )}
+              <button onClick={onClose} className="w-full mt-4 px-4 py-3 bg-clay text-white rounded-lg font-semibold">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     function NpsView() {
       const [tab, setTab] = useState("nps");
+      const [qrOpen, setQrOpen] = useState(false);
       const data = NPS_DEMO;
       const reviews = REVIEWS_DEMO;
       const npsTrend = data.score - data.previousScore;
@@ -1678,13 +1784,23 @@
 
       return (
         <div className="space-y-6">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="px-3 py-1 rounded-full bg-charcoal text-cream text-[10px] font-bold tracking-widest uppercase">⭐ Satisfacción</span>
-              <span className="text-xs text-muted">Últimos 30 días</span>
+          <EncuestaQRModal open={qrOpen} onClose={() => setQrOpen(false)} />
+
+          <div className="flex items-end justify-between flex-wrap gap-3">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="px-3 py-1 rounded-full bg-charcoal text-cream text-[10px] font-bold tracking-widest uppercase">⭐ Satisfacción</span>
+                <span className="text-xs text-muted">Últimos 30 días</span>
+              </div>
+              <h1 className="font-display text-3xl font-semibold">NPS · Reviews · Fidelización</h1>
+              <p className="text-sm text-muted mt-1">Cómo te ven tus clientes · qué dicen · y quiénes vuelven</p>
             </div>
-            <h1 className="font-display text-3xl font-semibold">NPS · Reviews · Fidelización</h1>
-            <p className="text-sm text-muted mt-1">Cómo te ven tus clientes · qué dicen · y quiénes vuelven</p>
+            <button
+              onClick={() => setQrOpen(true)}
+              className="px-4 py-2.5 bg-clay text-white rounded-lg text-sm font-semibold hover:bg-clay-dark flex items-center gap-2 shadow"
+            >
+              <span>📱</span> Generar QR encuesta
+            </button>
           </div>
 
           {/* Tabs */}

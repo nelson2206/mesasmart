@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#A0322B" />
+  <title>Encuesta · MesaSmart</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --cream: #FAF7F2;
+      --paper: #FFFFFF;
+      --charcoal: #1F1A17;
+      --ink: #2A1F1A;
+      --muted: #6B5D52;
+      --clay: #A0322B;
+      --clay-dark: #7E2820;
+      --gold: #C8941F;
+      --olive: #2D7D5A;
+      --border: #E8DFD3;
+      --danger: #DC2626;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      min-height: 100vh;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: linear-gradient(180deg, #FAF7F2 0%, #F4ECDF 100%);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+    }
+    .display { font-family: 'Playfair Display', serif; }
+    .container { max-width: 580px; margin: 0 auto; padding: 0 20px; }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, var(--charcoal) 0%, var(--ink) 60%, #3A2C20 100%);
+      color: white;
+      padding: 40px 20px 80px;
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      top: -100px; right: -50px;
+      width: 280px; height: 280px;
+      background: radial-gradient(circle, rgba(200,148,31,0.18) 0%, transparent 65%);
+      border-radius: 50%;
+    }
+    .header-content { position: relative; z-index: 1; }
+    .brand-pill {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 5px 14px 5px 5px;
+      background: rgba(255,255,255,0.10);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 100px;
+      margin-bottom: 16px;
+    }
+    .brand-logo {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, var(--clay), var(--gold));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .brand-text { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; }
+
+    h1.display {
+      font-size: clamp(26px, 5vw, 34px);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    h1 em { font-style: italic; color: var(--gold); }
+    .header-sub {
+      font-size: 14px;
+      color: rgba(255,255,255,0.75);
+      max-width: 380px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+    .restaurant-info {
+      margin-top: 16px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      display: inline-block;
+      font-size: 13px;
+    }
+    .restaurant-info strong { color: var(--gold); }
+
+    /* Card */
+    .card {
+      background: var(--paper);
+      border-radius: 22px;
+      padding: 24px 22px;
+      margin: -50px auto 20px;
+      max-width: 540px;
+      box-shadow: 0 24px 60px rgba(31,26,23,0.10);
+      position: relative;
+      z-index: 2;
+    }
+    .question {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+      line-height: 1.3;
+      margin-bottom: 4px;
+    }
+    .question-sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    /* NPS scale 0-10 */
+    .nps-scale {
+      display: grid;
+      grid-template-columns: repeat(11, 1fr);
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .nps-btn {
+      aspect-ratio: 1;
+      border: 1.5px solid var(--border);
+      background: var(--cream);
+      color: var(--ink);
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex; align-items: center; justify-content: center;
+      font-family: inherit;
+    }
+    .nps-btn:hover { transform: translateY(-2px); border-color: var(--clay); }
+    .nps-btn.active { transform: translateY(-3px); }
+    .nps-btn.active.detractor { background: var(--danger); color: white; border-color: var(--danger); box-shadow: 0 6px 16px rgba(220,38,38,0.30); }
+    .nps-btn.active.passive { background: var(--gold); color: white; border-color: var(--gold); box-shadow: 0 6px 16px rgba(200,148,31,0.30); }
+    .nps-btn.active.promoter { background: var(--olive); color: white; border-color: var(--olive); box-shadow: 0 6px 16px rgba(45,125,90,0.30); }
+
+    .nps-labels {
+      display: flex; justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 24px;
+      padding: 0 4px;
+    }
+    .nps-feedback {
+      text-align: center;
+      padding: 12px;
+      background: var(--cream);
+      border-radius: 12px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      font-weight: 500;
+      min-height: 50px;
+      transition: all 0.3s ease;
+    }
+    .nps-feedback.detractor { background: rgba(220,38,38,0.08); color: var(--danger); }
+    .nps-feedback.passive { background: rgba(200,148,31,0.08); color: var(--gold); }
+    .nps-feedback.promoter { background: rgba(45,125,90,0.08); color: var(--olive); }
+
+    /* Subscores 5 stars */
+    .subscores-wrap {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+    .subscore-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .subscore-row:last-child { border-bottom: none; }
+    .subscore-label {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 14px;
+      color: var(--ink);
+      font-weight: 500;
+    }
+    .subscore-emoji { font-size: 20px; }
+    .stars {
+      display: flex; gap: 4px;
+    }
+    .star {
+      width: 32px; height: 32px;
+      cursor: pointer;
+      color: var(--border);
+      transition: all 0.1s ease;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      background: transparent;
+      border: none;
+      padding: 0;
+    }
+    .star.active { color: var(--gold); }
+    .star:hover { transform: scale(1.15); }
+
+    /* Comment */
+    .comment-wrap {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+    textarea {
+      width: 100%;
+      padding: 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      transition: border 0.15s ease;
+      background: var(--cream);
+    }
+    textarea:focus { outline: none; border-color: var(--clay); background: white; }
+
+    /* Submit */
+    .submit-wrap {
+      margin-top: 28px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    button.submit {
+      padding: 16px 24px;
+      background: linear-gradient(135deg, var(--clay) 0%, var(--clay-dark) 100%);
+      color: white;
+      border: none;
+      border-radius: 100px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(160,50,43,0.25);
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    button.submit:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(160,50,43,0.32); }
+    button.submit:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .skip-link {
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 8px;
+    }
+    .skip-link:hover { color: var(--clay); }
+
+    /* Success / error states */
+    .state-screen {
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .state-screen .icon {
+      width: 84px; height: 84px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px;
+    }
+    .state-screen .icon.success { background: linear-gradient(135deg, #DCFCE7, #BBF7D0); }
+    .state-screen .icon.error { background: linear-gradient(135deg, #FEE2E2, #FECACA); }
+    .state-screen h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+    .state-screen p {
+      font-size: 14px;
+      color: var(--muted);
+      max-width: 360px;
+      margin: 0 auto 20px;
+      line-height: 1.5;
+    }
+
+    .footer-note {
+      text-align: center;
+      padding: 30px 20px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .footer-note a { color: var(--clay); text-decoration: none; font-weight: 600; }
+
+    @media (max-width: 480px) {
+      .nps-btn { font-size: 12px; }
+      .stars { gap: 2px; }
+      .star { width: 28px; height: 28px; font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <div class="brand-pill">
+        <div class="brand-logo">M</div>
+        <span class="brand-text">MESASMART</span>
+      </div>
+      <h1 class="display">¿Cómo fue tu <em>experiencia</em>?</h1>
+      <p class="header-sub">Tu opinión nos ayuda a mejorar. Toma 30 segundos.</p>
+      <div id="restaurant-info" class="restaurant-info" style="display:none;"></div>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Survey form -->
+    <div class="card" id="form-card">
+      <p class="question">¿Recomendarías este restaurante a un amigo?</p>
+      <p class="question-sub">0 = nada probable · 10 = muy probable</p>
+
+      <div class="nps-scale" id="nps-scale">
+        <!-- generado por JS -->
+      </div>
+      <div class="nps-labels">
+        <span>👎 Nada</span>
+        <span>👍 Mucho</span>
+      </div>
+      <div class="nps-feedback" id="nps-feedback">Selecciona del 0 al 10</div>
+
+      <div class="subscores-wrap">
+        <p class="question" style="font-size: 16px;">Califica más a detalle</p>
+        <p class="question-sub">Es opcional pero nos ayuda mucho</p>
+
+        <div class="subscore-row">
+          <div class="subscore-label"><span class="subscore-emoji">🍽️</span><span>Comida</span></div>
+          <div class="stars" data-key="food"></div>
+        </div>
+        <div class="subscore-row">
+          <div class="subscore-label"><span class="subscore-emoji">🤝</span><span>Atención del mozo</span></div>
+          <div class="stars" data-key="service"></div>
+        </div>
+        <div class="subscore-row">
+          <div class="subscore-label"><span class="subscore-emoji">🌿</span><span>Ambiente</span></div>
+          <div class="stars" data-key="ambience"></div>
+        </div>
+        <div class="subscore-row">
+          <div class="subscore-label"><span class="subscore-emoji">⚡</span><span>Rapidez</span></div>
+          <div class="stars" data-key="speed"></div>
+        </div>
+      </div>
+
+      <div class="comment-wrap">
+        <label class="question" style="font-size: 16px;">¿Algo más que quieras contarnos?</label>
+        <p class="question-sub">Tu comentario llega directo al dueño · totalmente anónimo</p>
+        <textarea id="comment" rows="4" placeholder="Lo que más te gustó · lo que mejorarías · cualquier feedback es bienvenido..." maxlength="2000"></textarea>
+      </div>
+
+      <div class="submit-wrap">
+        <button class="submit" id="submit" disabled>Enviar mi opinión</button>
+        <a href="#" class="skip-link" id="skip">No quiero responder ahora</a>
+      </div>
+    </div>
+
+    <!-- Success state -->
+    <div class="card state-screen" id="success-card" style="display:none;">
+      <div class="icon success">✨</div>
+      <h2>¡Gracias por tu opinión!</h2>
+      <p id="success-msg">Tu feedback es valioso. Lo recibirá el dueño y nos ayuda a mejorar todos los días.</p>
+      <p style="font-size: 13px; color: var(--muted); padding-top: 16px; border-top: 1px solid var(--border); margin-top: 20px;">
+        ¿Quieres recibir promociones exclusivas?<br/>
+        <a href="#" style="color: var(--clay); font-weight: 600;">Suscríbete al programa de fidelización →</a>
+      </p>
+    </div>
+
+    <!-- Error state -->
+    <div class="card state-screen" id="error-card" style="display:none;">
+      <div class="icon error">⚠️</div>
+      <h2>No pudimos guardar tu respuesta</h2>
+      <p id="error-msg">Verifica tu conexión a internet e intenta de nuevo.</p>
+      <button class="submit" onclick="location.reload()">Reintentar</button>
+    </div>
+  </div>
+
+  <p class="footer-note">
+    🔒 Encuesta anónima · datos protegidos por <a href="#">Ley 29733 PDP</a><br/>
+    Powered by <a href="./index.html">MesaSmart</a>
+  </p>
+
+  <script>
+    const API_BASE = (function() {
+      const stored = localStorage.getItem("mesasmart_api_url");
+      if (stored) return stored;
+      // Fallback a producción
+      return "https://mesasmart-backend.onrender.com";
+    })();
+
+    let state = {
+      token: null,
+      npsScore: null,
+      foodScore: null,
+      serviceScore: null,
+      ambienceScore: null,
+      speedScore: null,
+      comment: "",
+      restaurant: null,
+      waiter: null,
+      orderId: null
+    };
+
+    function init() {
+      // Parse token from URL
+      const params = new URLSearchParams(window.location.search);
+      state.token = params.get("t") || params.get("token");
+
+      buildScale();
+      buildStars();
+
+      // Submit
+      document.getElementById("submit").addEventListener("click", submit);
+      document.getElementById("skip").addEventListener("click", (e) => {
+        e.preventDefault();
+        if (confirm("¿Estás seguro? Tu opinión ayuda al restaurante a mejorar.")) {
+          window.close();
+          // si no se pudo cerrar (la mayoría de browsers no permiten)
+          setTimeout(() => alert("Puedes cerrar esta pestaña."), 200);
+        }
+      });
+
+      // Comment
+      document.getElementById("comment").addEventListener("input", (e) => {
+        state.comment = e.target.value;
+        validate();
+      });
+
+      // Validate token + load context
+      if (state.token) {
+        loadContext(state.token);
+      } else {
+        // Sin token mostramos el form igual pero sin atribución
+        console.warn("No token in URL — survey will not be linked to specific order/waiter.");
+      }
+    }
+
+    function buildScale() {
+      const scale = document.getElementById("nps-scale");
+      for (let i = 0; i <= 10; i++) {
+        const btn = document.createElement("button");
+        btn.className = "nps-btn";
+        btn.textContent = i;
+        btn.dataset.score = i;
+        btn.addEventListener("click", () => selectNps(i));
+        scale.appendChild(btn);
+      }
+    }
+
+    function selectNps(score) {
+      state.npsScore = score;
+      const cat = score >= 9 ? "promoter" : score >= 7 ? "passive" : "detractor";
+      document.querySelectorAll(".nps-btn").forEach(b => {
+        b.classList.remove("active", "detractor", "passive", "promoter");
+        if (parseInt(b.dataset.score) === score) {
+          b.classList.add("active", cat);
+        }
+      });
+
+      const fb = document.getElementById("nps-feedback");
+      fb.classList.remove("detractor", "passive", "promoter");
+      fb.classList.add(cat);
+      if (cat === "promoter") fb.textContent = "🎉 ¡Genial! Nos alegra que la pasaras tan bien.";
+      else if (cat === "passive") fb.textContent = "👍 Gracias · ¿qué podríamos mejorar?";
+      else fb.textContent = "🙏 Lo sentimos · ¿qué pasó? Nos importa saberlo.";
+
+      validate();
+    }
+
+    function buildStars() {
+      document.querySelectorAll(".stars").forEach(group => {
+        const key = group.dataset.key;
+        for (let i = 1; i <= 5; i++) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "star";
+          btn.textContent = "★";
+          btn.dataset.value = i;
+          btn.addEventListener("click", () => {
+            state[key + "Score"] = i;
+            renderStars(group, i);
+            validate();
+          });
+          group.appendChild(btn);
+        }
+      });
+    }
+    function renderStars(group, value) {
+      group.querySelectorAll(".star").forEach((s, idx) => {
+        s.classList.toggle("active", idx < value);
+      });
+    }
+
+    function validate() {
+      const ok = state.npsScore !== null;
+      document.getElementById("submit").disabled = !ok;
+    }
+
+    async function loadContext(token) {
+      try {
+        const r = await fetch(`${API_BASE}/api/engagement/nps/context/${encodeURIComponent(token)}`);
+        if (!r.ok) {
+          if (r.status === 410 || r.status === 404) {
+            console.warn("Token inválido o expirado");
+          }
+          return;
+        }
+        const data = await r.json();
+        state.restaurant = data.restaurant;
+        state.waiter = data.waiter;
+        state.orderId = data.orderId;
+
+        const info = document.getElementById("restaurant-info");
+        if (data.restaurant) {
+          info.style.display = "inline-block";
+          let html = `<strong>${data.restaurant.name}</strong>`;
+          if (data.waiter) html += ` · atendido por ${data.waiter.name}`;
+          info.innerHTML = html;
+        }
+      } catch (e) {
+        console.warn("Could not load context:", e);
+      }
+    }
+
+    async function submit() {
+      const btn = document.getElementById("submit");
+      btn.disabled = true;
+      btn.textContent = "Enviando...";
+
+      try {
+        const body = {
+          token: state.token,
+          npsScore: state.npsScore,
+          foodScore: state.foodScore || undefined,
+          serviceScore: state.serviceScore || undefined,
+          ambienceScore: state.ambienceScore || undefined,
+          speedScore: state.speedScore || undefined,
+          comment: state.comment || undefined,
+          source: "QR"
+        };
+        const r = await fetch(`${API_BASE}/api/engagement/nps/public`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        if (!r.ok) {
+          const errBody = await r.text();
+          throw new Error(`HTTP ${r.status}: ${errBody}`);
+        }
+        const data = await r.json();
+        showSuccess(data.category);
+      } catch (e) {
+        console.error(e);
+        document.getElementById("error-msg").textContent = "Error: " + (e.message || "no pudimos guardar tu respuesta");
+        document.getElementById("form-card").style.display = "none";
+        document.getElementById("error-card").style.display = "block";
+      }
+    }
+
+    function showSuccess(category) {
+      document.getElementById("form-card").style.display = "none";
+      document.getElementById("success-card").style.display = "block";
+      // Mensaje según categoría
+      const msg = document.getElementById("success-msg");
+      if (category === "PROMOTER") {
+        msg.innerHTML = "¡Nos alegra muchísimo que hayas pasado un gran momento! Esperamos verte pronto. <br/><br/>¿Nos ayudarías dejándonos una reseña en Google? <a href='#' style='color:var(--clay);font-weight:700;'>Ir a Google ★</a>";
+      } else if (category === "PASSIVE") {
+        msg.textContent = "Gracias por tu honestidad. Tomamos cada feedback muy en serio para mejorar.";
+      } else {
+        msg.innerHTML = "Lamentamos mucho que tu experiencia no haya sido la mejor. <strong style='color:var(--clay);'>El dueño te contactará en las próximas 24 horas</strong> si dejaste forma de comunicarnos contigo.";
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    init();
+  </script>
+
+</body>
+</html>

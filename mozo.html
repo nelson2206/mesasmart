@@ -1193,6 +1193,57 @@
               </div>
             </div>
 
+            {/* Banner persistente de sugerencias activas */}
+            {(() => {
+              // Calcular sugerencias activas según items en carrito
+              const cartIds = new Set(cart.map(c => c.item.id));
+              const activeSuggestions = [];
+              const seen = new Set();
+              for (const c of cart) {
+                const pairings = MOZO_PAIRINGS[c.item.id];
+                if (!pairings) continue;
+                for (const p of pairings) {
+                  if (cartIds.has(p.id) || seen.has(p.id)) continue;
+                  seen.add(p.id);
+                  activeSuggestions.push({ ...p, triggerName: c.item.name });
+                }
+              }
+              if (activeSuggestions.length === 0 || cart.length === 0) return null;
+              const top3 = activeSuggestions.sort((a, b) => b.conversion - a.conversion).slice(0, 3);
+              return (
+                <div className="bg-gradient-to-br from-clay/8 via-gold/8 to-clay/4 border-b border-clay/15 px-4 py-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-base">✨</span>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-clay">Sugerencias para esta mesa</p>
+                    <span className="text-[10px] text-muted">según items en pedido</span>
+                  </div>
+                  <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                    {top3.map(s => {
+                      const item = MOZO_MENU.find(m => m.id === s.id);
+                      if (!item) return null;
+                      return (
+                        <button
+                          key={s.id}
+                          onClick={() => {
+                            setCart(prev => [...prev, { item, qty: 1, notes: "[Sugerencia del mozo]" }]);
+                            setUpsellLog(prev => [...prev, { suggestedId: s.id, outcome: "ACCEPTED", ts: Date.now() }]);
+                          }}
+                          className="flex-shrink-0 flex items-center gap-2 bg-paper border border-border hover:border-clay rounded-xl px-3 py-2 transition group"
+                        >
+                          <span className="text-xl">{s.emoji}</span>
+                          <div className="text-left">
+                            <p className="text-xs font-bold text-ink leading-tight">{item.name}</p>
+                            <p className="text-[10px] text-muted">{PEN(item.price)} · ⭐ {Math.round(s.conversion * 100)}%</p>
+                          </div>
+                          <span className="text-clay text-xs ml-1">+</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Menu Grid */}
             <div className="flex-1 overflow-y-auto no-scrollbar p-4">
               <div className="grid grid-cols-2 gap-3">
@@ -1283,6 +1334,51 @@
                   </div>
                 </div>
               ))}
+
+              {/* Recordatorio inteligente · alerta si falta postre/bebida */}
+              {(() => {
+                const cats = new Set(cart.map(c => c.item.cat));
+                const hasMain = cart.some(c => ["pollos", "parrillas"].includes(c.item.cat));
+                const missingDrink = hasMain && !cats.has("bebidas");
+                const missingDessert = hasMain && !cats.has("postres");
+                if (!missingDrink && !missingDessert) return null;
+                return (
+                  <div className="bg-gradient-to-br from-amber-50 to-clay/8 border border-amber-300 rounded-2xl p-4">
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl flex-shrink-0">💡</span>
+                      <div className="flex-1">
+                        <p className="font-bold text-sm text-amber-900">Antes de enviar · revisa esto</p>
+                        <p className="text-xs text-amber-800 mt-1">
+                          El cliente pidió plato fuerte pero no tiene
+                          {missingDrink && <strong className="text-clay"> bebida</strong>}
+                          {missingDrink && missingDessert && " ni"}
+                          {missingDessert && <strong className="text-clay"> postre</strong>}.
+                          Aprovecha de ofrecer.
+                        </p>
+                        <div className="flex gap-2 mt-3 flex-wrap">
+                          {missingDrink && (
+                            <button
+                              onClick={() => setStep("menu") || setActiveCat("bebidas")}
+                              className="px-3 py-1.5 bg-clay text-white text-xs font-bold rounded-full hover:bg-clay-dark"
+                            >
+                              + Ofrecer bebida
+                            </button>
+                          )}
+                          {missingDessert && (
+                            <button
+                              onClick={() => setStep("menu") || setActiveCat("postres")}
+                              className="px-3 py-1.5 bg-clay text-white text-xs font-bold rounded-full hover:bg-clay-dark"
+                            >
+                              + Ofrecer postre
+                            </button>
+                          )}
+                          <button className="px-3 py-1.5 bg-cream border border-border text-muted text-xs font-bold rounded-full hover:bg-border/40">El cliente no quiso</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Notas y modo de servir */}
               <div className="space-y-3 mt-4">
