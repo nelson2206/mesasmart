@@ -226,6 +226,241 @@ adminRoutes.post(
 );
 
 // ═══════════════════════════════════════════════════════════════
+// POST /api/admin/backfill/engagement
+// Pairings + NPS demo + Google reviews + prep-time targets + upsell events
+// ═══════════════════════════════════════════════════════════════
+adminRoutes.post(
+  "/backfill/engagement",
+  authRequired,
+  requireRole("ADMIN"),
+  asyncHandler(async (req, res) => {
+    const restaurantId = req.user!.restaurantId;
+    const log: string[] = [];
+    const summary = { pairings: 0, targets: 0, npsResponses: 0, reviews: 0, upsells: 0 };
+
+    // Helper para encontrar menuItem por nombre
+    const items = await prisma.menuItem.findMany({
+      where: { category: { restaurantId } },
+      include: { category: true }
+    });
+    const findItem = (name: string) => items.find(i => i.name.toLowerCase().includes(name.toLowerCase()));
+
+    // ─── Pairings · sugerencias smart de postres y bebidas ───
+    const pairingDefs = [
+      // Pollo a la Brasa → bebidas + postres
+      { trigger: "Pollo Entero a la Brasa", suggestion: "Inka Cola", type: "BEVERAGE", message: "¿Le agregamos Inka Cola 1.5L? Perfecta con la brasa." },
+      { trigger: "Pollo Entero a la Brasa", suggestion: "Chicha Morada", type: "BEVERAGE", message: "Chicha morada artesanal de la casa, ¿le sirve una jarra?" },
+      { trigger: "Pollo Entero a la Brasa", suggestion: "Mazamorra Morada", type: "DESSERT", message: "De postre, mazamorra morada con arroz con leche, muy peruano." },
+      { trigger: "1/2 Pollo a la Brasa", suggestion: "Inka Cola", type: "BEVERAGE", message: "¿Le agregamos Inka Cola personal?" },
+      { trigger: "1/2 Pollo a la Brasa", suggestion: "Suspiro", type: "DESSERT", message: "¿De postre suspiro a la limeña? Es nuestro top." },
+      { trigger: "1/4 de Pollo", suggestion: "Inka Cola", type: "BEVERAGE", message: "¿Le agregamos Inka Cola personal?" },
+      { trigger: "1/4 de Pollo", suggestion: "Suspiro", type: "DESSERT", message: "Suspiro limeño · ideal para uno." },
+      // Lomo Saltado → bebida + postre
+      { trigger: "Lomo Saltado", suggestion: "Chicha Morada", type: "BEVERAGE", message: "Chicha morada va perfecto con el lomo." },
+      { trigger: "Lomo Saltado", suggestion: "Crema Volteada", type: "DESSERT", message: "Crema volteada de la casa, hecha hoy." },
+      // Anticuchos → bebida
+      { trigger: "Anticuchos", suggestion: "Cusqueña", type: "BEVERAGE", message: "Cerveza Cusqueña Negra con anticuchos, clásico." },
+      { trigger: "Anticuchos", suggestion: "Picarones", type: "DESSERT", message: "Y para cerrar, picarones con miel de chancaca." },
+      // Ceviche → bebida
+      { trigger: "Ceviche", suggestion: "Cusqueña", type: "BEVERAGE", message: "¿Una Cusqueña dorada bien helada con el ceviche?" }
+    ];
+
+    for (const def of pairingDefs) {
+      const trigger = findItem(def.trigger);
+      const suggestion = findItem(def.suggestion);
+      if (!trigger || !suggestion) continue;
+
+      const exists = await prisma.menuPairing.findFirst({
+        where: { restaurantId, triggerItemId: trigger.id, suggestedItemId: suggestion.id }
+      });
+      if (exists) continue;
+
+      // Random conversion rate y shown count para que se vean métricas
+      const totalShown = 30 + Math.floor(Math.random() * 80);
+      const totalAccepted = Math.floor(totalShown * (0.20 + Math.random() * 0.45));
+
+      await prisma.menuPairing.create({
+        data: {
+          restaurantId,
+          triggerItemId: trigger.id,
+          suggestedItemId: suggestion.id,
+          pairingType: def.type as any,
+          priority: def.type === "DESSERT" ? 8 : 6,
+          message: def.message,
+          totalShown,
+          totalAccepted,
+          conversionRate: totalAccepted / totalShown
+        }
+      });
+      summary.pairings++;
+    }
+    log.push(`✓ ${summary.pairings} pairings creadas`);
+
+    // ─── Prep-time targets · meta por plato ───
+    const targetDefs = [
+      { name: "Pollo Entero", minutes: 22 },
+      { name: "1/2 Pollo", minutes: 18 },
+      { name: "1/4 de Pollo", minutes: 14 },
+      { name: "Lomo Saltado", minutes: 16 },
+      { name: "Anticuchos", minutes: 18 },
+      { name: "Ceviche", minutes: 8 },
+      { name: "Causa", minutes: 6 },
+      { name: "Inka Cola", minutes: 1 },
+      { name: "Chicha Morada", minutes: 2 },
+      { name: "Suspiro", minutes: 3 },
+      { name: "Mazamorra", minutes: 3 }
+    ];
+    for (const t of targetDefs) {
+      const item = findItem(t.name);
+      if (!item) continue;
+      const exists = await prisma.prepTimeTarget.findFirst({
+        where: { restaurantId, menuItemId: item.id, station: item.kitchenStation }
+      });
+      if (exists) continue;
+      await prisma.prepTimeTarget.create({
+        data: {
+          restaurantId,
+          menuItemId: item.id,
+          station: item.kitchenStation,
+          targetMinutes: t.minutes,
+          warningMinutes: Math.round(t.minutes * 1.2),
+          criticalMinutes: Math.round(t.minutes * 1.5),
+          // Auto-calc placeholder
+          totalSamples: 50 + Math.floor(Math.random() * 80),
+          avgMinutes: t.minutes * (0.85 + Math.random() * 0.4),
+          p50Minutes: t.minutes * 0.95,
+          p75Minutes: t.minutes * 1.15,
+          p95Minutes: t.minutes * 1.55,
+          hitRatePct: 60 + Math.random() * 35
+        }
+      });
+      summary.targets++;
+    }
+    log.push(`✓ ${summary.targets} prep-time targets creados`);
+
+    // ─── NPS demo · respuestas variadas ───
+    const existing = await prisma.nPSResponse.count({ where: { restaurantId } });
+    if (existing < 5) {
+      const waiters = await prisma.user.findMany({
+        where: { restaurantId, role: "WAITER" }
+      });
+      const sampleResponses = [
+        { score: 10, food: 5, service: 5, ambience: 5, speed: 4, comment: "Excelente atención, María estuvo muy atenta. La pachamanca volada." },
+        { score: 9, food: 5, service: 5, ambience: 4, speed: 4, comment: "Comida deliciosa, repetiría sin duda." },
+        { score: 9, food: 4, service: 5, ambience: 4, speed: 5, comment: "Mozo muy buen rollo. Volveremos." },
+        { score: 8, food: 4, service: 4, ambience: 4, speed: 4, comment: "Bien todo, demoraron un poco las bebidas." },
+        { score: 10, food: 5, service: 5, ambience: 5, speed: 5, comment: null },
+        { score: 7, food: 4, service: 3, ambience: 4, speed: 3, comment: "Comida rica pero el servicio podría ser más rápido en hora pico." },
+        { score: 6, food: 4, service: 3, ambience: 3, speed: 2, comment: "Esperamos 35 minutos por el plato. Mejorables." },
+        { score: 3, food: 4, service: 1, ambience: 2, speed: 1, comment: "Muy mala atención, pedimos cuenta 4 veces. La comida sí estuvo bien." },
+        { score: 9, food: 5, service: 4, ambience: 5, speed: 4, comment: "Muy buena experiencia, recomendado para familia." },
+        { score: 10, food: 5, service: 5, ambience: 5, speed: 5, comment: "El mejor pollo a la brasa que he probado en Lima." },
+        { score: 8, food: 5, service: 4, ambience: 4, speed: 4, comment: null },
+        { score: 4, food: 3, service: 2, ambience: 3, speed: 2, comment: "Ceviche estaba tibio, mozo no nos hacía caso." },
+        { score: 9, food: 5, service: 5, ambience: 4, speed: 4, comment: "Inolvidable. La sazón tradicional se siente." }
+      ];
+
+      for (const r of sampleResponses) {
+        const w = waiters[Math.floor(Math.random() * waiters.length)];
+        const cat = r.score >= 9 ? "PROMOTER" : r.score >= 7 ? "PASSIVE" : "DETRACTOR";
+        const sentiment = r.comment
+          ? (r.score >= 7 ? "POSITIVE" : r.score >= 5 ? "NEUTRAL" : "NEGATIVE")
+          : null;
+        const daysAgo = Math.floor(Math.random() * 30);
+        const respondedAt = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
+
+        await prisma.nPSResponse.create({
+          data: {
+            restaurantId,
+            waiterId: w?.id,
+            npsScore: r.score,
+            category: cat,
+            foodScore: r.food,
+            serviceScore: r.service,
+            ambienceScore: r.ambience,
+            speedScore: r.speed,
+            comment: r.comment,
+            sentiment,
+            source: "TABLET",
+            respondedAt
+          }
+        });
+        summary.npsResponses++;
+      }
+      log.push(`✓ ${summary.npsResponses} respuestas NPS demo creadas`);
+    }
+
+    // ─── External reviews demo (Google) ───
+    const existingReviews = await prisma.externalReview.count({ where: { restaurantId } });
+    if (existingReviews < 3) {
+      const reviewDefs = [
+        { source: "GOOGLE", rating: 5, author: "Juan Pérez", title: "El mejor pollo de Miraflores", body: "La sazón es de antaño, las papas crocantes y la cremita ají amarillo de la casa. 100% recomendado.", days: 5 },
+        { source: "GOOGLE", rating: 5, author: "Ana Castillo", title: "Atención de primera", body: "Fui con mi familia y María nos atendió increíble. El pollo perfecto.", days: 12 },
+        { source: "GOOGLE", rating: 4, author: "Carlos M.", title: "Buena experiencia", body: "Comida deliciosa, solo tardaron un poco más de lo esperado. Volveré.", days: 18 },
+        { source: "GOOGLE", rating: 5, author: "Patricia G.", title: "Pollo + chicha morada = vida", body: "Llevo años yendo y nunca decae. Imperdible.", days: 25 },
+        { source: "GOOGLE", rating: 3, author: "Roberto S.", title: "Bien pero...", body: "La comida estuvo bien pero el local muy lleno y demoró todo. Quizás otro día.", days: 33 },
+        { source: "TRIPADVISOR", rating: 5, author: "Luis F.", title: "Local hidden gem in Miraflores", body: "Authentic peruvian rotisserie chicken. The crispy potatoes are addictive.", days: 8 },
+        { source: "GOOGLE", rating: 2, author: "Cliente anónimo", title: "Decepcionante", body: "Esperamos mucho, mozo desatento, comida tibia. No volvería.", days: 41 }
+      ];
+      for (const r of reviewDefs) {
+        const sentiment = r.rating >= 4 ? "POSITIVE" : r.rating >= 3 ? "NEUTRAL" : "NEGATIVE";
+        await prisma.externalReview.create({
+          data: {
+            restaurantId,
+            source: r.source,
+            externalId: `demo-${Date.now()}-${Math.random()}`,
+            authorName: r.author,
+            rating: r.rating,
+            title: r.title,
+            body: r.body,
+            sentiment,
+            reviewedAt: new Date(Date.now() - r.days * 24 * 60 * 60 * 1000)
+          }
+        });
+        summary.reviews++;
+      }
+      log.push(`✓ ${summary.reviews} reviews externas creadas`);
+    }
+
+    // ─── Upsell events demo ───
+    const pairings = await prisma.menuPairing.findMany({
+      where: { restaurantId },
+      take: 6
+    });
+    const existingEvents = await prisma.upsellEvent.count({ where: { restaurantId } });
+    if (existingEvents < 5 && pairings.length > 0) {
+      const waiters = await prisma.user.findMany({
+        where: { restaurantId, role: "WAITER" }
+      });
+      for (let i = 0; i < 30; i++) {
+        const p = pairings[Math.floor(Math.random() * pairings.length)];
+        const w = waiters[Math.floor(Math.random() * waiters.length)];
+        if (!w) continue;
+        const accepted = Math.random() < 0.45;
+        await prisma.upsellEvent.create({
+          data: {
+            restaurantId,
+            waiterId: w.id,
+            pairingId: p.id,
+            triggerItemId: p.triggerItemId,
+            suggestedItemId: p.suggestedItemId,
+            outcome: accepted ? "ACCEPTED" : (Math.random() < 0.6 ? "REJECTED" : "IGNORED"),
+            outcomeAt: new Date(),
+            acceptedQty: accepted ? 1 : 0,
+            acceptedRevenueCents: accepted ? 1500 + Math.floor(Math.random() * 4000) : 0,
+            shownAt: new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000))
+          }
+        });
+        summary.upsells++;
+      }
+      log.push(`✓ ${summary.upsells} upsell events demo creados`);
+    }
+
+    res.json({ ok: true, restaurantId, summary, log });
+  })
+);
+
+// ═══════════════════════════════════════════════════════════════
 // GET /api/admin/health/data
 // Reporte rápido de cuántos registros tiene el restaurante
 // ═══════════════════════════════════════════════════════════════

@@ -67,6 +67,11 @@ model Restaurant {
   cameras        Camera[]
   securityAlerts SecurityAlert[]
   securityRules  SecurityRule[]
+  menuPairings   MenuPairing[]
+  upsellEvents   UpsellEvent[]
+  prepTimeTargets PrepTimeTarget[]
+  npsResponses   NPSResponse[]
+  externalReviews ExternalReview[]
 }
 
 model User {
@@ -770,6 +775,150 @@ model SecurityRule {
 
   @@unique([restaurantId, type])
   @@index([restaurantId, enabled])
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//          UPSELLING (sugerencias del mozo: postres, bebidas, etc)
+// ═══════════════════════════════════════════════════════════════════
+
+// Define qué postres/bebidas sugerir cuando se pide un plato principal
+// Ej: "Pollo a la Brasa" → ["Inka Cola 1.5L", "Mazamorra Morada", "Suspiro Limeño"]
+model MenuPairing {
+  id              String   @id @default(cuid())
+  restaurantId    String
+  triggerItemId   String   // plato principal que dispara la sugerencia
+  suggestedItemId String   // item sugerido (postre/bebida/extra)
+  pairingType     String   // BEVERAGE | DESSERT | SIDE | EXTRA
+  priority        Int      @default(0)  // 0..10 para ordenar sugerencias
+  message         String?  // "¿Le gustaría agregar...?"
+  active          Boolean  @default(true)
+  // Performance auto-calculada
+  totalShown      Int      @default(0)
+  totalAccepted   Int      @default(0)
+  conversionRate  Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([restaurantId, triggerItemId, suggestedItemId])
+  @@index([restaurantId, active])
+}
+
+// Cada vez que un mozo le ofrece un postre/bebida al cliente
+// y el resultado (aceptó / rechazó / ignoró)
+model UpsellEvent {
+  id              String   @id @default(cuid())
+  restaurantId    String
+  orderId         String?  // null si ofreció antes de tomar pedido
+  waiterId        String
+  pairingId       String?  // qué sugerencia disparó el evento
+  triggerItemId   String?  // plato que disparó el upsell
+  suggestedItemId String   // item ofrecido
+  shownAt         DateTime @default(now())
+  outcome         String   @default("PENDING") // ACCEPTED | REJECTED | IGNORED | PENDING
+  outcomeAt       DateTime?
+  acceptedQty     Int?     // cantidad final aceptada
+  acceptedRevenueCents Int @default(0)
+  customerId      String?  // si el cliente está identificado
+
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, waiterId, shownAt])
+  @@index([restaurantId, outcome])
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//          PREP TIME · Métricas y metas de tiempos de cocina
+// ═══════════════════════════════════════════════════════════════════
+
+// Meta de tiempo por plato y estación
+model PrepTimeTarget {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  menuItemId    String
+  station       String   // brasa | parrilla | frio | bebidas | postres
+  targetMinutes Int      // meta en minutos
+  warningMinutes Int     // umbral amarillo
+  criticalMinutes Int    // umbral rojo
+  // Auto-calculadas (se actualizan en background)
+  avgMinutes    Float    @default(0)
+  p50Minutes    Float    @default(0)
+  p75Minutes    Float    @default(0)
+  p95Minutes    Float    @default(0)
+  totalSamples  Int      @default(0)
+  hitRatePct    Float    @default(0)  // % que cumplen la meta
+  lastComputedAt DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([restaurantId, menuItemId, station])
+  @@index([restaurantId])
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//          NPS · Encuestas de satisfacción y fidelización
+// ═══════════════════════════════════════════════════════════════════
+
+// Respuesta individual de NPS / satisfacción
+model NPSResponse {
+  id             String   @id @default(cuid())
+  restaurantId   String
+  orderId        String?
+  customerId     String?
+  waiterId       String?  // mozo que atendió (para métrica por mozo)
+  // Score NPS clásico (0-10)
+  npsScore       Int      // 0..10
+  category       String   // PROMOTER (9-10) | PASSIVE (7-8) | DETRACTOR (0-6)
+  // Subscores opcionales
+  foodScore      Int?     // 1..5 sabor
+  serviceScore   Int?     // 1..5 atención
+  ambienceScore  Int?     // 1..5 ambiente
+  speedScore     Int?     // 1..5 rapidez
+  // Comentario verbatim
+  comment        String?
+  // Procesamiento IA
+  sentiment      String?  // POSITIVE | NEUTRAL | NEGATIVE
+  topics         String   @default("[]") // JSON array de tópicos detectados
+  source         String   @default("TABLET") // TABLET | EMAIL | WHATSAPP | QR
+  respondedAt    DateTime @default(now())
+
+  restaurant     Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, respondedAt])
+  @@index([restaurantId, waiterId])
+  @@index([category])
+}
+
+// Reviews externas (Google, TripAdvisor, etc)
+model ExternalReview {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  source        String   // GOOGLE | TRIPADVISOR | YELP | FACEBOOK | OTHER
+  externalId    String?  // ID del review en la plataforma
+  authorName    String?
+  rating        Int      // 1..5
+  title         String?
+  body          String?
+  url           String?
+  // Procesamiento IA
+  sentiment     String?  // POSITIVE | NEUTRAL | NEGATIVE
+  topics        String   @default("[]") // JSON array
+  // Respuesta del restaurante
+  replied       Boolean  @default(false)
+  replyText     String?
+  repliedAt     DateTime?
+  // Metadata
+  reviewedAt    DateTime
+  importedAt    DateTime @default(now())
+
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([restaurantId, source, externalId])
+  @@index([restaurantId, reviewedAt])
+  @@index([rating, source])
 }
 
 model CampaignSuggestion {

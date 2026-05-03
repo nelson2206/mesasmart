@@ -270,7 +270,10 @@
           label: "ANALIZAR",
           items: [
             { id: "reportes", label: "Reportes", icon: "chart" },
-            { id: "personal", label: "Personal", icon: "users" }
+            { id: "personal", label: "Personal", icon: "users" },
+            { id: "performance", label: "Performance mozo", icon: "users", badge: "NEW" },
+            { id: "tiempos", label: "Tiempos cocina", icon: "clock", badge: "NEW" },
+            { id: "nps", label: "NPS y reviews", icon: "chart", badge: "NEW" }
           ]
         },
         {
@@ -1309,6 +1312,603 @@
       );
     }
 
+    // ─────────────────────── PERFORMANCE DEL PERSONAL ───────────────────────
+    const PERFORMANCE_DEMO = [
+      { userId: "u1", name: "María Quispe", position: "Mozo", avatarColor: "#A0322B", upsellShown: 87, upsellAccepted: 41, conversionRate: 0.471, revenueGeneratedCents: 84500, ordersServed: 142, avgTicketCents: 8520, tipRevenueCents: 38400, npsResponses: 28, npsScore: 67, complaints: 1 },
+      { userId: "u2", name: "Juan Cárdenas", position: "Mozo", avatarColor: "#C8941F", upsellShown: 76, upsellAccepted: 28, conversionRate: 0.368, revenueGeneratedCents: 56200, ordersServed: 128, avgTicketCents: 7910, tipRevenueCents: 32100, npsResponses: 24, npsScore: 54, complaints: 2 },
+      { userId: "u3", name: "Carlos Mendoza", position: "Mozo", avatarColor: "#2D7D5A", upsellShown: 45, upsellAccepted: 12, conversionRate: 0.267, revenueGeneratedCents: 24800, ordersServed: 78, avgTicketCents: 6850, tipRevenueCents: 14200, npsResponses: 14, npsScore: 21, complaints: 4 }
+    ];
+
+    function PerformanceView() {
+      const data = PERFORMANCE_DEMO;
+      const periodLabel = "Últimos 30 días";
+      const totalShown = data.reduce((s, w) => s + w.upsellShown, 0);
+      const totalAccepted = data.reduce((s, w) => s + w.upsellAccepted, 0);
+      const avgConversion = totalShown > 0 ? totalAccepted / totalShown : 0;
+      const totalRevenue = data.reduce((s, w) => s + w.revenueGeneratedCents, 0);
+
+      const sortedByConversion = [...data].sort((a, b) => b.conversionRate - a.conversionRate);
+      const topMozo = sortedByConversion[0];
+
+      return (
+        <div className="space-y-6">
+          <div className="flex items-end justify-between flex-wrap gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="px-3 py-1 rounded-full bg-charcoal text-cream text-[10px] font-bold tracking-widest uppercase">📊 Performance</span>
+                <span className="text-xs text-muted">{periodLabel}</span>
+              </div>
+              <h1 className="font-display text-3xl font-semibold">Performance del personal</h1>
+              <p className="text-sm text-muted mt-1">Conversión de upselling, ticket promedio, NPS personal y ranking comparativo</p>
+            </div>
+            <select className="px-3 py-2 bg-paper border border-border rounded-lg text-sm font-semibold">
+              <option>Últimos 30 días</option>
+              <option>Esta semana</option>
+              <option>Este mes</option>
+              <option>Trimestre</option>
+            </select>
+          </div>
+
+          {/* KPIs consolidados */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-paper border border-border rounded-2xl p-5">
+              <p className="text-[10px] uppercase tracking-widest text-muted font-bold">Sugerencias mostradas</p>
+              <p className="font-display text-3xl font-bold text-ink mt-1">{totalShown}</p>
+              <p className="text-xs text-muted mt-1">por todo el equipo</p>
+            </div>
+            <div className="bg-paper border border-border rounded-2xl p-5">
+              <p className="text-[10px] uppercase tracking-widest text-muted font-bold">Convertidas</p>
+              <p className="font-display text-3xl font-bold text-olive mt-1">{totalAccepted}</p>
+              <p className="text-xs text-olive mt-1">{Math.round(avgConversion * 100)}% conversión grupo</p>
+            </div>
+            <div className="bg-paper border border-border rounded-2xl p-5">
+              <p className="text-[10px] uppercase tracking-widest text-muted font-bold">Revenue extra</p>
+              <p className="font-display text-3xl font-bold text-clay mt-1">{PEN(totalRevenue)}</p>
+              <p className="text-xs text-muted mt-1">generado por upselling</p>
+            </div>
+            <div className="bg-paper border border-border rounded-2xl p-5">
+              <p className="text-[10px] uppercase tracking-widest text-muted font-bold">Top performer</p>
+              <p className="font-display text-xl font-bold text-ink mt-1">{topMozo.name.split(" ")[0]}</p>
+              <p className="text-xs text-olive mt-1">{Math.round(topMozo.conversionRate * 100)}% conversión</p>
+            </div>
+          </div>
+
+          {/* Tabla de mozos */}
+          <div className="bg-paper border border-border rounded-2xl overflow-hidden">
+            <div className="p-5 border-b border-border bg-cream/40">
+              <h3 className="font-display text-lg font-semibold">Ranking por mozo</h3>
+              <p className="text-xs text-muted mt-1">Métricas comparativas · click en uno para ver detalle</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-cream/40 border-b border-border">
+                    <th className="text-left px-5 py-3 text-[11px] uppercase tracking-widest font-bold text-muted">Mozo</th>
+                    <th className="text-right px-3 py-3 text-[11px] uppercase tracking-widest font-bold text-muted">Pedidos</th>
+                    <th className="text-right px-3 py-3 text-[11px] uppercase tracking-widest font-bold text-muted">Ticket avg</th>
+                    <th className="text-right px-3 py-3 text-[11px] uppercase tracking-widest font-bold text-muted">Upsell shown</th>
+                    <th className="text-right px-3 py-3 text-[11px] uppercase tracking-widest font-bold text-muted">Conversión</th>
+                    <th className="text-right px-3 py-3 text-[11px] uppercase tracking-widest font-bold text-muted">Revenue extra</th>
+                    <th className="text-right px-3 py-3 text-[11px] uppercase tracking-widest font-bold text-muted">Propinas</th>
+                    <th className="text-right px-3 py-3 text-[11px] uppercase tracking-widest font-bold text-muted">NPS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedByConversion.map((w, idx) => {
+                    const initials = w.name.split(" ").map(s => s[0]).join("").slice(0, 2);
+                    const npsClass = w.npsScore >= 50 ? "text-olive" : w.npsScore >= 0 ? "text-amber-600" : "text-red-600";
+                    const convClass = w.conversionRate >= 0.4 ? "text-olive" : w.conversionRate >= 0.3 ? "text-amber-600" : "text-red-600";
+                    return (
+                      <tr key={w.userId} className="border-b border-border hover:bg-cream/40 transition cursor-pointer">
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-xs" style={{ background: w.avatarColor }}>{initials}</div>
+                            <div>
+                              <p className="font-semibold text-sm">{w.name} {idx === 0 && <span className="text-gold">★</span>}</p>
+                              <p className="text-[11px] text-muted">{w.position}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="text-right px-3 py-4 font-semibold">{w.ordersServed}</td>
+                        <td className="text-right px-3 py-4">{PEN(w.avgTicketCents)}</td>
+                        <td className="text-right px-3 py-4">{w.upsellShown}</td>
+                        <td className={`text-right px-3 py-4 font-bold ${convClass}`}>{Math.round(w.conversionRate * 100)}%</td>
+                        <td className="text-right px-3 py-4 text-clay font-semibold">{PEN(w.revenueGeneratedCents)}</td>
+                        <td className="text-right px-3 py-4">{PEN(w.tipRevenueCents)}</td>
+                        <td className={`text-right px-3 py-4 font-bold ${npsClass}`}>
+                          {w.npsScore !== null ? w.npsScore : "—"}
+                          <span className="text-[10px] text-muted ml-1">({w.npsResponses})</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Detalle de top sugerencias del equipo */}
+          <div className="bg-paper border border-border rounded-2xl p-6">
+            <h3 className="font-display text-lg font-semibold mb-4">Top sugerencias del equipo</h3>
+            <p className="text-xs text-muted mb-4">Pairings con más alta conversión (qué les funciona ofrecer)</p>
+            <div className="space-y-2">
+              {[
+                { trigger: "Pollo Entero", suggestion: "Inka Cola 1.5L", shown: 64, accepted: 44, conv: 0.69 },
+                { trigger: "1/2 Pollo a la Brasa", suggestion: "Chicha Morada", shown: 58, accepted: 28, conv: 0.48 },
+                { trigger: "Anticuchos", suggestion: "Cusqueña Negra", shown: 35, accepted: 16, conv: 0.46 },
+                { trigger: "Pollo Entero", suggestion: "Mazamorra Morada", shown: 42, accepted: 16, conv: 0.38 },
+                { trigger: "1/4 Pollo", suggestion: "Suspiro Limeño", shown: 51, accepted: 14, conv: 0.27 }
+              ].map((p, i) => (
+                <div key={i} className="flex items-center gap-4 py-3 border-b border-border last:border-b-0">
+                  <span className="font-display text-2xl text-clay font-bold w-8">{i + 1}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm">
+                      <span className="font-semibold">{p.trigger}</span>
+                      <span className="text-muted mx-2">→</span>
+                      <span className="text-clay font-semibold">{p.suggestion}</span>
+                    </p>
+                    <p className="text-[11px] text-muted mt-0.5">Mostrado {p.shown} veces · {p.accepted} aceptados</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-display text-xl font-bold text-olive">{Math.round(p.conv * 100)}%</p>
+                    <p className="text-[10px] text-muted uppercase tracking-widest font-bold">conversión</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─────────────────────── TIEMPOS DE COCINA · METAS ───────────────────────
+    const PREP_TIME_DEMO = [
+      { menuItemId: "m1", name: "1/4 Pollo a la Brasa", station: "brasa", samples: 142, avgMinutes: 13.4, p50: 13, p75: 15, p95: 19, targetMinutes: 14, hitRatePct: 78 },
+      { menuItemId: "m2", name: "1/2 Pollo a la Brasa", station: "brasa", samples: 187, avgMinutes: 17.8, p50: 17, p75: 19, p95: 24, targetMinutes: 18, hitRatePct: 71 },
+      { menuItemId: "m3", name: "Pollo Entero", station: "brasa", samples: 96, avgMinutes: 22.6, p50: 22, p75: 25, p95: 32, targetMinutes: 22, hitRatePct: 58 },
+      { menuItemId: "m4", name: "Lomo Saltado", station: "parrilla", samples: 134, avgMinutes: 16.2, p50: 15, p75: 18, p95: 24, targetMinutes: 16, hitRatePct: 65 },
+      { menuItemId: "m5", name: "Anticuchos de Corazón", station: "parrilla", samples: 88, avgMinutes: 19.4, p50: 18, p75: 22, p95: 28, targetMinutes: 18, hitRatePct: 54 },
+      { menuItemId: "m6", name: "Ceviche Clásico", station: "frio", samples: 72, avgMinutes: 7.8, p50: 7, p75: 9, p95: 13, targetMinutes: 8, hitRatePct: 82 },
+      { menuItemId: "m7", name: "Causa de Pollo", station: "frio", samples: 65, avgMinutes: 6.2, p50: 6, p75: 7, p95: 10, targetMinutes: 6, hitRatePct: 88 },
+      { menuItemId: "m8", name: "Inca Kola 1.5L", station: "bebidas", samples: 245, avgMinutes: 1.4, p50: 1, p75: 2, p95: 3, targetMinutes: 2, hitRatePct: 94 },
+      { menuItemId: "m9", name: "Chicha Morada", station: "bebidas", samples: 198, avgMinutes: 2.1, p50: 2, p75: 3, p95: 4, targetMinutes: 2, hitRatePct: 79 },
+      { menuItemId: "m10", name: "Suspiro Limeño", station: "postres", samples: 68, avgMinutes: 3.8, p50: 4, p75: 4, p95: 6, targetMinutes: 4, hitRatePct: 87 }
+    ];
+
+    function TiemposView() {
+      const [data, setData] = useState(PREP_TIME_DEMO);
+      const [filterStation, setFilterStation] = useState("all");
+      const [editing, setEditing] = useState(null);
+
+      const stations = ["all", ...Array.from(new Set(data.map(d => d.station)))];
+      const filtered = filterStation === "all" ? data : data.filter(d => d.station === filterStation);
+
+      const totalSamples = filtered.reduce((s, d) => s + d.samples, 0);
+      const avgHitRate = filtered.length > 0 ? filtered.reduce((s, d) => s + d.hitRatePct, 0) / filtered.length : 0;
+      const overTarget = filtered.filter(d => d.avgMinutes > d.targetMinutes).length;
+
+      const handleSaveTarget = (menuItemId, newTarget) => {
+        setData(prev => prev.map(d => d.menuItemId === menuItemId ? { ...d, targetMinutes: newTarget, hitRatePct: Math.max(20, Math.min(95, 100 - Math.round((d.avgMinutes - newTarget) * 5))) } : d));
+        setEditing(null);
+      };
+
+      const stationStyles = {
+        brasa: "bg-clay/15 text-clay",
+        parrilla: "bg-charcoal/15 text-charcoal",
+        frio: "bg-blue-500/15 text-blue-700",
+        bebidas: "bg-amber-500/15 text-amber-700",
+        postres: "bg-pink-500/15 text-pink-700",
+        prep: "bg-olive/15 text-olive"
+      };
+
+      return (
+        <div className="space-y-6">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="px-3 py-1 rounded-full bg-charcoal text-cream text-[10px] font-bold tracking-widest uppercase">⏱️ Tiempos cocina</span>
+            </div>
+            <h1 className="font-display text-3xl font-semibold">Tiempos de preparación · histórico y metas</h1>
+            <p className="text-sm text-muted mt-1">Cuánto demora cada plato en cocina · vs meta definida · click para editar meta</p>
+          </div>
+
+          {/* KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-paper border border-border rounded-2xl p-5">
+              <p className="text-[10px] uppercase tracking-widest text-muted font-bold">Platos analizados</p>
+              <p className="font-display text-3xl font-bold mt-1">{filtered.length}</p>
+            </div>
+            <div className="bg-paper border border-border rounded-2xl p-5">
+              <p className="text-[10px] uppercase tracking-widest text-muted font-bold">Muestras totales</p>
+              <p className="font-display text-3xl font-bold text-ink mt-1">{totalSamples}</p>
+              <p className="text-xs text-muted mt-1">últimos 30 días</p>
+            </div>
+            <div className="bg-paper border border-border rounded-2xl p-5">
+              <p className="text-[10px] uppercase tracking-widest text-muted font-bold">Hit rate promedio</p>
+              <p className={`font-display text-3xl font-bold mt-1 ${avgHitRate >= 70 ? 'text-olive' : avgHitRate >= 50 ? 'text-amber-600' : 'text-red-600'}`}>{Math.round(avgHitRate)}%</p>
+              <p className="text-xs text-muted mt-1">cumplen meta</p>
+            </div>
+            <div className="bg-paper border border-border rounded-2xl p-5">
+              <p className="text-[10px] uppercase tracking-widest text-muted font-bold">Sobre meta</p>
+              <p className="font-display text-3xl font-bold text-red-600 mt-1">{overTarget}</p>
+              <p className="text-xs text-muted mt-1">platos en zona roja</p>
+            </div>
+          </div>
+
+          {/* Filtro por estación */}
+          <div className="flex gap-2 flex-wrap">
+            {stations.map(s => (
+              <button
+                key={s}
+                onClick={() => setFilterStation(s)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition ${filterStation === s ? 'bg-ink text-cream' : 'bg-paper border border-border text-muted hover:border-clay'}`}
+              >
+                {s === "all" ? `Todas las estaciones (${data.length})` : s.charAt(0).toUpperCase() + s.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          {/* Tabla */}
+          <div className="bg-paper border border-border rounded-2xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-cream/40 border-b border-border">
+                    <th className="text-left px-5 py-3 text-[11px] uppercase tracking-widest font-bold text-muted">Plato</th>
+                    <th className="text-left px-3 py-3 text-[11px] uppercase tracking-widest font-bold text-muted">Estación</th>
+                    <th className="text-right px-3 py-3 text-[11px] uppercase tracking-widest font-bold text-muted">Muestras</th>
+                    <th className="text-right px-3 py-3 text-[11px] uppercase tracking-widest font-bold text-muted">Promedio</th>
+                    <th className="text-right px-3 py-3 text-[11px] uppercase tracking-widest font-bold text-muted">P50</th>
+                    <th className="text-right px-3 py-3 text-[11px] uppercase tracking-widest font-bold text-muted">P75</th>
+                    <th className="text-right px-3 py-3 text-[11px] uppercase tracking-widest font-bold text-muted">P95</th>
+                    <th className="text-right px-3 py-3 text-[11px] uppercase tracking-widest font-bold text-muted">Meta</th>
+                    <th className="text-right px-3 py-3 text-[11px] uppercase tracking-widest font-bold text-muted">Hit rate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(d => {
+                    const overMeta = d.avgMinutes > d.targetMinutes;
+                    const hitClass = d.hitRatePct >= 75 ? "text-olive" : d.hitRatePct >= 55 ? "text-amber-600" : "text-red-600";
+                    const isEditing = editing === d.menuItemId;
+                    return (
+                      <tr key={d.menuItemId} className="border-b border-border hover:bg-cream/40 transition">
+                        <td className="px-5 py-3 font-semibold text-sm">{d.name}</td>
+                        <td className="px-3 py-3">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${stationStyles[d.station] || 'bg-cream text-muted'}`}>{d.station}</span>
+                        </td>
+                        <td className="text-right px-3 py-3 text-xs text-muted">{d.samples}</td>
+                        <td className={`text-right px-3 py-3 font-semibold ${overMeta ? 'text-red-600' : 'text-ink'}`}>{d.avgMinutes.toFixed(1)} min</td>
+                        <td className="text-right px-3 py-3 text-xs">{d.p50} min</td>
+                        <td className="text-right px-3 py-3 text-xs">{d.p75} min</td>
+                        <td className="text-right px-3 py-3 text-xs text-muted">{d.p95} min</td>
+                        <td className="text-right px-3 py-3">
+                          {isEditing ? (
+                            <input
+                              type="number"
+                              defaultValue={d.targetMinutes}
+                              onBlur={(e) => handleSaveTarget(d.menuItemId, parseInt(e.target.value) || d.targetMinutes)}
+                              onKeyDown={(e) => e.key === "Enter" && handleSaveTarget(d.menuItemId, parseInt(e.target.value) || d.targetMinutes)}
+                              className="w-16 px-2 py-1 border border-clay rounded text-right text-sm font-semibold"
+                              autoFocus
+                            />
+                          ) : (
+                            <button onClick={() => setEditing(d.menuItemId)} className="text-clay font-bold hover:underline">{d.targetMinutes} min ✎</button>
+                          )}
+                        </td>
+                        <td className="text-right px-3 py-3">
+                          <div className="inline-flex items-center gap-2 justify-end">
+                            <div className="w-16 h-2 bg-cream rounded-full overflow-hidden">
+                              <div className={`h-full ${d.hitRatePct >= 75 ? 'bg-olive' : d.hitRatePct >= 55 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${d.hitRatePct}%` }}></div>
+                            </div>
+                            <span className={`font-bold text-sm w-10 text-right ${hitClass}`}>{d.hitRatePct}%</span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="bg-cream/40 border border-border rounded-xl p-4 flex items-start gap-3">
+            <span className="text-2xl">💡</span>
+            <div>
+              <p className="font-semibold text-sm">Tip · cómo definir metas correctas</p>
+              <p className="text-xs text-muted mt-1">Una meta saludable está entre el P50 y P75 de tu histórico. Si está debajo del P50, será imposible cumplir. Por encima del P75, no presiona mejora.</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─────────────────────── NPS · REVIEWS · FIDELIZACIÓN ───────────────────────
+    const NPS_DEMO = {
+      score: 58,
+      previousScore: 42,
+      total: 134,
+      promoters: 78,
+      passives: 38,
+      detractors: 18,
+      promotersPct: 58,
+      detractorsPct: 13,
+      avgFood: 4.5,
+      avgService: 4.1,
+      avgAmbience: 4.3,
+      avgSpeed: 3.8,
+      trend: [
+        { date: "Día 1", score: 42 }, { date: "Día 2", score: 45 }, { date: "Día 3", score: 48 },
+        { date: "Día 4", score: 47 }, { date: "Día 5", score: 50 }, { date: "Día 6", score: 53 },
+        { date: "Día 7", score: 55 }, { date: "Día 8", score: 54 }, { date: "Día 9", score: 56 },
+        { date: "Día 10", score: 58 }, { date: "Día 11", score: 60 }, { date: "Día 12", score: 58 },
+        { date: "Día 13", score: 62 }, { date: "Día 14", score: 58 }
+      ],
+      recent: [
+        { id: 1, npsScore: 10, category: "PROMOTER", waiterName: "María Quispe", comment: "Excelente atención, María estuvo muy atenta. La pachamanca volada.", sentiment: "POSITIVE", respondedAt: "hace 2 h" },
+        { id: 2, npsScore: 9, category: "PROMOTER", waiterName: "Juan Cárdenas", comment: "Mozo muy buen rollo. Volveremos.", sentiment: "POSITIVE", respondedAt: "hace 5 h" },
+        { id: 3, npsScore: 7, category: "PASSIVE", waiterName: "María Quispe", comment: "Bien todo, demoraron un poco las bebidas.", sentiment: "NEUTRAL", respondedAt: "ayer" },
+        { id: 4, npsScore: 3, category: "DETRACTOR", waiterName: "Carlos Mendoza", comment: "Muy mala atención, pedimos cuenta 4 veces. La comida sí estuvo bien.", sentiment: "NEGATIVE", respondedAt: "ayer" },
+        { id: 5, npsScore: 9, category: "PROMOTER", waiterName: "Juan Cárdenas", comment: "Inolvidable. La sazón tradicional se siente.", sentiment: "POSITIVE", respondedAt: "hace 2 días" },
+        { id: 6, npsScore: 4, category: "DETRACTOR", waiterName: "Carlos Mendoza", comment: "Ceviche estaba tibio, mozo no nos hacía caso.", sentiment: "NEGATIVE", respondedAt: "hace 3 días" }
+      ]
+    };
+
+    const REVIEWS_DEMO = [
+      { id: 1, source: "GOOGLE", rating: 5, author: "Juan Pérez", title: "El mejor pollo de Miraflores", body: "La sazón es de antaño, las papas crocantes y la cremita ají amarillo de la casa. 100% recomendado.", sentiment: "POSITIVE", reviewedAt: "hace 5 días" },
+      { id: 2, source: "GOOGLE", rating: 5, author: "Ana Castillo", title: "Atención de primera", body: "Fui con mi familia y María nos atendió increíble. El pollo perfecto.", sentiment: "POSITIVE", reviewedAt: "hace 12 días" },
+      { id: 3, source: "GOOGLE", rating: 4, author: "Carlos M.", title: "Buena experiencia", body: "Comida deliciosa, solo tardaron un poco más de lo esperado. Volveré.", sentiment: "POSITIVE", reviewedAt: "hace 18 días" },
+      { id: 4, source: "TRIPADVISOR", rating: 5, author: "Luis F.", title: "Local hidden gem", body: "Authentic peruvian rotisserie chicken. The crispy potatoes are addictive.", sentiment: "POSITIVE", reviewedAt: "hace 8 días" },
+      { id: 5, source: "GOOGLE", rating: 2, author: "Cliente anónimo", title: "Decepcionante", body: "Esperamos mucho, mozo desatento, comida tibia. No volvería.", sentiment: "NEGATIVE", reviewedAt: "hace 41 días" }
+    ];
+
+    function NpsView() {
+      const [tab, setTab] = useState("nps");
+      const data = NPS_DEMO;
+      const reviews = REVIEWS_DEMO;
+      const npsTrend = data.score - data.previousScore;
+      const maxTrend = Math.max(...data.trend.map(t => t.score));
+      const minTrend = Math.min(...data.trend.map(t => t.score));
+
+      const sentimentEmoji = { POSITIVE: "😊", NEUTRAL: "😐", NEGATIVE: "😞" };
+      const ratingDist = [5, 4, 3, 2, 1].map(r => ({
+        rating: r,
+        count: reviews.filter(rv => rv.rating === r).length
+      }));
+      const totalReviews = reviews.length;
+      const avgRating = totalReviews > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / totalReviews : 0;
+
+      return (
+        <div className="space-y-6">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="px-3 py-1 rounded-full bg-charcoal text-cream text-[10px] font-bold tracking-widest uppercase">⭐ Satisfacción</span>
+              <span className="text-xs text-muted">Últimos 30 días</span>
+            </div>
+            <h1 className="font-display text-3xl font-semibold">NPS · Reviews · Fidelización</h1>
+            <p className="text-sm text-muted mt-1">Cómo te ven tus clientes · qué dicen · y quiénes vuelven</p>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-2 border-b border-border">
+            {[
+              { id: "nps", label: "📊 NPS y encuestas" },
+              { id: "reviews", label: "🌐 Reviews externas" },
+              { id: "fidelizacion", label: "💝 Fidelización" }
+            ].map(t => (
+              <button key={t.id} onClick={() => setTab(t.id)} className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${tab === t.id ? 'border-clay text-clay' : 'border-transparent text-muted hover:text-ink'}`}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {tab === "nps" && (
+            <>
+              {/* NPS hero */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-gradient-to-br from-clay to-clay-dark text-white rounded-2xl p-6 col-span-1">
+                  <p className="text-[10px] uppercase tracking-widest opacity-80 font-bold">Net Promoter Score</p>
+                  <div className="flex items-end gap-2 mt-2">
+                    <p className="font-display text-6xl font-bold leading-none">{data.score}</p>
+                    <span className={`mb-2 px-2 py-0.5 rounded-full text-xs font-bold ${npsTrend >= 0 ? 'bg-olive/30' : 'bg-red-500/30'}`}>
+                      {npsTrend >= 0 ? '↑' : '↓'} {Math.abs(npsTrend)}
+                    </span>
+                  </div>
+                  <p className="text-xs opacity-80 mt-3">basado en {data.total} respuestas · escala -100 a +100</p>
+                  <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                    <div className="bg-white/10 rounded-lg p-2">
+                      <p className="text-[9px] uppercase opacity-70 font-bold">Promotores</p>
+                      <p className="font-bold text-lg">{data.promoters}</p>
+                      <p className="text-[10px] opacity-70">{data.promotersPct}%</p>
+                    </div>
+                    <div className="bg-white/10 rounded-lg p-2">
+                      <p className="text-[9px] uppercase opacity-70 font-bold">Pasivos</p>
+                      <p className="font-bold text-lg">{data.passives}</p>
+                      <p className="text-[10px] opacity-70">{Math.round((data.passives / data.total) * 100)}%</p>
+                    </div>
+                    <div className="bg-white/10 rounded-lg p-2">
+                      <p className="text-[9px] uppercase opacity-70 font-bold">Detractores</p>
+                      <p className="font-bold text-lg">{data.detractors}</p>
+                      <p className="text-[10px] opacity-70">{data.detractorsPct}%</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Trend chart */}
+                <div className="bg-paper border border-border rounded-2xl p-5 col-span-2">
+                  <p className="text-[10px] uppercase tracking-widest text-muted font-bold">Tendencia · 14 días</p>
+                  <div className="mt-4 h-32 flex items-end gap-1">
+                    {data.trend.map((t, i) => {
+                      const height = ((t.score - minTrend) / (maxTrend - minTrend || 1)) * 100;
+                      return (
+                        <div key={i} className="flex-1 bg-clay/15 rounded-t flex items-end relative group" style={{ height: `${Math.max(height, 5)}%` }}>
+                          <div className="w-full bg-gradient-to-t from-clay to-gold rounded-t" style={{ height: '100%' }}></div>
+                          <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-ink opacity-0 group-hover:opacity-100">{t.score}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-between text-[10px] text-muted mt-2">
+                    <span>14d atrás</span>
+                    <span>Hoy</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Subscores */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { label: "Comida", value: data.avgFood, emoji: "🍽️" },
+                  { label: "Atención", value: data.avgService, emoji: "🤝" },
+                  { label: "Ambiente", value: data.avgAmbience, emoji: "🌿" },
+                  { label: "Rapidez", value: data.avgSpeed, emoji: "⚡" }
+                ].map(s => (
+                  <div key={s.label} className="bg-paper border border-border rounded-2xl p-5">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] uppercase tracking-widest text-muted font-bold">{s.label}</p>
+                      <span className="text-2xl">{s.emoji}</span>
+                    </div>
+                    <p className="font-display text-3xl font-bold mt-2">{s.value.toFixed(1)}<span className="text-base text-muted">/5</span></p>
+                    <div className="mt-2 h-1.5 bg-cream rounded-full overflow-hidden">
+                      <div className={`h-full ${s.value >= 4.3 ? 'bg-olive' : s.value >= 3.5 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${(s.value / 5) * 100}%` }}></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Comentarios verbatim */}
+              <div className="bg-paper border border-border rounded-2xl p-6">
+                <h3 className="font-display text-lg font-semibold mb-4">Comentarios recientes · verbatim</h3>
+                <div className="space-y-3">
+                  {data.recent.map(r => {
+                    const catColor = r.category === "PROMOTER" ? "bg-olive" : r.category === "PASSIVE" ? "bg-amber-500" : "bg-red-500";
+                    const catLabel = r.category === "PROMOTER" ? "Promotor" : r.category === "PASSIVE" ? "Pasivo" : "Detractor";
+                    return (
+                      <div key={r.id} className="flex gap-3 py-3 border-b border-border last:border-b-0">
+                        <div className={`w-12 h-12 rounded-full ${catColor} text-white flex items-center justify-center font-bold flex-shrink-0`}>{r.npsScore}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-[10px] font-bold uppercase tracking-wider ${r.category === 'PROMOTER' ? 'text-olive' : r.category === 'PASSIVE' ? 'text-amber-600' : 'text-red-600'}`}>{catLabel}</span>
+                            <span className="text-[10px] text-muted">·</span>
+                            <span className="text-[11px] text-muted">Atendido por <strong>{r.waiterName}</strong></span>
+                            <span className="text-[10px] text-muted ml-auto">{r.respondedAt}</span>
+                          </div>
+                          {r.comment && <p className="text-sm italic mt-1">{sentimentEmoji[r.sentiment]} "{r.comment}"</p>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+
+          {tab === "reviews" && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-2xl p-6">
+                  <p className="text-[10px] uppercase tracking-widest opacity-80 font-bold">Rating promedio</p>
+                  <p className="font-display text-6xl font-bold mt-2 leading-none">{avgRating.toFixed(1)}</p>
+                  <p className="mt-2">{Array.from({ length: 5 }).map((_, i) => <span key={i}>{i < Math.round(avgRating) ? '★' : '☆'}</span>)}</p>
+                  <p className="text-xs opacity-80 mt-2">{totalReviews} reviews totales</p>
+                </div>
+                <div className="bg-paper border border-border rounded-2xl p-5 col-span-2">
+                  <p className="text-[10px] uppercase tracking-widest text-muted font-bold">Distribución</p>
+                  <div className="space-y-2 mt-4">
+                    {ratingDist.map(d => {
+                      const pct = totalReviews > 0 ? (d.count / totalReviews) * 100 : 0;
+                      return (
+                        <div key={d.rating} className="flex items-center gap-3 text-sm">
+                          <span className="w-12 font-semibold">{d.rating} ★</span>
+                          <div className="flex-1 h-5 bg-cream rounded-full overflow-hidden">
+                            <div className="h-full bg-gradient-to-r from-amber-400 to-amber-500" style={{ width: `${pct}%` }}></div>
+                          </div>
+                          <span className="w-8 text-right text-muted text-xs">{d.count}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Reviews list */}
+              <div className="space-y-3">
+                {reviews.map(r => (
+                  <div key={r.id} className="bg-paper border border-border rounded-2xl p-5">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-clay to-gold flex items-center justify-center text-white font-bold text-sm flex-shrink-0">{r.author.split(" ").map(s => s[0]).slice(0, 2).join("")}</div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-sm">{r.author}</p>
+                          <span className="text-amber-500 text-xs">{Array.from({ length: 5 }).map((_, i) => i < r.rating ? '★' : '☆').join('')}</span>
+                          <span className="text-[10px] text-muted">·</span>
+                          <span className="text-[10px] uppercase tracking-wider font-bold text-muted">{r.source}</span>
+                          <span className="text-[10px] text-muted ml-auto">{r.reviewedAt}</span>
+                        </div>
+                        {r.title && <p className="font-display font-semibold mt-1">{r.title}</p>}
+                        <p className="text-sm text-muted mt-1">{r.body}</p>
+                        <button className="mt-2 text-xs text-clay font-semibold hover:underline">Responder →</button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {tab === "fidelizacion" && (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-paper border border-border rounded-2xl p-5">
+                  <p className="text-[10px] uppercase tracking-widest text-muted font-bold">Clientes registrados</p>
+                  <p className="font-display text-3xl font-bold mt-1">486</p>
+                  <p className="text-xs text-olive mt-1">+34 este mes</p>
+                </div>
+                <div className="bg-paper border border-border rounded-2xl p-5">
+                  <p className="text-[10px] uppercase tracking-widest text-muted font-bold">VIP (20+ visitas)</p>
+                  <p className="font-display text-3xl font-bold text-gold mt-1">28</p>
+                  <p className="text-xs text-muted mt-1">5.8% del total</p>
+                </div>
+                <div className="bg-paper border border-border rounded-2xl p-5">
+                  <p className="text-[10px] uppercase tracking-widest text-muted font-bold">Frecuentes</p>
+                  <p className="font-display text-3xl font-bold text-clay mt-1">94</p>
+                  <p className="text-xs text-muted mt-1">10+ visitas</p>
+                </div>
+                <div className="bg-paper border border-border rounded-2xl p-5">
+                  <p className="text-[10px] uppercase tracking-widest text-muted font-bold">Riesgo de fuga</p>
+                  <p className="font-display text-3xl font-bold text-red-600 mt-1">17</p>
+                  <p className="text-xs text-muted mt-1">+30 días sin volver</p>
+                </div>
+              </div>
+
+              <div className="bg-paper border border-border rounded-2xl p-6">
+                <h3 className="font-display text-lg font-semibold mb-4">Top 5 clientes fieles</h3>
+                <div className="space-y-3">
+                  {[
+                    { name: "Andrea Vega", visits: 28, spent: 248600, lastVisit: "ayer", tier: "VIP" },
+                    { name: "Lucía Mendoza", visits: 24, spent: 189400, lastVisit: "hace 3 días", tier: "VIP" },
+                    { name: "Carlos Ramírez", visits: 21, spent: 152000, lastVisit: "hace 1 semana", tier: "VIP" },
+                    { name: "Patricia Gómez", visits: 18, spent: 134500, lastVisit: "hace 5 días", tier: "FRECUENTE" },
+                    { name: "Roberto Silva", visits: 15, spent: 98700, lastVisit: "hace 2 semanas", tier: "FRECUENTE" }
+                  ].map((c, i) => (
+                    <div key={i} className="flex items-center gap-4 py-3 border-b border-border last:border-b-0">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-clay to-gold flex items-center justify-center text-white font-bold text-sm">{c.name.split(" ").map(s => s[0]).slice(0, 2).join("")}</div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-sm">{c.name}</p>
+                          {c.tier === "VIP" && <span className="px-1.5 py-0.5 bg-gold/15 text-gold rounded text-[9px] font-bold">VIP</span>}
+                        </div>
+                        <p className="text-[11px] text-muted">{c.visits} visitas · última: {c.lastVisit}</p>
+                      </div>
+                      <p className="font-display text-lg font-bold text-clay">{PEN(c.spent)}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      );
+    }
+
     // ─────────────────────── SEGURIDAD · LOSS PREVENTION ───────────────────────
     const SECURITY_DEMO_DATA = {
       stats: { pendingReview: 4, weeklyAlerts: 23, weeklyLossCents: 84600, activeCameras: 6 },
@@ -1737,6 +2337,9 @@
               {view === "cola" && <div data-feature="queue_ai"><ColaView tables={tables} setTables={setTables} queue={queue} setQueue={setQueue} /></div>}
               {view === "asistente_config" && <div data-feature="ai_assistant_waiter"><AsistenteConfigView /></div>}
               {view === "seguridad" && <div data-feature="security_ai"><SeguridadView /></div>}
+              {view === "performance" && <div data-feature="ai_assistant_waiter"><PerformanceView /></div>}
+              {view === "tiempos" && <div data-feature="smart_priority"><TiemposView /></div>}
+              {view === "nps" && <div data-feature="customer_id"><NpsView /></div>}
             </main>
           </div>
         </div>

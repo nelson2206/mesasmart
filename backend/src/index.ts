@@ -36,6 +36,7 @@ import { auditRoutes } from "./routes/audit.routes.js";
 import { personnelRoutes } from "./routes/personnel.routes.js";
 import { adminRoutes } from "./routes/admin.routes.js";
 import { securityRoutes } from "./routes/security.routes.js";
+import { engagementRoutes } from "./routes/engagement.routes.js";
 
 const app = express();
 const server = createServer(app);
@@ -118,6 +119,7 @@ app.use("/api/audit", auditRoutes);
 app.use("/api/personnel", personnelRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/security", securityRoutes);
+app.use("/api/engagement", engagementRoutes);
 
 // Public routes (no auth, used by cliente.html with qrToken)
 app.use("/api/public", publicRoutes);

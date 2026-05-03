@@ -157,6 +157,43 @@
       { id: "postres", name: "Postres" }
     ];
 
+    // ─── Pairings (sugerencias que dispara el upsell pop-up cuando el mozo agrega un main) ───
+    // Cada main_id tiene una lista de items sugeridos con mensaje y conversión histórica
+    const MOZO_PAIRINGS = {
+      1: [ // 1/4 Pollo
+        { id: 62, type: "BEVERAGE", message: "¿Le agregamos Inka Cola personal?", emoji: "🥤", conversion: 0.42 },
+        { id: 70, type: "DESSERT", message: "Suspiro a la limeña · ideal para uno", emoji: "🍮", conversion: 0.28 }
+      ],
+      2: [ // 1/2 Pollo
+        { id: 60, type: "BEVERAGE", message: "Chicha morada de la casa, ¿le sirvo?", emoji: "🍷", conversion: 0.51 },
+        { id: 70, type: "DESSERT", message: "¿De postre suspiro a la limeña?", emoji: "🍮", conversion: 0.34 }
+      ],
+      3: [ // Pollo Entero (familiar)
+        { id: 62, type: "BEVERAGE", message: "Inka Cola 1.5L familiar para acompañar", emoji: "🥤", conversion: 0.68 },
+        { id: 60, type: "BEVERAGE", message: "Jarra de chicha morada artesanal", emoji: "🍷", conversion: 0.44 },
+        { id: 70, type: "DESSERT", message: "Suspiro a la limeña · 4 personas", emoji: "🍮", conversion: 0.39 },
+        { id: 71, type: "DESSERT", message: "Torta de chocolate de la casa", emoji: "🍰", conversion: 0.31 }
+      ],
+      10: [ // Anticuchos
+        { id: 60, type: "BEVERAGE", message: "Chicha morada con anticuchos · clásico", emoji: "🍷", conversion: 0.47 },
+        { id: 70, type: "DESSERT", message: "¿Suspiro a la limeña para cerrar?", emoji: "🍮", conversion: 0.26 }
+      ],
+      11: [ // Parrilla Mixta
+        { id: 60, type: "BEVERAGE", message: "Chicha morada para acompañar", emoji: "🍷", conversion: 0.42 },
+        { id: 71, type: "DESSERT", message: "Torta de chocolate · perfecta", emoji: "🍰", conversion: 0.30 }
+      ],
+      12: [ // Alitas BBQ
+        { id: 62, type: "BEVERAGE", message: "Inka Cola con alitas · imbatible", emoji: "🥤", conversion: 0.54 },
+        { id: 71, type: "DESSERT", message: "Torta de chocolate de la casa", emoji: "🍰", conversion: 0.22 }
+      ],
+      40: [ // Ensalada César
+        { id: 61, type: "BEVERAGE", message: "Limonada frozen, súper refrescante", emoji: "🍋", conversion: 0.38 }
+      ],
+      41: [ // Ensalada de la casa
+        { id: 61, type: "BEVERAGE", message: "Limonada frozen para acompañar", emoji: "🍋", conversion: 0.32 }
+      ]
+    };
+
     // ───────────────────────────── DATA ─────────────────────────────
     const ME = { name: "María Quispe", role: "Mozo · Salón principal", shift: "16:00 - 24:00", color: "#A0322B" };
 
@@ -857,6 +894,54 @@
       );
     }
 
+    // ─── UPSELL POP-UP ───
+    function UpsellModal({ open, suggestions, triggerName, onAccept, onReject, onClose }) {
+      if (!open || !suggestions || suggestions.length === 0) return null;
+      return (
+        <div className="fixed inset-0 z-50 bg-charcoal/70 backdrop-blur flex items-end sm:items-center justify-center p-4" onClick={onClose}>
+          <div className="bg-paper rounded-3xl max-w-md w-full overflow-hidden shadow-2xl animate-slide-up" onClick={(e) => e.stopPropagation()} style={{ animation: 'slideUp 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
+            <div className="p-5 bg-gradient-to-br from-clay/10 via-gold/10 to-clay/5 border-b border-border">
+              <div className="flex items-start gap-3">
+                <div className="text-3xl">✨</div>
+                <div className="flex-1">
+                  <p className="text-[10px] font-extrabold uppercase tracking-widest text-clay">Sugerencia inteligente</p>
+                  <p className="font-display text-lg font-semibold mt-0.5 leading-tight">¿Le ofrezco algo más con su <span className="text-clay">{triggerName}</span>?</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-5 space-y-3">
+              {suggestions.map((s, idx) => {
+                const item = MOZO_MENU.find(m => m.id === s.id);
+                if (!item) return null;
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => onAccept(s, item)}
+                    className="w-full flex items-center gap-3 p-3 bg-cream hover:bg-clay/5 border border-border hover:border-clay rounded-2xl text-left transition group"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-paper overflow-hidden flex items-center justify-center text-2xl flex-shrink-0">{s.emoji}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm">{item.name}</p>
+                      <p className="text-xs text-muted leading-snug mt-0.5">"{s.message}"</p>
+                      <div className="flex items-center gap-3 mt-1.5">
+                        <span className="text-clay font-bold text-sm">{PEN(item.price)}</span>
+                        {s.conversion >= 0.4 && <span className="text-[10px] bg-olive/15 text-olive px-1.5 py-0.5 rounded-full font-bold">⭐ {Math.round(s.conversion * 100)}% acepta</span>}
+                      </div>
+                    </div>
+                    <div className="text-clay group-hover:translate-x-1 transition">→</div>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="p-4 pt-0 grid grid-cols-2 gap-2">
+              <button onClick={onReject} className="py-2.5 bg-cream border border-border text-muted rounded-lg text-sm font-semibold hover:bg-border/40">El cliente no quiso</button>
+              <button onClick={onClose} className="py-2.5 bg-cream border border-border text-muted rounded-lg text-sm font-semibold hover:bg-border/40">No ofrecí</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     // TOMAR PEDIDO VIEW
     function TomarPedidoView({ tables, setTables, onSent }) {
       const [step, setStep] = useState("select");
@@ -869,6 +954,12 @@
       const [itemQty, setItemQty] = useState(1);
       const [servingMode, setServingMode] = useState("asReady");
       const [orderNotes, setOrderNotes] = useState("");
+      // Upsell state
+      const [upsellOpen, setUpsellOpen] = useState(false);
+      const [upsellSuggestions, setUpsellSuggestions] = useState([]);
+      const [upsellTriggerName, setUpsellTriggerName] = useState("");
+      const [shownPairings, setShownPairings] = useState({});  // mainId → array of suggested ids ya mostrados
+      const [upsellLog, setUpsellLog] = useState([]);          // {triggerId, suggestedId, outcome, ts}
 
       const myTables = tables.filter(t => t.server === ME.name);
 
@@ -878,9 +969,58 @@
         return matchCat && matchSearch;
       });
 
+      // ─── Upsell trigger logic ───
+      const triggerUpsellIfApplicable = (item) => {
+        const pairings = MOZO_PAIRINGS[item.id];
+        if (!pairings || pairings.length === 0) return;
+        // Filtrar las que ya están en el carrito o ya se mostraron
+        const cartIds = new Set(cart.map(c => c.item.id));
+        const alreadyShown = new Set(shownPairings[item.id] || []);
+        const fresh = pairings.filter(p => !cartIds.has(p.id) && !alreadyShown.has(p.id));
+        if (fresh.length === 0) return;
+
+        setUpsellSuggestions(fresh.slice(0, 3));
+        setUpsellTriggerName(item.name);
+        setUpsellOpen(true);
+        setShownPairings(prev => ({
+          ...prev,
+          [item.id]: [...(prev[item.id] || []), ...fresh.map(p => p.id)]
+        }));
+
+        // Backend tracking (best-effort)
+        if (window.MesaSmartAPI && window.MesaSmartAPI.token) {
+          fresh.slice(0, 3).forEach(p => {
+            fetch((window.MesaSmartAPI.baseUrl || '') + '/api/engagement/upsell', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + window.MesaSmartAPI.token },
+              body: JSON.stringify({
+                triggerItemId: String(item.id),
+                suggestedItemId: String(p.id)
+              })
+            }).catch(() => {});
+          });
+        }
+      };
+
+      const handleUpsellAccept = (suggestion, item) => {
+        // Agregar al carrito
+        setCart(prev => [...prev, { item, qty: 1, notes: "[Sugerencia del mozo]" }]);
+        setUpsellLog(prev => [...prev, { suggestedId: suggestion.id, outcome: "ACCEPTED", ts: Date.now() }]);
+        setUpsellOpen(false);
+      };
+      const handleUpsellReject = () => {
+        setUpsellLog(prev => [...prev, { outcome: "REJECTED", ts: Date.now() }]);
+        setUpsellOpen(false);
+      };
+      const handleUpsellClose = () => {
+        setUpsellLog(prev => [...prev, { outcome: "IGNORED", ts: Date.now() }]);
+        setUpsellOpen(false);
+      };
+
       const handleAddItem = () => {
         if (!detailItem) return;
         const existingIdx = cart.findIndex(c => c.item.id === detailItem.id && c.notes === itemNotes);
+        const justAdded = detailItem;
         if (existingIdx >= 0) {
           setCart(prev => {
             const newCart = [...prev];
@@ -893,6 +1033,9 @@
         setDetailItem(null);
         setItemNotes("");
         setItemQty(1);
+
+        // Trigger upsell si el item agregado tiene pairings
+        setTimeout(() => triggerUpsellIfApplicable(justAdded), 200);
       };
 
       const handleRemoveItem = (idx) => {
@@ -990,6 +1133,7 @@
 
       // PASO B: CARTA
       if (step === "menu" && selectedTable) {
+        const acceptedUpsells = upsellLog.filter(u => u.outcome === "ACCEPTED").length;
         return (
           <div className="flex flex-col h-[calc(100vh-280px)] bg-cream">
             {/* Header */}
@@ -998,10 +1142,27 @@
                 <p className="font-semibold text-base">Mesa {selectedTable.id}</p>
                 {selectedTable.party && <p className="text-xs text-muted">{selectedTable.party} comensales</p>}
               </div>
-              <button onClick={() => { setStep("select"); setSelectedTable(null); }} className="flex items-center gap-1 text-xs text-clay font-semibold">
-                <Icon name="chevronLeft" size={14} /> Cambiar mesa
-              </button>
+              <div className="flex items-center gap-3">
+                {acceptedUpsells > 0 && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-olive/15 text-olive rounded-full text-[10px] font-bold">
+                    ✨ {acceptedUpsells} upsell{acceptedUpsells > 1 ? 's' : ''} aceptado{acceptedUpsells > 1 ? 's' : ''}
+                  </span>
+                )}
+                <button onClick={() => { setStep("select"); setSelectedTable(null); }} className="flex items-center gap-1 text-xs text-clay font-semibold">
+                  <Icon name="chevronLeft" size={14} /> Cambiar mesa
+                </button>
+              </div>
             </div>
+
+            {/* Upsell modal */}
+            <UpsellModal
+              open={upsellOpen}
+              suggestions={upsellSuggestions}
+              triggerName={upsellTriggerName}
+              onAccept={handleUpsellAccept}
+              onReject={handleUpsellReject}
+              onClose={handleUpsellClose}
+            />
 
             {/* Search + Categories */}
             <div className="bg-paper border-b border-border p-4 space-y-3">
